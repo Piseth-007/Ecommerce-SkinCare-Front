@@ -11,6 +11,8 @@ import {
   User,
   MapPin,
   Printer,
+  Search,
+  X,
 } from "lucide-react";
 import api from "../../api/axios";
 import { RowSkeleton, StatSkeleton } from "../../components/Skeleton";
@@ -42,6 +44,7 @@ export default function Orders() {
   const [error, setError] = useState("");
 
   const [filter, setFilter] = useState("");
+  const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
   const [printingOrder, setPrintingOrder] = useState(null);
@@ -119,6 +122,25 @@ export default function Orders() {
     setTimeout(() => window.print(), 50);
   };
 
+  // Search — matches order ID, customer name, or customer email
+  const filteredOrders = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+
+    if (!keyword) return orders;
+
+    return orders.filter((order) => {
+      const orderId = String(order.id || "");
+      const customerName = order.user?.name?.toLowerCase() || "";
+      const customerEmail = order.user?.email?.toLowerCase() || "";
+
+      return (
+        orderId.includes(keyword) ||
+        customerName.includes(keyword) ||
+        customerEmail.includes(keyword)
+      );
+    });
+  }, [orders, search]);
+
   const stats = useMemo(() => {
     return {
       total: orders.length,
@@ -134,10 +156,12 @@ export default function Orders() {
     setExpanded((current) => (current === id ? null : id));
   };
 
+  const clearSearch = () => setSearch("");
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6 print:hidden">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-2 print:hidden">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-stone mb-1">
             Fulfillment
@@ -154,10 +178,6 @@ export default function Orders() {
               </span>
             )}
           </div>
-
-          <p className="text-[13px] text-stone mt-1">
-            Track customer orders and manage fulfillment status.
-          </p>
         </div>
 
         <button
@@ -175,66 +195,58 @@ export default function Orders() {
         </button>
       </div>
 
-      {/* Statistics */}
-      {loading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 print:hidden">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <StatSkeleton key={index} />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 print:hidden">
-          <StatCard
-            icon={ShoppingBag}
-            label="Total Orders"
-            value={stats.total}
-          />
+      <div className="  rounded-xl  mb-5 print:hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+          {/* Search */}
+          <div className="relative flex-1 lg:max-w-xs">
+            <Search
+              size={16}
+              strokeWidth={1.75}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-stone"
+            />
 
-          <StatCard
-            icon={Clock3}
-            label="Pending"
-            value={stats.pending}
-            valueClass={stats.pending > 0 ? "text-clay" : "text-ink"}
-          />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search order #, customer..."
+              className="w-full pl-9 pr-9 py-2 rounded-lg border border-hairline bg-paper text-[13px] text-ink placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-moss/20 focus:border-moss transition-colors"
+            />
 
-          <StatCard
-            icon={Package}
-            label="Processing"
-            value={stats.processing}
-          />
+            {search && (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-stone hover:text-ink"
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
 
-          <StatCard
-            icon={CheckCircle2}
-            label="Completed"
-            value={stats.completed}
-            valueClass="text-moss"
-          />
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className="bg-surface border border-hairline rounded-xl p-3 mb-5 overflow-x-auto print:hidden">
-        <div className="flex items-center gap-2 min-w-max">
-          <FilterPill
-            label="All"
-            active={filter === ""}
-            onClick={() => {
-              setExpanded(null);
-              setFilter("");
-            }}
-          />
-
-          {STATUSES.map((status) => (
+          {/* Filter Pills */}
+          <div className=" bg-surface  border border-hairline rounded-xl flex items-center gap-2 overflow-x-auto lg:ml-auto">
             <FilterPill
-              key={status}
-              label={status}
-              active={filter === status}
+              label="All"
+              active={filter === ""}
               onClick={() => {
                 setExpanded(null);
-                setFilter(status);
+                setFilter("");
               }}
             />
-          ))}
+
+            {STATUSES.map((status) => (
+              <FilterPill
+                key={status}
+                label={status}
+                active={filter === status}
+                onClick={() => {
+                  setExpanded(null);
+                  setFilter(status);
+                }}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -273,6 +285,8 @@ export default function Orders() {
         </div>
       ) : orders.length === 0 ? (
         <EmptyState filter={filter} onClear={() => setFilter("")} />
+      ) : filteredOrders.length === 0 ? (
+        <SearchEmptyState search={search} onClear={clearSearch} />
       ) : (
         <div className="bg-surface border border-hairline rounded-xl overflow-hidden print:hidden">
           <div className="overflow-x-auto">
@@ -288,7 +302,7 @@ export default function Orders() {
               </thead>
 
               <tbody>
-                {orders.map((order) => {
+                {filteredOrders.map((order) => {
                   const StatusIcon = statusIcons[order.status] || Clock3;
 
                   return (
@@ -550,21 +564,6 @@ function OrderRow({
   );
 }
 
-function StatCard({ icon: Icon, label, value, valueClass = "text-ink" }) {
-  return (
-    <div className="bg-surface border border-hairline rounded-xl p-5">
-      <div className="w-9 h-9 rounded-lg bg-moss-tint flex items-center justify-center mb-4">
-        <Icon size={17} className="text-moss" strokeWidth={1.75} />
-      </div>
-
-      <p className={`font-mono text-[24px] leading-none mb-1.5 ${valueClass}`}>
-        {value}
-      </p>
-
-      <p className="text-[12.5px] text-stone">{label}</p>
-    </div>
-  );
-}
 
 function TableHead({ children }) {
   return (
@@ -581,7 +580,7 @@ function FilterPill({ label, active, onClick }) {
       onClick={onClick}
       className={`px-3.5 py-2 rounded-lg text-[12px] font-medium capitalize transition-all whitespace-nowrap ${
         active
-          ? "bg-ink text-white shadow-[0_2px_4px_rgba(33,31,27,0.1)]"
+          ? "bg-moss text-white shadow-[0_2px_4px_rgba(33,31,27,0.1)]"
           : "text-stone hover:bg-paper hover:text-ink"
       }`}
     >
@@ -614,6 +613,31 @@ function EmptyState({ filter, onClear }) {
           Show all orders
         </button>
       )}
+    </div>
+  );
+}
+
+function SearchEmptyState({ search, onClear }) {
+  return (
+    <div className="bg-surface border border-dashed border-hairline rounded-xl py-16 px-6 flex flex-col items-center text-center print:hidden">
+      <div className="w-12 h-12 rounded-full bg-paper flex items-center justify-center mb-4">
+        <Search size={20} className="text-stone" strokeWidth={1.75} />
+      </div>
+
+      <p className="text-[14px] font-medium text-ink mb-1">No orders found</p>
+
+      <p className="text-[13px] text-stone mb-5">
+        No results found for{" "}
+        <span className="font-medium text-ink">"{search}"</span>
+      </p>
+
+      <button
+        type="button"
+        onClick={onClear}
+        className="text-[13px] font-medium text-moss hover:text-moss-deep transition-colors"
+      >
+        Clear search
+      </button>
     </div>
   );
 }

@@ -1,23 +1,24 @@
 import { useContext, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   Plus,
-  Pencil,
-  Trash2,
   Package,
-  ImageOff,
   Search,
   RefreshCw,
   X,
   Filter,
   Boxes,
   AlertTriangle,
+  Download,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import api from "../../api/axios";
 import { CardSkeleton, StatSkeleton } from "../../components/Skeleton";
 import { ToastContext } from "../../context/ToastContext";
 import { ConfirmContext } from "../../context/ConfirmContext";
+import ProductCard from "../../components/admin/ProductCard";
+import ProductFormModal from "../../components/admin/ProductFormModal";
 
 const STOCK_FILTERS = [
   { key: "all", label: "All Stock" },
@@ -25,6 +26,8 @@ const STOCK_FILTERS = [
   { key: "low-stock", label: "Low Stock" },
   { key: "out-of-stock", label: "Out of Stock" },
 ];
+
+const PRODUCTS_PER_PAGE = 12;
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -35,9 +38,16 @@ export default function Products() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { showToast } = useContext(ToastContext);
   const { confirm } = useContext(ConfirmContext);
+
+  const [modalState, setModalState] = useState(null);
+  const openCreateModal = () => setModalState({ productId: null });
+  const openEditModal = (id) => setModalState({ productId: id });
+  const closeModal = () => setModalState(null);
 
   const loadProducts = async (showRefreshState = false) => {
     try {
@@ -67,7 +77,11 @@ export default function Products() {
     loadProducts();
   }, []);
 
-  // Get unique categories from products
+  const handleModalSuccess = () => {
+    loadProducts(true);
+  };
+
+  // Get unique categories
   const categories = useMemo(() => {
     const uniqueCategories = new Map();
 
@@ -77,7 +91,9 @@ export default function Products() {
       }
     });
 
-    return Array.from(uniqueCategories.values());
+    return Array.from(uniqueCategories.values()).sort((a, b) =>
+      (a.name || "").localeCompare(b.name || ""),
+    );
   }, [products]);
 
   // Filter products
@@ -102,9 +118,13 @@ export default function Products() {
 
       if (stockFilter === "in-stock") {
         matchesStock = stock > 5;
-      } else if (stockFilter === "low-stock") {
+      }
+
+      if (stockFilter === "low-stock") {
         matchesStock = stock > 0 && stock <= 5;
-      } else if (stockFilter === "out-of-stock") {
+      }
+
+      if (stockFilter === "out-of-stock") {
         matchesStock = stock === 0;
       }
 
@@ -112,6 +132,76 @@ export default function Products() {
     });
   }, [products, search, categoryFilter, stockFilter]);
 
+  // Sort products
+  const sortedProducts = useMemo(() => {
+    const sorted = [...filteredProducts];
+
+    switch (sortBy) {
+      case "name-asc":
+        return sorted.sort((a, b) =>
+          (a.name || "").localeCompare(b.name || ""),
+        );
+
+      case "name-desc":
+        return sorted.sort((a, b) =>
+          (b.name || "").localeCompare(a.name || ""),
+        );
+
+      case "price-low":
+        return sorted.sort(
+          (a, b) => Number(a.price || 0) - Number(b.price || 0),
+        );
+
+      case "price-high":
+        return sorted.sort(
+          (a, b) => Number(b.price || 0) - Number(a.price || 0),
+        );
+
+      case "stock-low":
+        return sorted.sort(
+          (a, b) => Number(a.stock || 0) - Number(b.stock || 0),
+        );
+
+      case "stock-high":
+        return sorted.sort(
+          (a, b) => Number(b.stock || 0) - Number(a.stock || 0),
+        );
+
+      case "newest":
+      default:
+        return sorted.sort((a, b) => {
+          const dateA = new Date(a.created_at || 0).getTime();
+          const dateB = new Date(b.created_at || 0).getTime();
+
+          return dateB - dateA;
+        });
+    }
+  }, [filteredProducts, sortBy]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, categoryFilter, stockFilter, sortBy]);
+
+  // Pagination
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedProducts.length / PRODUCTS_PER_PAGE),
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+
+    return sortedProducts.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
+  }, [sortedProducts, currentPage]);
+
+  // Delete product
   const handleDelete = async (product) => {
     const confirmed = await confirm(
       `Delete "${product.name}"? This action cannot be undone.`,
@@ -141,57 +231,141 @@ export default function Products() {
     }
   };
 
+  // Clear filters
   const clearFilters = () => {
     setSearch("");
     setCategoryFilter("all");
     setStockFilter("all");
+    setSortBy("newest");
+    setCurrentPage(1);
+  };
+
+  // Export CSV
+  const exportProducts = () => {
+    if (sortedProducts.length === 0) {
+      showToast("No products available to export", "error");
+      return;
+    }
+
+    const escapeCsv = (value) => {
+      const text = String(value ?? "");
+
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+
+    const headers = [
+      "ID",
+      "Name",
+      "Category",
+      "Price",
+      "Stock",
+      "Status",
+      "Created At",
+    ];
+
+    const rows = sortedProducts.map((product) => {
+      const stock = Number(product.stock || 0);
+
+      const status =
+        stock === 0 ? "Out of Stock" : stock <= 5 ? "Low Stock" : "In Stock";
+
+      return [
+        product.id,
+        escapeCsv(product.name),
+        escapeCsv(product.category?.name || "Uncategorized"),
+        Number(product.price || 0).toFixed(2),
+        stock,
+        status,
+        product.created_at || "",
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.join(",")),
+    ].join("\n");
+
+    const blob = new Blob(["\uFEFF" + csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "products.csv";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+    showToast("Products exported successfully");
   };
 
   // Statistics
-  const totalStock = products.reduce(
-    (sum, product) => sum + Number(product.stock || 0),
-    0,
+  const totalStock = useMemo(
+    () =>
+      products.reduce((sum, product) => sum + Number(product.stock || 0), 0),
+    [products],
   );
 
-  const lowStockCount = products.filter((product) => {
-    const stock = Number(product.stock || 0);
-    return stock > 0 && stock <= 5;
-  }).length;
+  const lowStockCount = useMemo(
+    () =>
+      products.filter((product) => {
+        const stock = Number(product.stock || 0);
 
-  const outOfStockCount = products.filter(
-    (product) => Number(product.stock || 0) === 0,
-  ).length;
+        return stock > 0 && stock <= 5;
+      }).length,
+    [products],
+  );
 
-  const totalValue = products.reduce(
-    (sum, product) =>
-      sum + Number(product.price || 0) * Number(product.stock || 0),
-    0,
+  const outOfStockCount = useMemo(
+    () => products.filter((product) => Number(product.stock || 0) === 0).length,
+    [products],
+  );
+
+  const totalValue = useMemo(
+    () =>
+      products.reduce(
+        (sum, product) =>
+          sum + Number(product.price || 0) * Number(product.stock || 0),
+        0,
+      ),
+    [products],
+  );
+
+  const hasActiveFilters =
+    search ||
+    categoryFilter !== "all" ||
+    stockFilter !== "all" ||
+    sortBy !== "newest";
+
+  const startProduct =
+    sortedProducts.length === 0 ? 0 : (currentPage - 1) * PRODUCTS_PER_PAGE + 1;
+
+  const endProduct = Math.min(
+    currentPage * PRODUCTS_PER_PAGE,
+    sortedProducts.length,
   );
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+    <div className="mx-auto max-w-7xl">
+      {/* ================= HEADER ================= */}
+      <div className="mb-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-stone mb-1">
-            Catalog Management
-          </p>
-
           <div className="flex items-center gap-3">
             <h1 className="font-display text-[28px] font-medium text-ink">
               Products
             </h1>
 
             {!loading && (
-              <span className="px-2 py-0.5 rounded-md bg-moss-tint text-moss text-[11px] font-medium">
+              <span className="rounded-md bg-moss-tint px-2 py-0.5 text-[11px] font-medium text-moss">
                 {products.length}
               </span>
             )}
           </div>
-
-          <p className="text-[13px] text-stone mt-1">
-            Manage your products, pricing, inventory, and categories.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -199,8 +373,9 @@ export default function Products() {
             type="button"
             onClick={() => loadProducts(true)}
             disabled={refreshing || loading}
-            className="w-10 h-10 rounded-lg border border-hairline bg-surface flex items-center justify-center text-stone hover:text-ink hover:bg-paper transition-colors disabled:opacity-50"
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-hairline bg-surface text-stone transition-colors hover:bg-paper hover:text-ink disabled:opacity-50"
             title="Refresh products"
+            aria-label="Refresh products"
           >
             <RefreshCw
               size={16}
@@ -209,40 +384,38 @@ export default function Products() {
             />
           </button>
 
-          <Link
-            to="/admin/products/new"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-moss text-white text-[13.5px] font-medium hover:bg-moss-deep active:scale-[0.98] transition-all"
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="flex items-center gap-2 rounded-lg bg-moss px-4 py-2.5 text-[13.5px] font-medium text-white transition-all hover:bg-moss-deep active:scale-[0.98]"
           >
             <Plus size={16} strokeWidth={2} />
             New Product
-          </Link>
+          </button>
         </div>
       </div>
 
-      {/* Statistics */}
+      {/* ================= STATISTICS ================= */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
             <StatSkeleton key={index} />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {/* Total Products */}
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             icon={Package}
             label="Total Products"
             value={products.length}
           />
 
-          {/* Units in Stock */}
           <StatCard
             icon={Boxes}
             label="Units in Stock"
             value={totalStock.toLocaleString()}
           />
 
-          {/* Low Stock */}
           <StatCard
             icon={AlertTriangle}
             label="Low Stock"
@@ -250,7 +423,6 @@ export default function Products() {
             valueClass={lowStockCount > 0 ? "text-clay" : "text-ink"}
           />
 
-          {/* Inventory Value */}
           <StatCard
             icon={Package}
             label="Inventory Value"
@@ -262,23 +434,23 @@ export default function Products() {
         </div>
       )}
 
-      {/* Search and Filters */}
+      {/* ================= SEARCH AND FILTERS ================= */}
       {!loading && products.length > 0 && (
-        <div className="bg-surface border border-hairline rounded-xl p-4 mb-5">
-          <div className="flex flex-col lg:flex-row gap-3">
+        <div className="mb-5 ">
+          <div className="flex flex-col gap-3 xl:flex-row">
             {/* Search */}
             <div className="relative flex-1">
               <Search
                 size={16}
                 strokeWidth={1.75}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone "
               />
 
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search products or categories..."
-                className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-hairline bg-paper text-[13.5px] text-ink placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-moss/20 focus:border-moss transition-colors"
+                className="w-full rounded-lg border border-hairline bg-surface py-2.5 pl-10 pr-10 text-[13.5px] text-ink placeholder:text-stone/50 transition-colors focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/20"
               />
 
               {search && (
@@ -297,7 +469,7 @@ export default function Products() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="min-w-45 px-3 py-2.5 rounded-lg border border-hairline bg-paper text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-moss/20 focus:border-moss"
+              className="min-w-[180px] rounded-lg border border-hairline bg-surface px-3 py-2.5 text-[13px] text-ink focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/20"
             >
               <option value="all">All Categories</option>
 
@@ -312,7 +484,7 @@ export default function Products() {
             <select
               value={stockFilter}
               onChange={(e) => setStockFilter(e.target.value)}
-              className="min-w-40 px-3 py-2.5 rounded-lg border border-hairline bg-paper text-[13px] text-ink focus:outline-none focus:ring-2 focus:ring-moss/20 focus:border-moss"
+              className="min-w-[160px] rounded-lg border border-hairline bg-surface px-3 py-2.5 text-[13px] text-ink focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/20"
             >
               {STOCK_FILTERS.map((filter) => (
                 <option key={filter.key} value={filter.key}>
@@ -321,71 +493,164 @@ export default function Products() {
               ))}
             </select>
 
-            {/* Clear Filters */}
-            {(search || categoryFilter !== "all" || stockFilter !== "all") && (
+            {/* Sort */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="min-w-[175px] rounded-lg border border-hairline bg-surface px-3 py-2.5 text-[13px] text-ink focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/20"
+            >
+              <option value="newest">Newest First</option>
+              <option value="name-asc">Name: A–Z</option>
+              <option value="name-desc">Name: Z–A</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="stock-low">Stock: Low to High</option>
+              <option value="stock-high">Stock: High to Low</option>
+            </select>
+
+            {/* Export */}
+            <button
+              type="button"
+              onClick={exportProducts}
+              className="flex items-center justify-center gap-2 rounded-lg border border-hairline bg-surface px-3.5 py-2.5 text-[13px] font-medium text-ink transition-colors hover:bg-paper"
+            >
+              <Download size={15} />
+              Export
+            </button>
+
+            {/* Clear */}
+            {hasActiveFilters && (
               <button
                 type="button"
                 onClick={clearFilters}
-                className="px-3 py-2.5 rounded-lg text-[13px] font-medium text-stone hover:text-ink hover:bg-paper transition-colors"
+                className="rounded-lg px-3 py-2.5 text-[13px] font-medium text-stone transition-colors hover:bg-paper hover:text-ink"
               >
                 Clear
               </button>
             )}
           </div>
 
-          <div className="flex items-center justify-between mt-3">
+          {/* Filter Result */}
+          <div className="mt-3 flex flex-col gap-2 border-t border-hairline pt-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[12px] text-stone">
               Showing{" "}
               <span className="font-medium text-ink">
-                {filteredProducts.length}
+                {sortedProducts.length}
               </span>{" "}
               of {products.length} products
             </p>
 
-            {outOfStockCount > 0 && (
-              <span className="text-[11px] font-medium text-clay">
-                {outOfStockCount} out of stock
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {lowStockCount > 0 && (
+                <span className="text-[11px] font-medium text-clay">
+                  {lowStockCount} low stock
+                </span>
+              )}
+
+              {outOfStockCount > 0 && (
+                <span className="text-[11px] font-medium text-clay">
+                  {outOfStockCount} out of stock
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Product Content */}
+      {/* ================= PRODUCT CONTENT ================= */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, index) => (
             <CardSkeleton key={index} />
           ))}
         </div>
       ) : products.length === 0 ? (
-        <EmptyState />
-      ) : filteredProducts.length === 0 ? (
+        <EmptyState onCreate={openCreateModal} />
+      ) : sortedProducts.length === 0 ? (
         <SearchEmptyState onClear={clearFilters} />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filteredProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              isDeleting={deletingId === product.id}
-              onDelete={() => handleDelete(product)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {paginatedProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                isDeleting={deletingId === product.id}
+                onEdit={() => openEditModal(product.id)}
+                onDelete={() => handleDelete(product)}
+              />
+            ))}
+          </div>
+
+          {/* ================= PAGINATION ================= */}
+          {sortedProducts.length > PRODUCTS_PER_PAGE && (
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[12px] text-stone">
+                Showing{" "}
+                <span className="font-medium text-ink">
+                  {startProduct}–{endProduct}
+                </span>{" "}
+                of {sortedProducts.length} products
+              </p>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((page) => Math.max(1, page - 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline bg-surface text-stone transition-colors hover:bg-paper hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                <span className="px-2 text-[12px] text-stone">
+                  Page{" "}
+                  <span className="font-medium text-ink">{currentPage}</span> of{" "}
+                  {totalPages}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((page) => Math.min(totalPages, page + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline bg-surface text-stone transition-colors hover:bg-paper hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label="Next page"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ================= PRODUCT FORM MODAL ================= */}
+      {modalState && (
+        <ProductFormModal
+          productId={modalState.productId}
+          onClose={closeModal}
+          onSuccess={handleModalSuccess}
+        />
       )}
     </div>
   );
 }
 
+/* ================= STAT CARD ================= */
+
 function StatCard({ icon: Icon, label, value, valueClass = "text-ink" }) {
   return (
-    <div className="bg-surface border border-hairline rounded-xl p-5">
-      <div className="w-9 h-9 rounded-lg bg-moss-tint flex items-center justify-center mb-4">
+    <div className="rounded-xl border border-hairline bg-surface p-5">
+      <div className="mb-4 flex h-9 w-9 items-center justify-center rounded-lg bg-moss-tint">
         <Icon size={17} className="text-moss" strokeWidth={1.75} />
       </div>
 
-      <p className={`font-mono text-[22px] leading-none mb-1.5 ${valueClass}`}>
+      <p className={`mb-1.5 font-mono text-[22px] leading-none ${valueClass}`}>
         {value}
       </p>
 
@@ -394,161 +659,48 @@ function StatCard({ icon: Icon, label, value, valueClass = "text-ink" }) {
   );
 }
 
-function ProductCard({ product, isDeleting, onDelete }) {
-  const stock = Number(product.stock || 0);
-
-  const isOutOfStock = stock === 0;
-  const isLowStock = stock > 0 && stock <= 5;
-
-  const stockLabel = isOutOfStock
-    ? "Out of Stock"
-    : isLowStock
-      ? "Low Stock"
-      : null;
-
+function EmptyState({ onCreate }) {
   return (
-    <div
-      className={`group bg-surface border border-hairline rounded-xl overflow-hidden transition-all hover:border-moss/30 hover:shadow-[0_6px_20px_rgba(33,31,27,0.06)] ${
-        isDeleting ? "opacity-50 pointer-events-none" : ""
-      }`}
-    >
-      {/* Product Image */}
-      <div className="aspect-square bg-paper relative overflow-hidden">
-        {product.images?.[0]?.url ? (
-          <img
-            src={product.images[0].url}
-            alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center">
-            <ImageOff
-              size={26}
-              className="text-hairline mb-2"
-              strokeWidth={1.5}
-            />
-
-            <span className="text-[11px] text-stone">No image</span>
-          </div>
-        )}
-
-        {/* Stock Badge */}
-        {stockLabel && (
-          <span
-            className={`absolute top-2.5 left-2.5 text-[9.5px] font-medium uppercase tracking-wide px-2 py-1 rounded-md ${
-              isOutOfStock ? "bg-ink text-white" : "bg-clay text-white"
-            }`}
-          >
-            {stockLabel}
-          </span>
-        )}
-
-        {/* Actions */}
-        <div className="absolute top-2.5 right-2.5 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-          <Link
-            to={`/admin/products/${product.id}/edit`}
-            className="w-8 h-8 rounded-lg bg-surface/95 backdrop-blur border border-hairline flex items-center justify-center text-stone hover:text-ink hover:bg-surface transition-colors"
-            title="Edit product"
-            aria-label={`Edit ${product.name}`}
-          >
-            <Pencil size={14} strokeWidth={1.75} />
-          </Link>
-
-          <button
-            type="button"
-            onClick={onDelete}
-            disabled={isDeleting}
-            className="w-8 h-8 rounded-lg bg-surface/95 backdrop-blur border border-hairline flex items-center justify-center text-stone hover:text-clay hover:bg-clay-tint transition-colors"
-            title="Delete product"
-            aria-label={`Delete ${product.name}`}
-          >
-            {isDeleting ? (
-              <span className="w-4 h-4 border-2 border-stone border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Trash2 size={14} strokeWidth={1.75} />
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Product Details */}
-      <div className="p-4">
-        <p className="text-[10.5px] font-medium uppercase tracking-[0.08em] text-stone mb-1">
-          {product.category?.name || "Uncategorized"}
-        </p>
-
-        <h3
-          className="text-[14px] font-medium text-ink mb-3 truncate"
-          title={product.name}
-        >
-          {product.name}
-        </h3>
-
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <p className="text-[10px] text-stone mb-0.5">Price</p>
-            <p className="font-mono text-[15px] text-ink">
-              ${Number(product.price || 0).toFixed(2)}
-            </p>
-          </div>
-
-          <div className="text-right">
-            <p className="text-[10px] text-stone mb-0.5">Stock</p>
-            <p
-              className={`font-mono text-[13px] ${
-                isOutOfStock || isLowStock ? "text-clay" : "text-ink"
-              }`}
-            >
-              {stock} units
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="bg-surface border border-dashed border-hairline rounded-xl py-20 px-6 flex flex-col items-center text-center">
-      <div className="w-14 h-14 rounded-2xl bg-moss-tint flex items-center justify-center mb-4">
+    <div className="flex flex-col items-center rounded-xl border border-dashed border-hairline bg-surface px-6 py-20 text-center">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-moss-tint">
         <Package size={22} className="text-moss" strokeWidth={1.75} />
       </div>
 
-      <p className="text-[15px] font-medium text-ink mb-1">No products yet</p>
+      <p className="mb-1 text-[15px] font-medium text-ink">No products yet</p>
 
-      <p className="max-w-sm text-[13px] leading-6 text-stone mb-5">
+      <p className="mb-5 max-w-sm text-[13px] leading-6 text-stone">
         Add your first product to start building your product catalog.
       </p>
 
-      <Link
-        to="/admin/products/new"
-        className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-moss text-white text-[13.5px] font-medium hover:bg-moss-deep transition-colors"
+      <button
+        type="button"
+        onClick={onCreate}
+        className="flex items-center gap-2 rounded-lg bg-moss px-4 py-2.5 text-[13.5px] font-medium text-white transition-colors hover:bg-moss-deep"
       >
         <Plus size={16} strokeWidth={2} />
         New Product
-      </Link>
+      </button>
     </div>
   );
 }
 
 function SearchEmptyState({ onClear }) {
   return (
-    <div className="bg-surface border border-dashed border-hairline rounded-xl py-16 px-6 flex flex-col items-center text-center">
-      <div className="w-12 h-12 rounded-full bg-paper flex items-center justify-center mb-4">
+    <div className="flex flex-col items-center rounded-xl border border-dashed border-hairline bg-surface px-6 py-16 text-center">
+      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-paper">
         <Filter size={20} className="text-stone" strokeWidth={1.75} />
       </div>
 
-      <p className="text-[14px] font-medium text-ink mb-1">No products found</p>
+      <p className="mb-1 text-[14px] font-medium text-ink">No products found</p>
 
-      <p className="text-[13px] text-stone mb-5">
+      <p className="mb-5 text-[13px] text-stone">
         Try changing your search or filter options.
       </p>
 
       <button
         type="button"
         onClick={onClear}
-        className="text-[13px] font-medium text-moss hover:text-moss-deep transition-colors"
+        className="text-[13px] font-medium text-moss transition-colors hover:text-moss-deep"
       >
         Clear all filters
       </button>

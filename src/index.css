@@ -1,16 +1,26 @@
 @import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap");
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
+  /* Surfaces */
   --color-paper: #faf8f4;
   --color-surface: #ffffff;
   --color-hairline: #e4e0d8;
+
+  /* Text */
   --color-ink: #211f1b;
   --color-stone: #8a8579;
+
+  /* Brand — moss (primary) */
   --color-moss: #3f5843;
   --color-moss-deep: #2c4030;
   --color-moss-tint: #eef2ed;
+
+  /* Accent — clay (warnings / destructive / highlights) */
   --color-clay: #a3492a;
+  --color-clay-deep: #7a3520;
   --color-clay-tint: #fbeee9;
 
   --font-display: "Fraunces", serif;
@@ -38,4 +48,25 @@ body {
     top: 0;
     width: 100%;
   }
+}
+
+.dark {
+  /* Surfaces — slightly lifted layers instead of pure black, keeps depth */
+  --color-paper: #0c0c0e;
+  --color-surface: #17171a;
+  --color-hairline: #2a2a2e;
+
+  /* Text */
+  --color-ink: #f2f1ee;
+  --color-stone: #94908a;
+
+  /* Brand — moss lightened for contrast, deep variant darkened further */
+  --color-moss: #6b9271;
+  --color-moss-deep: #4b6b53;
+  --color-moss-tint: #1a251c;
+
+  /* Accent — clay lightened for contrast, deep variant kept rich */
+  --color-clay: #e2896a;
+  --color-clay-deep: #b8583a;
+  --color-clay-tint: #2e1c16;
 }

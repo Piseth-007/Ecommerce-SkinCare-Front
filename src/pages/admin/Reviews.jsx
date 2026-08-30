@@ -142,7 +142,7 @@ export default function Reviews() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-2">
         <div>
           <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-stone mb-1">
             Moderation
@@ -159,10 +159,6 @@ export default function Reviews() {
               </span>
             )}
           </div>
-
-          <p className="text-[13px] text-stone mt-1">
-            Monitor and manage customer product reviews.
-          </p>
         </div>
 
         <button

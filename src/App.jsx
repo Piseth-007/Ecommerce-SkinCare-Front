@@ -9,12 +9,13 @@ import Navbar from "./components/storefront/Navbar";
 import Home from "./pages/shop/Home";
 import ProductList from "./pages/shop/ProductList";
 import ProductDetail from "./pages/shop/ProductDetail";
+import Category from "./pages/shop/Category";
 import Cart from "./pages/shop/Cart";
 import Checkout from "./pages/shop/Checkout";
 import OrderHistory from "./pages/shop/OrderHistory";
 import RequireAuth from "./components/RequireAuth";
 
-// Auth (shared entry points)
+// Auth (
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import AdminLogin from "./pages/auth/AdminLogin";
@@ -26,12 +27,16 @@ import AdminLayout from "./components/admin/AdminLayout";
 import AdminRoute from "./components/admin/AdminRoute";
 import Dashboard from "./pages/admin/Dashboard";
 import Products from "./pages/admin/Products";
-import ProductForm from "./pages/admin/ProductForm";
+
 import Categories from "./pages/admin/Categories";
 import Brands from "./pages/admin/Brands";
 import Orders from "./pages/admin/Orders";
 import Reviews from "./pages/admin/Reviews";
 import Footer from "./components/storefront/Footer";
+import Stock from "./pages/admin/Stock";
+import Brand from "./pages/shop/Brands";
+import About from "./pages/shop/About";
+import Contact from "./pages/shop/Contact";
 
 function StorefrontLayout({ children }) {
   return (
@@ -69,6 +74,22 @@ function App() {
                   }
                 />
                 <Route
+                  path="/categories"
+                  element={
+                    <StorefrontLayout>
+                      <Category />
+                    </StorefrontLayout>
+                  }
+                />
+                <Route
+                  path="/brands"
+                  element={
+                    <StorefrontLayout>
+                      <Brand />
+                    </StorefrontLayout>
+                  }
+                />
+                <Route
                   path="/products/:id"
                   element={
                     <StorefrontLayout>
@@ -81,6 +102,22 @@ function App() {
                   element={
                     <StorefrontLayout>
                       <Cart />
+                    </StorefrontLayout>
+                  }
+                />
+                <Route
+                  path="/about"
+                  element={
+                    <StorefrontLayout>
+                      <About />
+                    </StorefrontLayout>
+                  }
+                />
+                <Route
+                  path="/contact"
+                  element={
+                    <StorefrontLayout>
+                      <Contact />
                     </StorefrontLayout>
                   }
                 />
@@ -152,11 +189,7 @@ function App() {
                 >
                   <Route path="/admin/dashboard" element={<Dashboard />} />
                   <Route path="/admin/products" element={<Products />} />
-                  <Route path="/admin/products/new" element={<ProductForm />} />
-                  <Route
-                    path="/admin/products/:id/edit"
-                    element={<ProductForm />}
-                  />
+                  <Route path="/admin/stock" element={<Stock />} />
                   <Route path="/admin/categories" element={<Categories />} />
                   <Route path="/admin/brands" element={<Brands />} />
                   <Route path="/admin/orders" element={<Orders />} />

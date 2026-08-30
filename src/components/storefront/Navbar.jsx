@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ShoppingBag,
@@ -13,9 +13,14 @@ import {
   Award,
   Info,
   Mail,
+  Sun,
+  Moon,
+  ChevronDown,
+  ArrowRight,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/useCard";
+import api from "../../api/axios";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -25,6 +30,30 @@ export default function Navbar() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [darkMode, setDarkMode] = useState(false);
+
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [openMenu, setOpenMenu] = useState(null); // "categories" | "brands" | null
+  const closeTimer = useRef(null);
+
+  useEffect(() => {
+    api
+      .get("/categories")
+      .then((res) => setCategories(res.data?.data || res.data || []));
+
+    api
+      .get("/brands")
+      .then((res) => setBrands(res.data?.data || res.data || []));
+  }, []);
+
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => {
+      const next = !prev;
+      document.documentElement.classList.toggle("dark", next);
+      return next;
+    });
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -44,8 +73,32 @@ export default function Navbar() {
     setSearchTerm("");
   };
 
+  // Small delay before closing so moving from trigger -> panel doesn't flicker-close
+  const openDropdown = (key) => {
+    clearTimeout(closeTimer.current);
+    setOpenMenu(key);
+  };
+
+  const scheduleClose = () => {
+    clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setOpenMenu(null), 150);
+  };
+
   return (
     <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur border-b border-hairline">
+      <style>{`
+        @keyframes navdrop-in {
+          from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .navdrop-in {
+          animation: navdrop-in .18s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .navdrop-in { animation: none !important; }
+        }
+      `}</style>
+
       <div className="max-w-6xl mx-auto px-6 h-16 grid grid-cols-[auto_1fr_auto] items-center gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0">
@@ -60,12 +113,76 @@ export default function Navbar() {
           <Link to="/products" className="hover:text-ink transition-colors">
             Shop all
           </Link>
-          <Link to="/categories" className="hover:text-ink transition-colors">
-            Categories
-          </Link>
-          <Link to="/brands" className="hover:text-ink transition-colors">
-            Brands
-          </Link>
+
+          {/* Categories dropdown trigger */}
+          <div
+            className="relative"
+            onMouseEnter={() => openDropdown("categories")}
+            onMouseLeave={scheduleClose}
+          >
+            <Link
+              to="/categories"
+              className={`flex items-center gap-1 transition-colors ${
+                openMenu === "categories" ? "text-ink" : "hover:text-ink"
+              }`}
+            >
+              Categories
+              <ChevronDown
+                size={13}
+                strokeWidth={2}
+                className={`transition-transform duration-200 ${
+                  openMenu === "categories" ? "rotate-180" : ""
+                }`}
+              />
+            </Link>
+
+            {openMenu === "categories" && (
+              <NavDropdown
+                items={categories}
+                emptyLabel="No categories yet"
+                buildHref={(item) => `/products?category_id=${item.id}`}
+                viewAllHref="/categories"
+                viewAllLabel="View all categories"
+                onNavigate={() => setOpenMenu(null)}
+              />
+            )}
+          </div>
+
+          {/* Brands dropdown trigger */}
+          <div
+            className="relative"
+            onMouseEnter={() => openDropdown("brands")}
+            onMouseLeave={scheduleClose}
+          >
+            <Link
+              to="/brands"
+              className={`flex items-center gap-1 transition-colors ${
+                openMenu === "brands" ? "text-ink" : "hover:text-ink"
+              }`}
+            >
+              Brands
+              <ChevronDown
+                size={13}
+                strokeWidth={2}
+                className={`transition-transform duration-200 ${
+                  openMenu === "brands" ? "rotate-180" : ""
+                }`}
+              />
+            </Link>
+
+            {openMenu === "brands" && (
+              <NavDropdown
+                items={brands}
+                emptyLabel="No brands yet"
+                buildHref={(item) => `/products?brand_id=${item.id}`}
+                viewAllHref="/brands"
+                viewAllLabel="View all brands"
+                onNavigate={() => setOpenMenu(null)}
+                showLogo
+              />
+            )}
+          </div>
+
           <Link
             to="/products?sort=rating"
             className="hover:text-ink transition-colors"
@@ -81,7 +198,20 @@ export default function Navbar() {
         </nav>
 
         {/* Icons */}
+
         <div className="flex items-center gap-1 justify-self-end">
+          <button
+            type="button"
+            onClick={toggleDarkMode}
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline text-stone transition-colors hover:bg-paper hover:text-ink"
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? (
+              <Sun size={17} strokeWidth={1.75} />
+            ) : (
+              <Moon size={17} strokeWidth={1.75} />
+            )}
+          </button>
           {/* Search */}
           <div className="relative">
             <button
@@ -255,5 +385,68 @@ export default function Navbar() {
         </nav>
       )}
     </header>
+  );
+}
+
+function NavDropdown({
+  items,
+  emptyLabel,
+  buildHref,
+  viewAllHref,
+  viewAllLabel,
+  onNavigate,
+  showLogo = false,
+}) {
+  return (
+    <div
+      className="navdrop-in absolute left-1/2 top-full z-30 mt-2 w-64 -translate-x-1/2 rounded-xl border border-hairline bg-surface shadow-[0_16px_40px_rgba(33,31,27,0.12)]"
+      style={{ transformOrigin: "top center" }}
+    >
+      <div className="max-h-80 overflow-y-auto p-1.5">
+        {items.length === 0 ? (
+          <p className="px-3 py-4 text-center text-[12.5px] text-stone">
+            {emptyLabel}
+          </p>
+        ) : (
+          items.map((item) => (
+            <Link
+              key={item.id}
+              to={buildHref(item)}
+              onClick={onNavigate}
+              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium capitalize text-ink transition-colors hover:bg-paper hover:text-moss"
+            >
+              {showLogo && (
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-paper">
+                  {item.logo_url ? (
+                    <img
+                      src={item.logo_url}
+                      alt=""
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <span className="text-[10px] font-semibold text-moss">
+                      {item.name?.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </span>
+              )}
+
+              <span className="truncate">{item.name}</span>
+            </Link>
+          ))
+        )}
+      </div>
+
+      {items.length > 0 && (
+        <Link
+          to={viewAllHref}
+          onClick={onNavigate}
+          className="flex items-center justify-between gap-2 rounded-b-xl border-t border-hairline bg-paper/50 px-3.5 py-2.5 text-[12px] font-medium text-moss transition-colors hover:bg-moss-tint"
+        >
+          {viewAllLabel}
+          <ArrowRight size={13} strokeWidth={2} />
+        </Link>
+      )}
+    </div>
   );
 }

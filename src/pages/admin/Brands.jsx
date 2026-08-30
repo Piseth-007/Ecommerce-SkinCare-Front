@@ -3,26 +3,24 @@ import {
   Plus,
   Pencil,
   Trash2,
-  X,
   Upload,
   Award,
   Search,
   RefreshCw,
-  ImageOff,
-  Check,
+  X,
 } from "lucide-react";
 
 import api from "../../api/axios";
-import { RowSkeleton, StatSkeleton } from "../../components/Skeleton";
+import { RowSkeleton } from "../../components/Skeleton";
 import { ToastContext } from "../../context/ToastContext";
+import BrandFormModal from "../../components/admin/BrandFormModal";
 
 export default function Brands() {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [editing, setEditing] = useState(null);
-  const [name, setName] = useState("");
+  const [editing, setEditing] = useState(null); // null | "new" | brand object
   const [saving, setSaving] = useState(false);
 
   const [search, setSearch] = useState("");
@@ -69,32 +67,16 @@ export default function Brands() {
     );
   }, [brands, search]);
 
-  const brandsWithLogo = brands.filter((brand) => brand.logo_url).length;
-  const brandsWithoutLogo = brands.length - brandsWithLogo;
-
-  const openNew = () => {
-    setEditing("new");
-    setName("");
-  };
-
-  const openEdit = (brand) => {
-    setEditing(brand);
-    setName(brand.name || "");
-  };
+  const openNew = () => setEditing("new");
+  const openEdit = (brand) => setEditing(brand);
 
   const closeForm = () => {
     if (saving) return;
-
     setEditing(null);
-    setName("");
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
-
-    const brandName = name.trim();
-
-    if (!brandName) {
+  const handleSave = async (payload) => {
+    if (!payload.name) {
       showToast("Brand name is required", "error");
       return;
     }
@@ -103,9 +85,7 @@ export default function Brands() {
       setSaving(true);
 
       if (editing === "new") {
-        const res = await api.post("/brands", {
-          name: brandName,
-        });
+        const res = await api.post("/brands", payload);
 
         const newBrand = res.data?.data || res.data;
 
@@ -113,9 +93,7 @@ export default function Brands() {
 
         showToast("Brand created successfully");
       } else {
-        const res = await api.put(`/brands/${editing.id}`, {
-          name: brandName,
-        });
+        const res = await api.put(`/brands/${editing.id}`, payload);
 
         const updatedBrand = res.data?.data || res.data;
 
@@ -126,7 +104,7 @@ export default function Brands() {
         showToast("Brand updated successfully");
       }
 
-      closeForm();
+      setEditing(null);
     } catch (err) {
       showToast(err.response?.data?.message || "Failed to save brand", "error");
     } finally {
@@ -201,31 +179,41 @@ export default function Brands() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-stone mb-1">
-            Catalog Management
-          </p>
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <h1 className="font-display text-[28px] font-medium text-ink">
+          Brands
+        </h1>
+      </div>
 
-          <div className="flex items-center gap-3">
-            <h1 className="font-display text-[28px] font-medium text-ink">
-              Brands
-            </h1>
+      {/* Search & Actions — same row */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+        <div className="relative flex-1">
+          <Search
+            size={16}
+            strokeWidth={1.75}
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone"
+          />
 
-            {!loading && (
-              <span className="px-2 py-0.5 rounded-md bg-moss-tint text-moss text-[11px] font-medium">
-                {brands.length}
-              </span>
-            )}
-          </div>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search brands..."
+            className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-hairline bg-surface text-[13.5px] text-ink placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-moss/20 focus:border-moss"
+          />
 
-          <p className="text-[13px] text-stone mt-1">
-            Manage brands and upload their logos.
-          </p>
+          {search && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-stone hover:text-ink"
+              aria-label="Clear search"
+            >
+              <X size={15} />
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Refresh */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => loadBrands(true)}
@@ -240,11 +228,10 @@ export default function Brands() {
             />
           </button>
 
-          {/* New Brand */}
           <button
             type="button"
             onClick={openNew}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-moss text-white text-[13.5px] font-medium hover:bg-moss-deep active:scale-[0.98] transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-moss text-white text-[13.5px] font-medium hover:bg-moss-deep active:scale-[0.98] transition-all whitespace-nowrap"
           >
             <Plus size={16} strokeWidth={2} />
             New Brand
@@ -252,138 +239,13 @@ export default function Brands() {
         </div>
       </div>
 
-      {/* Statistics */}
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <StatSkeleton />
-          <StatSkeleton />
-          <StatSkeleton />
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <StatCard icon={Award} label="Total Brands" value={brands.length} />
-
-          <StatCard icon={Check} label="With Logo" value={brandsWithLogo} />
-
-          <StatCard
-            icon={ImageOff}
-            label="Without Logo"
-            value={brandsWithoutLogo}
-            valueClass={brandsWithoutLogo > 0 ? "text-clay" : "text-ink"}
-          />
-        </div>
-      )}
-
-      {/* Create / Edit Form */}
-      {editing && (
-        <div className="bg-surface border border-hairline rounded-xl p-5 mb-5 shadow-[0_4px_20px_rgba(33,31,27,0.04)]">
-          <div className="flex items-start justify-between gap-4 mb-5">
-            <div>
-              <p className="text-[10.5px] font-medium uppercase tracking-widest text-stone mb-1">
-                {editing === "new" ? "Create" : "Edit"}
-              </p>
-
-              <h2 className="font-display text-[18px] font-medium text-ink">
-                {editing === "new" ? "New Brand" : `Edit ${editing.name}`}
-              </h2>
-            </div>
-
-            <button
-              type="button"
-              onClick={closeForm}
-              disabled={saving}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-stone hover:bg-paper hover:text-ink transition-colors disabled:opacity-50"
-              aria-label="Close form"
-            >
-              <X size={17} strokeWidth={1.75} />
-            </button>
-          </div>
-
-          <form
-            onSubmit={handleSave}
-            className="flex flex-col sm:flex-row sm:items-end gap-3"
-          >
-            <div className="flex-1">
-              <label className="block text-[11px] font-medium uppercase tracking-[0.08em] text-stone mb-2">
-                Brand Name
-              </label>
-
-              <input
-                autoFocus
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={saving}
-                required
-                maxLength={255}
-                placeholder="Example: Nike"
-                className="w-full px-3.5 py-2.5 rounded-lg border border-hairline bg-paper text-ink text-[14px] placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-moss/20 focus:border-moss transition-colors disabled:opacity-60"
-              />
-
-              <div className="flex justify-between mt-1.5">
-                <p className="text-[11px] text-stone">
-                  Use a clear and unique brand name.
-                </p>
-
-                <span className="text-[11px] text-stone">
-                  {name.length}/255
-                </span>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={saving || !name.trim()}
-              className="min-w-30 px-5 py-2.5 rounded-lg bg-moss text-white text-[13.5px] font-medium hover:bg-moss-deep active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving
-                ? "Saving…"
-                : editing === "new"
-                  ? "Create Brand"
-                  : "Save Changes"}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Search */}
+      {/* Result count */}
       {!loading && brands.length > 0 && (
-        <div className="bg-surface border border-hairline rounded-xl p-4 mb-5">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="relative flex-1">
-              <Search
-                size={16}
-                strokeWidth={1.75}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone"
-              />
-
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search brands..."
-                className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-hairline bg-paper text-[13.5px] text-ink placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-moss/20 focus:border-moss"
-              />
-
-              {search && (
-                <button
-                  type="button"
-                  onClick={clearSearch}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-stone hover:text-ink"
-                  aria-label="Clear search"
-                >
-                  <X size={15} />
-                </button>
-              )}
-            </div>
-
-            <p className="text-[12.5px] text-stone whitespace-nowrap">
-              Showing{" "}
-              <span className="font-medium text-ink">
-                {filteredBrands.length}
-              </span>{" "}
-              of {brands.length} brands
-            </p>
-          </div>
-        </div>
+        <p className="text-[12.5px] text-stone mb-4">
+          Showing{" "}
+          <span className="font-medium text-ink">{filteredBrands.length}</span>{" "}
+          of {brands.length} brands
+        </p>
       )}
 
       {/* Content */}
@@ -417,22 +279,16 @@ export default function Brands() {
           ))}
         </div>
       )}
-    </div>
-  );
-}
 
-function StatCard({ icon: Icon, label, value, valueClass = "text-ink" }) {
-  return (
-    <div className="bg-surface border border-hairline rounded-xl p-5">
-      <div className="w-9 h-9 rounded-lg bg-moss-tint flex items-center justify-center mb-4">
-        <Icon size={17} className="text-moss" strokeWidth={1.75} />
-      </div>
-
-      <p className={`font-mono text-[24px] leading-none mb-1.5 ${valueClass}`}>
-        {value}
-      </p>
-
-      <p className="text-[12.5px] text-stone">{label}</p>
+      {/* Create / Edit Modal */}
+      {editing && (
+        <BrandFormModal
+          brand={editing === "new" ? null : editing}
+          onClose={closeForm}
+          onSave={handleSave}
+          saving={saving}
+        />
+      )}
     </div>
   );
 }
