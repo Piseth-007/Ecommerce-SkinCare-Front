@@ -15,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 import api from "../../api/axios";
-import { RowSkeleton, StatSkeleton } from "../../components/Skeleton";
+import { RowSkeleton } from "../../components/Skeleton";
 import { ToastContext } from "../../context/ToastContext";
 import Receipt from "../../components/Receipt";
 
@@ -117,12 +117,9 @@ export default function Orders() {
 
   const handlePrint = (order) => {
     setPrintingOrder(order);
-
-    // let the receipt render before invoking the browser print dialog
     setTimeout(() => window.print(), 50);
   };
 
-  // Search — matches order ID, customer name, or customer email
   const filteredOrders = useMemo(() => {
     const keyword = search.trim().toLowerCase();
 
@@ -141,17 +138,6 @@ export default function Orders() {
     });
   }, [orders, search]);
 
-  const stats = useMemo(() => {
-    return {
-      total: orders.length,
-      pending: orders.filter((order) => order.status === "pending").length,
-      processing: orders.filter((order) =>
-        ["paid", "shipped"].includes(order.status),
-      ).length,
-      completed: orders.filter((order) => order.status === "completed").length,
-    };
-  }, [orders]);
-
   const toggleOrder = (id) => {
     setExpanded((current) => (current === id ? null : id));
   };
@@ -160,12 +146,9 @@ export default function Orders() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
+      
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-2 print:hidden">
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-stone mb-1">
-            Fulfillment
-          </p>
 
           <div className="flex items-center gap-3">
             <h1 className="font-display text-[28px] font-medium text-ink">
@@ -209,7 +192,7 @@ export default function Orders() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search order #, customer..."
-              className="w-full pl-9 pr-9 py-2 rounded-lg border border-hairline bg-paper text-[13px] text-ink placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-moss/20 focus:border-moss transition-colors"
+              className="w-100 pl-9 pr-9 py-2 rounded-lg border border-hairline bg-surface text-[13px] text-ink placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-moss/20 focus:border-moss transition-colors"
             />
 
             {search && (

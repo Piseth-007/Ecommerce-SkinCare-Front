@@ -26,7 +26,7 @@ export default function Cart() {
     try {
       await removeItem(itemId);
       showToast("Item removed");
-    } catch (err) {
+    } catch {
       showToast("Failed to remove item", "error");
     }
   };

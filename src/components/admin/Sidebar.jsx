@@ -10,7 +10,6 @@ import {
   MessageSquare,
   X,
   ChevronRight,
-  Boxes,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 

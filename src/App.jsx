@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
@@ -6,37 +7,37 @@ import { ConfirmProvider } from "./context/ConfirmContext";
 
 // Storefront
 import Navbar from "./components/storefront/Navbar";
-import Home from "./pages/shop/Home";
-import ProductList from "./pages/shop/ProductList";
-import ProductDetail from "./pages/shop/ProductDetail";
-import Category from "./pages/shop/Category";
-import Cart from "./pages/shop/Cart";
-import Checkout from "./pages/shop/Checkout";
-import OrderHistory from "./pages/shop/OrderHistory";
 import RequireAuth from "./components/RequireAuth";
 
 // Auth (
-import Login from "./pages/auth/Login";
-import Register from "./pages/auth/Register";
-import AdminLogin from "./pages/auth/AdminLogin";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
 
 // Admin
-import AdminLayout from "./components/admin/AdminLayout";
 import AdminRoute from "./components/admin/AdminRoute";
-import Dashboard from "./pages/admin/Dashboard";
-import Products from "./pages/admin/Products";
-
-import Categories from "./pages/admin/Categories";
-import Brands from "./pages/admin/Brands";
-import Orders from "./pages/admin/Orders";
-import Reviews from "./pages/admin/Reviews";
 import Footer from "./components/storefront/Footer";
-import Stock from "./pages/admin/Stock";
-import Brand from "./pages/shop/Brands";
-import About from "./pages/shop/About";
-import Contact from "./pages/shop/Contact";
+
+const Home = lazy(() => import("./pages/shop/Home"));
+const ProductList = lazy(() => import("./pages/shop/ProductList"));
+const ProductDetail = lazy(() => import("./pages/shop/ProductDetail"));
+const Category = lazy(() => import("./pages/shop/Category"));
+const Brand = lazy(() => import("./pages/shop/Brands"));
+const Cart = lazy(() => import("./pages/shop/Cart"));
+const Checkout = lazy(() => import("./pages/shop/Checkout"));
+const OrderHistory = lazy(() => import("./pages/shop/OrderHistory"));
+const About = lazy(() => import("./pages/shop/About"));
+const Contact = lazy(() => import("./pages/shop/Contact"));
+const Login = lazy(() => import("./pages/auth/Login"));
+const Register = lazy(() => import("./pages/auth/Register"));
+const AdminLogin = lazy(() => import("./pages/auth/AdminLogin"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
+const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
+const Products = lazy(() => import("./pages/admin/Products"));
+const Stock = lazy(() => import("./pages/admin/Stock"));
+const Categories = lazy(() => import("./pages/admin/Categories"));
+const Brands = lazy(() => import("./pages/admin/Brands"));
+const Orders = lazy(() => import("./pages/admin/Orders"));
+const Reviews = lazy(() => import("./pages/admin/Reviews"));
 
 function StorefrontLayout({ children }) {
   return (
@@ -55,7 +56,8 @@ function App() {
         <CartProvider>
           <ToastProvider>
             <ConfirmProvider>
-              <Routes>
+              <Suspense fallback={<div className="min-h-screen bg-paper" />}>
+                <Routes>
                 {/* Storefront — public */}
                 <Route
                   path="/"
@@ -195,7 +197,8 @@ function App() {
                   <Route path="/admin/orders" element={<Orders />} />
                   <Route path="/admin/reviews" element={<Reviews />} />
                 </Route>
-              </Routes>
+                </Routes>
+              </Suspense>
             </ConfirmProvider>
           </ToastProvider>
         </CartProvider>

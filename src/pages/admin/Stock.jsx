@@ -241,16 +241,6 @@ export default function Stock() {
     [products],
   );
 
-  const inventoryValue = useMemo(
-    () =>
-      products.reduce(
-        (total, product) =>
-          total + Number(product.price || 0) * Number(product.stock || 0),
-        0,
-      ),
-    [products],
-  );
-
   const hasActiveFilters =
     search ||
     categoryFilter !== "all" ||

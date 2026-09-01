@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { Leaf } from "lucide-react";
 import { useAuth } from "../../context/useAuth";

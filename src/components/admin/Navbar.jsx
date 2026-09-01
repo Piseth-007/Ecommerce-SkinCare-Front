@@ -49,7 +49,7 @@ export default function Navbar({ onMenuClick }) {
 
       setPendingOrders(orders);
       setLowStockProducts(lowStock);
-    } catch (err) {
+    } catch {
       // Fail silently — notifications aren't critical path, avoid noisy toasts
     } finally {
       setLoading(false);

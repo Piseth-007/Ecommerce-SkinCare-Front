@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
-  ArrowRight,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -71,7 +70,7 @@ export default function ProductDetail() {
         if (mounted) {
           setProduct(response.data);
         }
-      } catch (err) {
+      } catch {
         if (mounted) {
           setError(true);
         }

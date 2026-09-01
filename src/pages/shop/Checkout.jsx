@@ -377,7 +377,7 @@ export default function Checkout() {
     try {
       await navigator.clipboard.writeText(paymentData.qr_string);
       showToast("KHQR payment string copied", "success");
-    } catch (error) {
+    } catch {
       showToast("Failed to copy QR code", "error");
     }
   };

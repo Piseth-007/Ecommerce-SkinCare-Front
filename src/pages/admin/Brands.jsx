@@ -198,7 +198,7 @@ export default function Brands() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search brands..."
-            className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-hairline bg-surface text-[13.5px] text-ink placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-moss/20 focus:border-moss"
+            className="w-100 pl-10 pr-10 py-2.5 rounded-lg border border-hairline bg-surface text-[13.5px] text-ink placeholder:text-stone/50 focus:outline-none focus:ring-2 focus:ring-moss/20 focus:border-moss"
           />
 
           {search && (
