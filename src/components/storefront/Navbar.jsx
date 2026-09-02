@@ -91,17 +91,54 @@ export default function Navbar() {
           from { opacity: 0; transform: translateY(-6px) scale(0.98); }
           to { opacity: 1; transform: translateY(0) scale(1); }
         }
+        @keyframes navmenu-in {
+          from { opacity: 0; transform: translateY(-12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes navbadge-pop {
+          0% { transform: scale(.55); opacity: 0; }
+          70% { transform: scale(1.12); }
+          100% { transform: scale(1); opacity: 1; }
+        }
         .navdrop-in {
           animation: navdrop-in .18s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
+        .navmenu-in {
+          animation: navmenu-in .3s cubic-bezier(.22, 1, .36, 1) both;
+        }
+        .nav-action {
+          transition: transform .2s cubic-bezier(.22, 1, .36, 1), color .2s ease, background-color .2s ease, border-color .2s ease;
+        }
+        .nav-action:hover { transform: translateY(-1px); }
+        .nav-action:active { transform: translateY(0) scale(.94); }
+        .nav-link {
+          position: relative;
+          transition: color .2s ease;
+        }
+        .nav-link::after {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: -6px;
+          height: 1.5px;
+          border-radius: 999px;
+          background: currentColor;
+          transform: scaleX(0);
+          transform-origin: center;
+          transition: transform .24s cubic-bezier(.22, 1, .36, 1);
+        }
+        .nav-link:hover::after { transform: scaleX(1); }
+        .nav-cart-badge { animation: navbadge-pop .32s cubic-bezier(.22, 1, .36, 1) both; }
         @media (prefers-reduced-motion: reduce) {
-          .navdrop-in { animation: none !important; }
+          .navdrop-in, .navmenu-in, .nav-cart-badge { animation: none !important; }
+          .nav-action, .nav-link::after { transition: none !important; }
         }
       `}</style>
 
       <div className="max-w-6xl mx-auto px-6 h-16 grid grid-cols-[auto_1fr_auto] items-center gap-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0">
+        <Link to="/" className="nav-action flex items-center gap-2 shrink-0">
           <Leaf size={18} className="text-moss" strokeWidth={1.75} />
           <span className="font-display text-[18px] font-medium text-ink">
             Botaniq
@@ -110,7 +147,7 @@ export default function Navbar() {
 
         {/* Centered nav */}
         <nav className="hidden md:flex items-center justify-center gap-6 text-[13.5px] font-medium text-stone">
-          <Link to="/products" className="hover:text-ink transition-colors">
+          <Link to="/products" className="nav-link hover:text-ink">
             Shop all
           </Link>
 
@@ -122,7 +159,7 @@ export default function Navbar() {
           >
             <Link
               to="/categories"
-              className={`flex items-center gap-1 transition-colors ${
+              className={`nav-link flex items-center gap-1 ${
                 openMenu === "categories" ? "text-ink" : "hover:text-ink"
               }`}
             >
@@ -156,7 +193,7 @@ export default function Navbar() {
           >
             <Link
               to="/brands"
-              className={`flex items-center gap-1 transition-colors ${
+              className={`nav-link flex items-center gap-1 ${
                 openMenu === "brands" ? "text-ink" : "hover:text-ink"
               }`}
             >
@@ -185,14 +222,14 @@ export default function Navbar() {
 
           <Link
             to="/products?sort=rating"
-            className="hover:text-ink transition-colors"
+            className="nav-link hover:text-ink"
           >
             Best rated
           </Link>
-          <Link to="/about" className="hover:text-ink transition-colors">
+          <Link to="/about" className="nav-link hover:text-ink">
             About
           </Link>
-          <Link to="/contact" className="hover:text-ink transition-colors">
+          <Link to="/contact" className="nav-link hover:text-ink">
             Contact
           </Link>
         </nav>
@@ -203,7 +240,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={toggleDarkMode}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline text-stone transition-colors hover:bg-paper hover:text-ink"
+            className="nav-action flex h-9 w-9 items-center justify-center rounded-lg border border-hairline text-stone hover:bg-paper hover:text-ink"
             aria-label="Toggle dark mode"
           >
             {darkMode ? (
@@ -216,7 +253,7 @@ export default function Navbar() {
           <div className="relative">
             <button
               onClick={() => setSearchOpen((v) => !v)}
-              className="p-2 rounded-lg text-stone hover:bg-paper hover:text-ink transition-colors"
+              className="nav-action p-2 rounded-lg text-stone hover:bg-paper hover:text-ink"
               aria-label="Search"
             >
               {searchOpen ? (
@@ -234,7 +271,7 @@ export default function Navbar() {
                 />
                 <form
                   onSubmit={handleSearchSubmit}
-                  className="absolute right-0 top-11 z-20 w-64 bg-surface border border-hairline rounded-xl shadow-[0_8px_24px_rgba(33,31,27,0.1)] p-2"
+                  className="navdrop-in absolute right-0 top-11 z-20 w-64 bg-surface border border-hairline rounded-xl shadow-[0_8px_24px_rgba(33,31,27,0.1)] p-2"
                 >
                   <input
                     autoFocus
@@ -250,11 +287,11 @@ export default function Navbar() {
 
           <Link
             to="/cart"
-            className="relative p-2 rounded-lg text-stone hover:bg-paper hover:text-ink transition-colors"
+            className="nav-action relative p-2 rounded-lg text-stone hover:bg-paper hover:text-ink"
           >
             <ShoppingBag size={18} strokeWidth={1.75} />
             {itemCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-moss text-white text-[10px] font-medium flex items-center justify-center">
+              <span className="nav-cart-badge absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-moss text-white text-[10px] font-medium flex items-center justify-center">
                 {itemCount}
               </span>
             )}
@@ -264,7 +301,7 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setAccountOpen((v) => !v)}
-                className="p-2 rounded-lg text-stone hover:bg-paper hover:text-ink transition-colors"
+                className="nav-action p-2 rounded-lg text-stone hover:bg-paper hover:text-ink"
               >
                 <User size={18} strokeWidth={1.75} />
               </button>
@@ -275,7 +312,7 @@ export default function Navbar() {
                     className="fixed inset-0 z-10"
                     onClick={() => setAccountOpen(false)}
                   />
-                  <div className="absolute right-0 top-11 z-20 w-52 bg-surface border border-hairline rounded-xl shadow-[0_8px_24px_rgba(33,31,27,0.1)] py-1.5">
+                  <div className="navdrop-in absolute right-0 top-11 z-20 w-52 bg-surface border border-hairline rounded-xl shadow-[0_8px_24px_rgba(33,31,27,0.1)] py-1.5">
                     <div className="px-3.5 py-2.5 border-b border-hairline">
                       <p className="text-[13px] font-medium text-ink truncate">
                         {user.name}
@@ -314,7 +351,7 @@ export default function Navbar() {
           ) : (
             <Link
               to="/login"
-              className="ml-1 px-4 py-2 rounded-lg bg-moss text-white text-[13px] font-medium hover:bg-moss-deep transition-colors"
+              className="nav-action ml-1 px-4 py-2 rounded-lg bg-moss text-white text-[13px] font-medium hover:bg-moss-deep"
             >
               Sign in
             </Link>
@@ -322,7 +359,7 @@ export default function Navbar() {
 
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="md:hidden p-2 rounded-lg text-stone hover:bg-paper hover:text-ink transition-colors"
+            className="nav-action md:hidden p-2 rounded-lg text-stone hover:bg-paper hover:text-ink"
           >
             {menuOpen ? (
               <X size={18} strokeWidth={1.75} />
@@ -334,7 +371,7 @@ export default function Navbar() {
       </div>
 
       {menuOpen && (
-        <nav className="md:hidden border-t border-hairline px-6 py-3 flex flex-col gap-1">
+        <nav className="navmenu-in md:hidden border-t border-hairline px-6 py-3 flex flex-col gap-1">
           <Link
             to="/products"
             onClick={() => setMenuOpen(false)}

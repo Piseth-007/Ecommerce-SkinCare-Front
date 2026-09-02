@@ -4,6 +4,8 @@ import { QRCodeCanvas } from "qrcode.react";
 import {
   Plus,
   MapPin,
+  Pencil,
+  Trash2,
   QrCode,
   X,
   Download,
@@ -24,6 +26,14 @@ export default function Checkout() {
   const [addresses, setAddresses] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState(null);
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [communes, setCommunes] = useState([]);
+  const [locationCodes, setLocationCodes] = useState({
+    province: "",
+    district: "",
+  });
   const [placing, setPlacing] = useState(false);
 
   const [paymentData, setPaymentData] = useState(null);
@@ -37,14 +47,13 @@ export default function Checkout() {
   const qrCanvasRef = useRef(null);
 
   const [form, setForm] = useState({
-    type: "home",
     full_name: "",
-    phone: "",
-    street_address: "",
-    city: "",
-    province_state: "",
-    postal_code: "",
-    country: "Cambodia",
+    telephone: "",
+    city_province: "",
+    district: "",
+    commune: "",
+    street: "",
+    label: "",
   });
 
   const items = cart?.items || [];
@@ -81,33 +90,117 @@ export default function Checkout() {
     fetchAddresses();
   }, [showToast]);
 
+  useEffect(() => {
+    api
+      .get("/locations/provinces")
+      .then((res) => setProvinces(res.data))
+      .catch((error) => console.error("Province error:", error));
+  }, []);
+
+  const resetAddressForm = () => {
+    setForm({
+      full_name: "",
+      telephone: "",
+      city_province: "",
+      district: "",
+      commune: "",
+      street: "",
+      label: "",
+    });
+    setLocationCodes({ province: "", district: "" });
+    setDistricts([]);
+    setCommunes([]);
+    setEditingAddressId(null);
+  };
+
+  const loadDistricts = async (provinceCode) => {
+    const res = await api.get(`/locations/provinces/${provinceCode}/districts`);
+    setDistricts(res.data);
+    return res.data;
+  };
+
+  const loadCommunes = async (districtCode) => {
+    const res = await api.get(`/locations/districts/${districtCode}/communes`);
+    setCommunes(res.data);
+    return res.data;
+  };
+
+  const handleProvinceChange = async (e) => {
+    const province = provinces.find((item) => item.code === e.target.value);
+    setLocationCodes({ province: province?.code || "", district: "" });
+    setForm((prev) => ({
+      ...prev,
+      city_province: province?.name_en || "",
+      district: "",
+      commune: "",
+    }));
+    setCommunes([]);
+    setDistricts([]);
+
+    if (province) {
+      try {
+        await loadDistricts(province.code);
+      } catch (error) {
+        console.error("District error:", error);
+        showToast("Failed to load districts", "error");
+      }
+    }
+  };
+
+  const handleDistrictChange = async (e) => {
+    const district = districts.find((item) => item.code === e.target.value);
+    setLocationCodes((prev) => ({ ...prev, district: district?.code || "" }));
+    setForm((prev) => ({
+      ...prev,
+      district: district?.name_en || "",
+      commune: "",
+    }));
+    setCommunes([]);
+
+    if (district) {
+      try {
+        await loadCommunes(district.code);
+      } catch (error) {
+        console.error("Commune error:", error);
+        showToast("Failed to load communes", "error");
+      }
+    }
+  };
+
+  const handleCommuneChange = (e) => {
+    const commune = communes.find((item) => item.code === e.target.value);
+    setForm((prev) => ({ ...prev, commune: commune?.name_en || "" }));
+  };
+
   const handleAddAddress = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await api.post("/addresses", {
+      const payload = {
         ...form,
-        is_default: addresses.length === 0,
-      });
+        ...(editingAddressId ? {} : { is_default: addresses.length === 0 }),
+      };
+      const res = editingAddressId
+        ? await api.put(`/addresses/${editingAddressId}`, payload)
+        : await api.post("/addresses", payload);
+      const savedAddress = res.data;
 
-      const newAddress = res.data;
-
-      setAddresses((prev) => [...prev, newAddress]);
-      setSelectedId(newAddress.id);
+      setAddresses((prev) =>
+        editingAddressId
+          ? prev.map((address) =>
+              address.id === savedAddress.id ? savedAddress : address,
+            )
+          : [...prev, savedAddress],
+      );
+      setSelectedId(savedAddress.id);
       setShowForm(false);
-
-      setForm({
-        type: "home",
-        full_name: "",
-        phone: "",
-        street_address: "",
-        city: "",
-        province_state: "",
-        postal_code: "",
-        country: "Cambodia",
-      });
-
-      showToast("Address saved successfully", "success");
+      resetAddressForm();
+      showToast(
+        editingAddressId
+          ? "Address updated successfully"
+          : "Address saved successfully",
+        "success",
+      );
     } catch (err) {
       console.error("Address error:", err);
 
@@ -118,11 +211,73 @@ export default function Checkout() {
     }
   };
 
-  /*
-  |--------------------------------------------------------------------------
-  | Start KHQR Payment
-  |--------------------------------------------------------------------------
-  */
+  const handleEditAddress = async (address) => {
+    setEditingAddressId(address.id);
+    setForm({
+      full_name: address.full_name || "",
+      telephone: address.telephone || "",
+      city_province: address.city_province || "",
+      district: address.district || "",
+      commune: address.commune || "",
+      street: address.street || "",
+      label: address.label || "",
+    });
+    setShowForm(true);
+
+    const province = provinces.find(
+      (item) => item.name_en === address.city_province,
+    );
+    if (!province) {
+      setLocationCodes({ province: "", district: "" });
+      setDistricts([]);
+      setCommunes([]);
+      return;
+    }
+
+    try {
+      const loadedDistricts = await loadDistricts(province.code);
+      const district = loadedDistricts.find(
+        (item) => item.name_en === address.district,
+      );
+      setLocationCodes({
+        province: province.code,
+        district: district?.code || "",
+      });
+
+      if (district) {
+        await loadCommunes(district.code);
+      } else {
+        setCommunes([]);
+      }
+    } catch (error) {
+      console.error("Address location error:", error);
+      showToast("Failed to load address locations", "error");
+    }
+  };
+
+  const handleDeleteAddress = async (address) => {
+    if (!window.confirm(`Delete the address for ${address.full_name}?`)) return;
+
+    try {
+      await api.delete(`/addresses/${address.id}`);
+      const remainingAddresses = addresses.filter(
+        (item) => item.id !== address.id,
+      );
+      setAddresses(remainingAddresses);
+
+      if (selectedId === address.id) {
+        setSelectedId(remainingAddresses[0]?.id || null);
+      }
+
+      showToast("Address deleted", "success");
+    } catch (error) {
+      console.error("Address deletion error:", error);
+      showToast(
+        error.response?.data?.message || "Failed to delete address",
+        "error",
+      );
+    }
+  };
 
   const handleKhqrPayment = async () => {
     if (placing) return;
@@ -166,12 +321,6 @@ export default function Checkout() {
       if (!result.qr_string || !result.payment_id) {
         throw new Error(result.message || "KHQR code was not generated");
       }
-
-      /*
-      |--------------------------------------------------------------
-      | STEP 3: Save Payment Data
-      |--------------------------------------------------------------
-      */
 
       setPaymentData({
         payment_id: result.payment_id,
@@ -250,7 +399,7 @@ export default function Checkout() {
           setShowQrModal(false);
           setPaymentData(null);
 
-          navigate(`/payment/success?order_id=${paymentData?.order_id}`);
+          navigate(`/orders`);
         }, 800);
 
         return true;
@@ -305,7 +454,6 @@ export default function Checkout() {
     return () => clearInterval(interval);
   }, [showQrModal, paymentData?.payment_id, paymentStatus]);
 
-
   useEffect(() => {
     if (
       !showQrModal ||
@@ -315,7 +463,20 @@ export default function Checkout() {
       return;
     }
 
-    const expiresAt = new Date(paymentData.expires_at).getTime();
+    const rawExpiry = String(paymentData.expires_at);
+    const expiresAt = /^\d+$/.test(rawExpiry)
+      ? Number(rawExpiry) * (rawExpiry.length <= 3 ? 1000 : 1)
+      : Date.parse(
+          /(?:Z|[+-]\d{2}:?\d{2})$/i.test(rawExpiry)
+            ? rawExpiry
+            : `${rawExpiry.replace(" ", "T")}Z`,
+        );
+
+    if (Number.isNaN(expiresAt)) {
+      console.error("Invalid KHQR expiry time:", paymentData.expires_at);
+      setSecondsLeft(null);
+      return;
+    }
 
     const tick = () => {
       const remaining = Math.max(
@@ -335,12 +496,8 @@ export default function Checkout() {
     return () => clearInterval(interval);
   }, [showQrModal, paymentData?.expires_at, paymentStatus]);
 
-
   const handleClosePayment = async () => {
     if (checkingPayment || cancellingPayment) return;
-
-    // A pending payment has already created an order and reserved its cart
-    // items. Cancel it before closing so the backend restores those items.
     if (paymentData?.payment_id && paymentStatus !== "paid") {
       setCancellingPayment(true);
 
@@ -405,6 +562,8 @@ export default function Checkout() {
     return `${m}:${String(s).padStart(2, "0")}`;
   };
 
+  const isExpiringSoon = secondsLeft !== null && secondsLeft <= 60;
+
   return (
     <div className="max-w-4xl mx-auto px-6 py-10">
       <h1 className="font-display text-[28px] font-medium text-ink mb-8">
@@ -422,11 +581,10 @@ export default function Checkout() {
 
             <div className="space-y-2 mb-3">
               {addresses.map((addr) => (
-                <button
-                  type="button"
+                <div
                   key={addr.id}
                   onClick={() => setSelectedId(addr.id)}
-                  className={`w-full text-left flex items-start gap-3 p-4 rounded-xl border transition-colors ${
+                  className={`w-full text-left flex items-start gap-3 p-4 rounded-xl border transition-colors cursor-pointer ${
                     selectedId === addr.id
                       ? "border-moss bg-moss-tint"
                       : "border-hairline bg-surface hover:border-stone/30"
@@ -440,7 +598,7 @@ export default function Checkout() {
                     strokeWidth={1.75}
                   />
 
-                  <div>
+                  <div className="hidden">
                     <p className="text-[13.5px] font-medium text-ink">
                       {addr.full_name} · {addr.phone}
                     </p>
@@ -450,7 +608,38 @@ export default function Checkout() {
                       {addr.country}
                     </p>
                   </div>
-                </button>
+                  <div className="flex-1">
+                    <p className="text-[13.5px] font-medium text-ink">
+                      {addr.full_name} · {addr.telephone}
+                      {addr.label && ` (${addr.label})`}
+                    </p>
+                    <p className="text-[12.5px] text-stone mt-1">
+                      {addr.street}, {addr.commune}, {addr.district},{" "}
+                      {addr.city_province}
+                    </p>
+                  </div>
+                  <div
+                    className="ml-auto flex gap-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleEditAddress(addr)}
+                      className="p-1.5 text-stone hover:text-moss"
+                      aria-label={`Edit address for ${addr.full_name}`}
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAddress(addr)}
+                      className="p-1.5 text-stone hover:text-clay"
+                      aria-label={`Delete address for ${addr.full_name}`}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
 
@@ -482,10 +671,10 @@ export default function Checkout() {
                   />
 
                   <input
-                    placeholder="Phone"
-                    value={form.phone}
+                    placeholder="Telephone"
+                    value={form.telephone}
                     onChange={(e) =>
-                      setForm({ ...form, phone: e.target.value })
+                      setForm({ ...form, telephone: e.target.value })
                     }
                     className={inputClass}
                     required
@@ -493,56 +682,83 @@ export default function Checkout() {
                 </div>
 
                 <input
-                  placeholder="Street address"
-                  value={form.street_address}
-                  onChange={(e) =>
-                    setForm({ ...form, street_address: e.target.value })
-                  }
+                  placeholder="Street / house number"
+                  value={form.street}
+                  onChange={(e) => setForm({ ...form, street: e.target.value })}
                   className={inputClass}
-                  required
                 />
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <input
-                    placeholder="City"
-                    value={form.city}
-                    onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  <select
+                    value={locationCodes.province}
+                    onChange={handleProvinceChange}
                     className={inputClass}
                     required
-                  />
+                  >
+                    <option value="">Select province</option>
+                    {provinces.map((province) => (
+                      <option key={province.id} value={province.code}>
+                        {province.name_en}
+                      </option>
+                    ))}
+                  </select>
 
-                  <input
-                    placeholder="Province"
-                    value={form.province_state}
-                    onChange={(e) =>
-                      setForm({ ...form, province_state: e.target.value })
-                    }
+                  <select
+                    value={locationCodes.district}
+                    onChange={handleDistrictChange}
                     className={inputClass}
+                    disabled={!locationCodes.province}
                     required
-                  />
+                  >
+                    <option value="">Select district</option>
+                    {districts.map((district) => (
+                      <option key={district.id} value={district.code}>
+                        {district.name_en}
+                      </option>
+                    ))}
+                  </select>
 
-                  <input
-                    placeholder="Postal code"
-                    value={form.postal_code}
-                    onChange={(e) =>
-                      setForm({ ...form, postal_code: e.target.value })
+                  <select
+                    value={
+                      communes.find((item) => item.name_en === form.commune)
+                        ?.code || ""
                     }
+                    onChange={handleCommuneChange}
                     className={inputClass}
-                  />
+                    disabled={!locationCodes.district}
+                    required
+                  >
+                    <option value="">Select commune</option>
+                    {communes.map((commune) => (
+                      <option key={commune.id} value={commune.code}>
+                        {commune.name_en}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
+                <input
+                  placeholder="Label (e.g. Home or Work)"
+                  value={form.label}
+                  onChange={(e) => setForm({ ...form, label: e.target.value })}
+                  className={inputClass}
+                />
 
                 <div className="flex gap-2 pt-1">
                   <button
                     type="submit"
                     className="px-4 py-2 rounded-lg bg-moss text-white text-[13px] font-medium hover:bg-moss-deep"
                   >
-                    Save Address
+                    {editingAddressId ? "Update Address" : "Save Address"}
                   </button>
 
                   {addresses.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => setShowForm(false)}
+                      onClick={() => {
+                        setShowForm(false);
+                        resetAddressForm();
+                      }}
                       className="px-4 py-2 rounded-lg border border-hairline text-ink text-[13px] font-medium hover:bg-paper"
                     >
                       Cancel
@@ -656,8 +872,6 @@ export default function Checkout() {
                 <X size={20} className="text-stone" />
               </button>
             </div>
-
-            {/* QR IMAGE */}
             <div
               ref={qrCanvasRef}
               className="bg-paper p-5 rounded-xl flex justify-center"
@@ -691,7 +905,27 @@ export default function Checkout() {
                 </p>
               ) : (
                 <>
-                  <div className="flex items-center justify-center gap-1.5 text-stone">
+                  <div
+                    className={`rounded-xl border px-4 py-3 ${
+                      isExpiringSoon
+                        ? "border-clay/30 bg-clay-tint text-clay"
+                        : "border-moss/20 bg-moss-tint text-moss"
+                    }`}
+                  >
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Clock3 size={15} strokeWidth={1.9} />
+                      <p className="text-[11px] uppercase tracking-[0.1em] font-medium">
+                        {isExpiringSoon ? "Expires soon" : "Time remaining"}
+                      </p>
+                    </div>
+                    <p
+                      aria-live="polite"
+                      className="mt-1 font-mono text-[30px] font-semibold tracking-[0.12em] leading-none"
+                    >
+                      {secondsLeft !== null ? formatTime(secondsLeft) : "--:--"}
+                    </p>
+                  </div>
+                  <div className="hidden">
                     <Clock3 size={13} strokeWidth={1.75} />
                     <p className="text-[12px] uppercase tracking-[0.08em] font-medium">
                       Waiting for Payment
@@ -699,7 +933,7 @@ export default function Checkout() {
                     </p>
                   </div>
 
-                  <p className="text-[11.5px] text-stone mt-2">
+                  <p className="hidden text-[11.5px] text-stone mt-2">
                     Checking automatically every 5 seconds
                   </p>
                 </>

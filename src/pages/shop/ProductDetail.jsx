@@ -42,6 +42,7 @@ export default function ProductDetail() {
 
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
+  const [showCartSheet, setShowCartSheet] = useState(false);
 
   const [liked, setLiked] = useState(false);
 
@@ -58,6 +59,7 @@ export default function ProductDetail() {
       setActiveImage(0);
       setQuantity(1);
       setAdded(false);
+      setShowCartSheet(false);
 
       window.scrollTo({
         top: 0,
@@ -197,6 +199,7 @@ export default function ProductDetail() {
       await addToCart(product.id, quantity);
 
       setAdded(true);
+      setShowCartSheet(true);
 
       showToast(`Added ${quantity} × ${product.name} to cart`);
 
@@ -215,10 +218,6 @@ export default function ProductDetail() {
   if (loading) {
     return <ProductDetailSkeleton />;
   }
-
-  /* =========================================================
-     ERROR
-  ========================================================= */
 
   if (error || !product) {
     return (
@@ -287,6 +286,33 @@ export default function ProductDetail() {
           }
         }
 
+        @keyframes cart-sheet-backdrop {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes cart-sheet-rise {
+          from {
+            opacity: 0;
+            transform: translateY(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes cart-sheet-content {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
         .product-detail-fade {
           animation: product-detail-fade .7s ease-out both;
         }
@@ -299,18 +325,30 @@ export default function ProductDetail() {
           animation: product-detail-pulse 4s ease-in-out infinite;
         }
 
+        .cart-sheet-backdrop {
+          animation: cart-sheet-backdrop .22s ease-out both;
+        }
+
+        .cart-sheet-panel {
+          animation: cart-sheet-rise .46s cubic-bezier(.22, 1, .36, 1) both;
+          will-change: transform;
+        }
+
+        .cart-sheet-content {
+          animation: cart-sheet-content .35s .14s cubic-bezier(.22, 1, .36, 1) both;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .product-detail-fade,
           .product-detail-image,
-          .product-detail-pulse {
+          .product-detail-pulse,
+          .cart-sheet-backdrop,
+          .cart-sheet-panel,
+          .cart-sheet-content {
             animation: none !important;
           }
         }
       `}</style>
-
-      {/* =====================================================
-          BREADCRUMB
-      ===================================================== */}
 
       <div className="mx-auto max-w-6xl px-6 pt-7">
         <div className="flex items-center gap-2 text-[11px] text-stone">
@@ -339,22 +377,10 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* =====================================================
-          PRODUCT
-      ===================================================== */}
-
       <main className="mx-auto max-w-6xl px-6 pb-20 pt-7">
         <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-14 p-10">
-          {/* =================================================
-              GALLERY
-          ================================================= */}
-
           <div className="product-detail-fade">
-            {/* Main image */}
-
             <div className="group relative aspect-square overflow-hidden rounded-2xl border border-hairline bg-surface">
-              {/* Decorative background */}
-
               <div className="product-detail-pulse pointer-events-none absolute -right-16 -top-16 z-0 h-40 w-40 rounded-full bg-moss/[0.06] blur-2xl" />
 
               {images[activeImage]?.url ? (
@@ -749,15 +775,8 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
-
-        {/* =====================================================
-            REVIEWS
-        ===================================================== */}
-
         <section className="mt-20 border-t border-hairline pt-14">
           <div className="grid gap-12 lg:grid-cols-[260px_1fr]">
-            {/* Review summary */}
-
             <div>
               <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-moss">
                 Customer feedback
@@ -856,6 +875,57 @@ export default function ProductDetail() {
           </Link>
         </div>
       </main>
+
+      {showCartSheet && (
+        <div
+          className="cart-sheet-backdrop fixed inset-0 z-50 flex items-end bg-black/40"
+          onClick={() => setShowCartSheet(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cart-sheet-title"
+            className="cart-sheet-panel w-full rounded-t-3xl bg-white px-6 pb-8 pt-4 shadow-2xl sm:mx-auto sm:max-w-lg"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-hairline" />
+
+            <div className="cart-sheet-content flex items-start gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-moss-tint text-moss">
+                <Check size={20} strokeWidth={2} />
+              </div>
+              <div>
+                <h2
+                  id="cart-sheet-title"
+                  className="text-[18px] font-medium text-ink"
+                >
+                  Added to your cart
+                </h2>
+                <p className="mt-1 text-[13px] text-stone">
+                  {quantity} × {product.name}
+                </p>
+              </div>
+            </div>
+
+            <div className="cart-sheet-content mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setShowCartSheet(false)}
+                className="rounded-xl border border-hairline px-4 py-3 text-[13px] font-medium text-ink transition-all duration-200 hover:bg-paper active:scale-[0.98]"
+              >
+                Continue shopping
+              </button>
+              <Link
+                to="/checkout"
+                className="flex items-center justify-center gap-2 rounded-xl bg-moss px-4 py-3 text-[13px] font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-moss-deep active:translate-y-0 active:scale-[0.98]"
+              >
+                <ShoppingBag size={16} />
+                Go to checkout
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
