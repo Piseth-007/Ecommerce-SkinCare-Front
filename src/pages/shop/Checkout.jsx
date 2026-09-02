@@ -29,6 +29,7 @@ export default function Checkout() {
   const [paymentData, setPaymentData] = useState(null);
   const [showQrModal, setShowQrModal] = useState(false);
   const [checkingPayment, setCheckingPayment] = useState(false);
+  const [cancellingPayment, setCancellingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState("pending");
   const [secondsLeft, setSecondsLeft] = useState(null);
 
@@ -148,12 +149,6 @@ export default function Checkout() {
     setPlacing(true);
 
     try {
-      /*
-      |--------------------------------------------------------------
-      | STEP 1: Create Order
-      |--------------------------------------------------------------
-      */
-
       const orderResponse = await api.post("/orders", {
         address_id: selectedId,
       });
@@ -164,12 +159,6 @@ export default function Checkout() {
       if (!orderId) {
         throw new Error("Order ID was not returned from the server");
       }
-
-      /*
-      |--------------------------------------------------------------
-      | STEP 2: Generate Bakong KHQR Payment
-      |--------------------------------------------------------------
-      */
 
       const paymentResponse = await api.post(`/orders/${orderId}/payment`);
       const result = paymentResponse.data;
@@ -316,11 +305,6 @@ export default function Checkout() {
     return () => clearInterval(interval);
   }, [showQrModal, paymentData?.payment_id, paymentStatus]);
 
-  /*
-  |--------------------------------------------------------------------------
-  | Countdown Timer
-  |--------------------------------------------------------------------------
-  */
 
   useEffect(() => {
     if (
@@ -351,20 +335,35 @@ export default function Checkout() {
     return () => clearInterval(interval);
   }, [showQrModal, paymentData?.expires_at, paymentStatus]);
 
-  /*
-  |--------------------------------------------------------------------------
-  | Close Payment Modal
-  |--------------------------------------------------------------------------
-  */
 
-  const handleClosePayment = () => {
-    if (checkingPayment) return;
+  const handleClosePayment = async () => {
+    if (checkingPayment || cancellingPayment) return;
+
+    // A pending payment has already created an order and reserved its cart
+    // items. Cancel it before closing so the backend restores those items.
+    if (paymentData?.payment_id && paymentStatus !== "paid") {
+      setCancellingPayment(true);
+
+      try {
+        await api.post(`/payments/${paymentData.payment_id}/cancel`);
+        await refreshCart();
+      } catch (error) {
+        console.error("Payment cancellation error:", error);
+        showToast(
+          error.response?.data?.message ||
+            "Failed to cancel payment. Please try again.",
+          "error",
+        );
+        return;
+      } finally {
+        setCancellingPayment(false);
+      }
+    }
 
     setShowQrModal(false);
     setPaymentData(null);
     setPaymentStatus("pending");
     setSecondsLeft(null);
-
     paymentCompletedRef.current = false;
   };
 
@@ -381,12 +380,6 @@ export default function Checkout() {
       showToast("Failed to copy QR code", "error");
     }
   };
-
-  /*
-  |--------------------------------------------------------------------------
-  | Download QR Image (rendered client-side canvas -> PNG)
-  |--------------------------------------------------------------------------
-  */
 
   const handleDownloadQr = () => {
     const canvas = qrCanvasRef.current?.querySelector("canvas");
@@ -411,12 +404,6 @@ export default function Checkout() {
     const s = secs % 60;
     return `${m}:${String(s).padStart(2, "0")}`;
   };
-
-  /*
-  |--------------------------------------------------------------------------
-  | Render
-  |--------------------------------------------------------------------------
-  */
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-10">
@@ -663,7 +650,7 @@ export default function Checkout() {
               <button
                 type="button"
                 onClick={handleClosePayment}
-                disabled={checkingPayment}
+                disabled={checkingPayment || cancellingPayment}
                 className="p-2 hover:bg-paper rounded-lg transition-colors disabled:opacity-50"
               >
                 <X size={20} className="text-stone" />
@@ -770,10 +757,10 @@ export default function Checkout() {
             <button
               type="button"
               onClick={handleClosePayment}
-              disabled={checkingPayment}
+              disabled={checkingPayment || cancellingPayment}
               className="w-full py-2.5 px-4 text-ink text-[13px] font-medium rounded-lg border border-hairline hover:bg-paper transition-colors disabled:opacity-50"
             >
-              Close
+              {cancellingPayment ? "Cancelling payment..." : "Close"}
             </button>
           </div>
         </div>
