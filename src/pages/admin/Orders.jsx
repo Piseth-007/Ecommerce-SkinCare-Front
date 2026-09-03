@@ -96,6 +96,12 @@ export default function Orders() {
         status,
       });
 
+      if (res.data?.deleted) {
+        setOrders((prev) => prev.filter((order) => order.id !== orderId));
+        showToast(`Order #${orderId} was cancelled and removed`);
+        return;
+      }
+
       const updatedStatus = res.data?.status || status;
 
       setOrders((prev) =>

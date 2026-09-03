@@ -1,11 +1,6 @@
 import { Link } from "react-router-dom";
-import {
-  Star,
-  ImageOff,
-  ShoppingBag,
-  ArrowUpRight,
-  Truck,
-} from "lucide-react";
+import { Star, ImageOff, ShoppingBag, ArrowUpRight, Truck } from "lucide-react";
+import FavoriteButton from "./FavoriteButton";
 
 export default function ProductCard({ product }) {
   const image = product?.images?.[0]?.url;
@@ -16,9 +11,7 @@ export default function ProductCard({ product }) {
   const hasDiscount = discount > 0;
 
   // Assuming discount is a percentage.
-  const finalPrice = hasDiscount
-    ? price - (price * discount) / 100
-    : price;
+  const finalPrice = hasDiscount ? price - (price * discount) / 100 : price;
 
   const rating = Number(product?.reviews_avg_rating || 0);
   const reviewCount = Number(product?.reviews_count || 0);
@@ -36,14 +29,8 @@ export default function ProductCard({ product }) {
   return (
     <Link
       to={`/products/${product.id}`}
-      className={`group block ${
-        isOutOfStock ? "cursor-default" : ""
-      }`}
+      className={`group block ${isOutOfStock ? "cursor-default" : ""}`}
     >
-      {/* =====================================================
-          IMAGE
-      ===================================================== */}
-
       <div
         className="
           relative
@@ -60,7 +47,6 @@ export default function ProductCard({ product }) {
           group-hover:shadow-[0_18px_40px_rgba(63,88,67,0.10)]
         "
       >
-        {/* Image */}
 
         {image ? (
           <img
@@ -84,10 +70,7 @@ export default function ProductCard({ product }) {
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <div className="flex flex-col items-center gap-2 text-stone/50">
-              <ImageOff
-                size={27}
-                strokeWidth={1.25}
-              />
+              <ImageOff size={27} strokeWidth={1.25} />
 
               <span className="text-[10px] uppercase tracking-[0.12em]">
                 No image
@@ -113,6 +96,10 @@ export default function ProductCard({ product }) {
               Free delivery
             </span>
           )}
+        </div>
+
+        <div className="absolute right-3 top-3 z-10">
+          <FavoriteButton productId={product.id} size={16} />
         </div>
 
         {/* =================================================
@@ -193,9 +180,7 @@ export default function ProductCard({ product }) {
 
         <div className="mb-1.5 flex items-center justify-between gap-2">
           <p className="truncate text-[10px] font-medium uppercase tracking-[0.09em] text-stone">
-            {product.brand?.name ||
-              product.category?.name ||
-              "Skincare"}
+            {product.brand?.name || product.category?.name || "Skincare"}
           </p>
 
           {reviewCount > 0 && (
@@ -277,8 +262,7 @@ export default function ProductCard({ product }) {
             </div>
 
             <span className="text-[10px] text-stone">
-              {reviewCount}{" "}
-              {reviewCount === 1 ? "review" : "reviews"}
+              {reviewCount} {reviewCount === 1 ? "review" : "reviews"}
             </span>
           </div>
         )}
