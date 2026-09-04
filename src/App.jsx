@@ -17,6 +17,7 @@ import Footer from "./components/storefront/Footer";
 import Profile from "./pages/shop/Profile";
 import Favorites from "./pages/shop/Favorites";
 import { FavoritesProvider } from "./context/FavoriteContext";
+import Contacts from "./pages/admin/Contacts";
 
 const Home = lazy(() => import("./pages/shop/Home"));
 const ProductList = lazy(() => import("./pages/shop/ProductList"));
@@ -229,6 +230,7 @@ function App() {
                       />
                       <Route path="/admin/brands" element={<Brands />} />
                       <Route path="/admin/orders" element={<Orders />} />
+                      <Route path="/admin/contacts" element={<Contacts />} />
                       <Route path="/admin/reviews" element={<Reviews />} />
                     </Route>
                   </Routes>

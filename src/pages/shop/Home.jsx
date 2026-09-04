@@ -2525,9 +2525,6 @@ function TrustItem({ icon: Icon, label }) {
   );
 }
 
-/* =========================================================
-   ERROR STATE
-========================================================= */
 
 function ErrorState({ message, onRetry }) {
   const [retrying, setRetrying] = useState(false);
@@ -2589,13 +2586,10 @@ function ErrorState({ message, onRetry }) {
 
         {retrying ? "Retrying" : "Retry"}
       </button>
-    </div>
+    </div>  
   );
 }
 
-/* =========================================================
-   ARROW DOWN
-========================================================= */
 
 function ArrowDown() {
   return (

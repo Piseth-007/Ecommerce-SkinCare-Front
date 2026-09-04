@@ -11,6 +11,10 @@ import {
   Download,
   ChevronLeft,
   ChevronRight,
+  LayoutGrid,
+  List,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 import api from "../../api/axios";
@@ -41,13 +45,23 @@ export default function Products() {
   const [sortBy, setSortBy] = useState("newest");
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [viewMode, setViewMode] = useState(() => {
+    return localStorage.getItem("admin-products-view") || "card";
+  });
+
   const { showToast } = useContext(ToastContext);
   const { confirm } = useContext(ConfirmContext);
 
   const [modalState, setModalState] = useState(null);
+
   const openCreateModal = () => setModalState({ productId: null });
   const openEditModal = (id) => setModalState({ productId: id });
   const closeModal = () => setModalState(null);
+
+  const changeViewMode = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem("admin-products-view", mode);
+  };
 
   const loadProducts = async (showRefreshState = false) => {
     try {
@@ -81,7 +95,6 @@ export default function Products() {
     loadProducts(true);
   };
 
-  // Get unique categories
   const categories = useMemo(() => {
     const uniqueCategories = new Map();
 
@@ -96,7 +109,6 @@ export default function Products() {
     );
   }, [products]);
 
-  // Filter products
   const filteredProducts = useMemo(() => {
     const keyword = search.trim().toLowerCase();
 
@@ -132,7 +144,6 @@ export default function Products() {
     });
   }, [products, search, categoryFilter, stockFilter]);
 
-  // Sort products
   const sortedProducts = useMemo(() => {
     const sorted = [...filteredProducts];
 
@@ -178,12 +189,10 @@ export default function Products() {
     }
   }, [filteredProducts, sortBy]);
 
-  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, categoryFilter, stockFilter, sortBy]);
+  }, [search, categoryFilter, stockFilter, sortBy, viewMode]);
 
-  // Pagination
   const totalPages = Math.max(
     1,
     Math.ceil(sortedProducts.length / PRODUCTS_PER_PAGE),
@@ -201,7 +210,6 @@ export default function Products() {
     return sortedProducts.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
   }, [sortedProducts, currentPage]);
 
-  // Delete product
   const handleDelete = async (product) => {
     const confirmed = await confirm(
       `Delete "${product.name}"? This action cannot be undone.`,
@@ -231,7 +239,6 @@ export default function Products() {
     }
   };
 
-  // Clear filters
   const clearFilters = () => {
     setSearch("");
     setCategoryFilter("all");
@@ -240,7 +247,6 @@ export default function Products() {
     setCurrentPage(1);
   };
 
-  // Export CSV
   const exportProducts = () => {
     if (sortedProducts.length === 0) {
       showToast("No products available to export", "error");
@@ -304,7 +310,6 @@ export default function Products() {
     showToast("Products exported successfully");
   };
 
-  // Statistics
   const totalStock = useMemo(
     () =>
       products.reduce((sum, product) => sum + Number(product.stock || 0), 0),
@@ -352,7 +357,6 @@ export default function Products() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      {/* ================= HEADER ================= */}
       <div className="mb-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex items-center gap-3">
@@ -395,7 +399,6 @@ export default function Products() {
         </div>
       </div>
 
-      {/* ================= STATISTICS ================= */}
       {loading ? (
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
@@ -434,16 +437,14 @@ export default function Products() {
         </div>
       )}
 
-      {/* ================= SEARCH AND FILTERS ================= */}
       {!loading && products.length > 0 && (
-        <div className="mb-5 ">
+        <div className="mb-5">
           <div className="flex flex-col gap-3 xl:flex-row">
-            {/* Search */}
             <div className="relative flex-1">
               <Search
                 size={16}
                 strokeWidth={1.75}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone "
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone"
               />
 
               <input
@@ -465,7 +466,6 @@ export default function Products() {
               )}
             </div>
 
-            {/* Category Filter */}
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
@@ -480,7 +480,6 @@ export default function Products() {
               ))}
             </select>
 
-            {/* Stock Filter */}
             <select
               value={stockFilter}
               onChange={(e) => setStockFilter(e.target.value)}
@@ -493,7 +492,6 @@ export default function Products() {
               ))}
             </select>
 
-            {/* Sort */}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
@@ -508,7 +506,6 @@ export default function Products() {
               <option value="stock-high">Stock: High to Low</option>
             </select>
 
-            {/* Export */}
             <button
               type="button"
               onClick={exportProducts}
@@ -518,7 +515,22 @@ export default function Products() {
               Export
             </button>
 
-            {/* Clear */}
+            <div className="flex items-center rounded-lg border border-hairline bg-surface p-1">
+              <ViewButton
+                active={viewMode === "card"}
+                onClick={() => changeViewMode("card")}
+                icon={LayoutGrid}
+                label="Card view"
+              />
+
+              <ViewButton
+                active={viewMode === "table"}
+                onClick={() => changeViewMode("table")}
+                icon={List}
+                label="Table view"
+              />
+            </div>
+
             {hasActiveFilters && (
               <button
                 type="button"
@@ -530,7 +542,6 @@ export default function Products() {
             )}
           </div>
 
-          {/* Filter Result */}
           <div className="mt-3 flex flex-col gap-2 border-t border-hairline pt-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[12px] text-stone">
               Showing{" "}
@@ -557,7 +568,6 @@ export default function Products() {
         </div>
       )}
 
-      {/* ================= PRODUCT CONTENT ================= */}
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, index) => (
@@ -568,68 +578,36 @@ export default function Products() {
         <EmptyState onCreate={openCreateModal} />
       ) : sortedProducts.length === 0 ? (
         <SearchEmptyState onClear={clearFilters} />
+      ) : viewMode === "card" ? (
+        <CardView
+          products={paginatedProducts}
+          deletingId={deletingId}
+          onEdit={openEditModal}
+          onDelete={handleDelete}
+        />
       ) : (
-        <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {paginatedProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                isDeleting={deletingId === product.id}
-                onEdit={() => openEditModal(product.id)}
-                onDelete={() => handleDelete(product)}
-              />
-            ))}
-          </div>
-
-          {/* ================= PAGINATION ================= */}
-          {sortedProducts.length > PRODUCTS_PER_PAGE && (
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-[12px] text-stone">
-                Showing{" "}
-                <span className="font-medium text-ink">
-                  {startProduct}–{endProduct}
-                </span>{" "}
-                of {sortedProducts.length} products
-              </p>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCurrentPage((page) => Math.max(1, page - 1))
-                  }
-                  disabled={currentPage === 1}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline bg-surface text-stone transition-colors hover:bg-paper hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-
-                <span className="px-2 text-[12px] text-stone">
-                  Page{" "}
-                  <span className="font-medium text-ink">{currentPage}</span> of{" "}
-                  {totalPages}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCurrentPage((page) => Math.min(totalPages, page + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline bg-surface text-stone transition-colors hover:bg-paper hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
-                  aria-label="Next page"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
-        </>
+        <TableView
+          products={paginatedProducts}
+          deletingId={deletingId}
+          onEdit={openEditModal}
+          onDelete={handleDelete}
+        />
       )}
 
-      {/* ================= PRODUCT FORM MODAL ================= */}
+      {!loading && sortedProducts.length > PRODUCTS_PER_PAGE && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          startProduct={startProduct}
+          endProduct={endProduct}
+          totalProducts={sortedProducts.length}
+          onPrevious={() => setCurrentPage((page) => Math.max(1, page - 1))}
+          onNext={() =>
+            setCurrentPage((page) => Math.min(totalPages, page + 1))
+          }
+        />
+      )}
+
       {modalState && (
         <ProductFormModal
           productId={modalState.productId}
@@ -641,7 +619,247 @@ export default function Products() {
   );
 }
 
-/* ================= STAT CARD ================= */
+function ViewButton({ active, onClick, icon: Icon, label }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+        active
+          ? "bg-moss text-white"
+          : "text-stone hover:bg-paper hover:text-ink"
+      }`}
+    >
+      <Icon size={15} strokeWidth={1.75} />
+    </button>
+  );
+}
+
+function CardView({ products, deletingId, onEdit, onDelete }) {
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      {products.map((product) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          isDeleting={deletingId === product.id}
+          onEdit={() => onEdit(product.id)}
+          onDelete={() => onDelete(product)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function TableView({ products, deletingId, onEdit, onDelete }) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-hairline bg-surface">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[850px] text-left">
+          <thead>
+            <tr className="border-b border-hairline bg-paper/30">
+              <TableHead>Product</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Stock</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead align="right">Actions</TableHead>
+            </tr>
+          </thead>
+
+          <tbody>
+            {products.map((product) => (
+              <ProductTableRow
+                key={product.id}
+                product={product}
+                deleting={deletingId === product.id}
+                onEdit={() => onEdit(product.id)}
+                onDelete={() => onDelete(product)}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function ProductTableRow({ product, deleting, onEdit, onDelete }) {
+  const stock = Number(product.stock || 0);
+  const price = Number(product.price || 0);
+  const image = product.images?.[0]?.url;
+
+  const status =
+    stock === 0 ? "Out of Stock" : stock <= 5 ? "Low Stock" : "In Stock";
+
+  const statusClass =
+    stock === 0
+      ? "bg-clay-tint text-clay"
+      : stock <= 5
+        ? "bg-clay-tint text-clay"
+        : "bg-moss-tint text-moss";
+
+  return (
+    <tr className="border-b border-hairline transition-colors last:border-b-0 hover:bg-paper/40">
+      <td className="px-5 py-3.5">
+        <div className="flex items-center gap-3">
+          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-paper">
+            {image ? (
+              <img
+                src={image}
+                alt={product.name || "Product"}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <Package size={17} className="text-stone" strokeWidth={1.5} />
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0">
+            <p className="max-w-[220px] truncate text-[13.5px] font-medium text-ink">
+              {product.name || "Unnamed Product"}
+            </p>
+
+            <p className="mt-0.5 text-[11px] text-stone">#{product.id}</p>
+          </div>
+        </div>
+      </td>
+
+      <td className="px-5 py-3.5">
+        <span className="text-[12.5px] text-stone">
+          {product.category?.name || "Uncategorized"}
+        </span>
+      </td>
+
+      <td className="px-5 py-3.5">
+        <span className="font-mono text-[13px] font-medium text-ink">
+          ${price.toFixed(2)}
+        </span>
+      </td>
+
+      <td className="px-5 py-3.5">
+        <span
+          className={`font-mono text-[13px] font-medium ${
+            stock === 0 || stock <= 5 ? "text-clay" : "text-ink"
+          }`}
+        >
+          {stock}
+        </span>
+      </td>
+
+      <td className="px-5 py-3.5">
+        <span
+          className={`inline-flex rounded-md px-2 py-1 text-[10.5px] font-medium ${statusClass}`}
+        >
+          {status}
+        </span>
+      </td>
+
+      <td className="px-5 py-3.5">
+        <span className="text-[12px] text-stone">
+          {product.created_at
+            ? new Date(product.created_at).toLocaleDateString()
+            : "-"}
+        </span>
+      </td>
+
+      <td className="px-5 py-3.5">
+        <div className="flex justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-stone transition-colors hover:bg-moss-tint hover:text-moss"
+            title="Edit product"
+            aria-label="Edit product"
+          >
+            <Pencil size={14} strokeWidth={1.75} />
+          </button>
+
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={deleting}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-stone transition-colors hover:bg-clay-tint hover:text-clay disabled:cursor-not-allowed disabled:opacity-50"
+            title="Delete product"
+            aria-label="Delete product"
+          >
+            {deleting ? (
+              <RefreshCw size={14} className="animate-spin" />
+            ) : (
+              <Trash2 size={14} strokeWidth={1.75} />
+            )}
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function Pagination({
+  currentPage,
+  totalPages,
+  startProduct,
+  endProduct,
+  totalProducts,
+  onPrevious,
+  onNext,
+}) {
+  return (
+    <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-[12px] text-stone">
+        Showing{" "}
+        <span className="font-medium text-ink">
+          {startProduct}–{endProduct}
+        </span>{" "}
+        of {totalProducts} products
+      </p>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onPrevious}
+          disabled={currentPage === 1}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline bg-surface text-stone transition-colors hover:bg-paper hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label="Previous page"
+        >
+          <ChevronLeft size={16} />
+        </button>
+
+        <span className="px-2 text-[12px] text-stone">
+          Page <span className="font-medium text-ink">{currentPage}</span> of{" "}
+          {totalPages}
+        </span>
+
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={currentPage === totalPages}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline bg-surface text-stone transition-colors hover:bg-paper hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+          aria-label="Next page"
+        >
+          <ChevronRight size={16} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TableHead({ children, align = "left" }) {
+  return (
+    <th
+      className={`px-5 py-3 text-[10.5px] font-medium uppercase tracking-widest text-stone ${
+        align === "right" ? "text-right" : ""
+      }`}
+    >
+      {children}
+    </th>
+  );
+}
 
 function StatCard({ icon: Icon, label, value, valueClass = "text-ink" }) {
   return (

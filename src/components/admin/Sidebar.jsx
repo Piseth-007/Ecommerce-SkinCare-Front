@@ -10,6 +10,7 @@ import {
   MessageSquare,
   X,
   ChevronRight,
+  Mail,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 
@@ -19,9 +20,9 @@ const links = [
   { to: "/admin/categories", label: "Categories", icon: Tag },
   { to: "/admin/brands", label: "Brands", icon: Award },
   { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { to: "/admin/contacts", label: "Contacts", icon: Mail },
   { to: "/admin/reviews", label: "Reviews", icon: MessageSquare },
 ];
-
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const { user, logout } = useAuth();
 
@@ -76,7 +77,6 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-5">
-
           <div className="space-y-1.5">
             {links.map(({ to, label, icon: Icon }) => (
               <NavLink

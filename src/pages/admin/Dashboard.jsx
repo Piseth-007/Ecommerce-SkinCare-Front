@@ -42,8 +42,6 @@ const PIE_COLORS = {
   cancelled: "#C96A5B",
 };
 
-// Watches <html class="dark"> so chart colors (which Tailwind's token
-// system can't reach, since they're plain JS/SVG props) can react too.
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() =>
     document.documentElement.classList.contains("dark"),
@@ -56,7 +54,10 @@ function useDarkMode() {
       setIsDark(target.classList.contains("dark"));
     });
 
-    observer.observe(target, { attributes: true, attributeFilter: ["class"] });
+    observer.observe(target, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
 
     return () => observer.disconnect();
   }, []);
@@ -67,6 +68,7 @@ function useDarkMode() {
 export default function Dashboard() {
   const navigate = useNavigate();
   const isDark = useDarkMode();
+  const { showToast } = useContext(ToastContext);
 
   const [summary, setSummary] = useState(null);
   const [trend, setTrend] = useState([]);
@@ -75,8 +77,6 @@ export default function Dashboard() {
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [trendLoading, setTrendLoading] = useState(true);
 
-  const { showToast } = useContext(ToastContext);
-
   useEffect(() => {
     const loadSummary = async () => {
       try {
@@ -84,7 +84,9 @@ export default function Dashboard() {
 
         const res = await api.get("/admin/dashboard/summary");
 
-        setSummary(res.data);
+        const data = res.data?.data ?? res.data;
+
+        setSummary(data || null);
       } catch (err) {
         setSummary(null);
 
@@ -109,7 +111,9 @@ export default function Dashboard() {
           params: { range },
         });
 
-        setTrend(res.data || []);
+        const data = res.data?.data ?? res.data;
+
+        setTrend(Array.isArray(data) ? data : []);
       } catch (err) {
         setTrend([]);
 
@@ -152,11 +156,24 @@ export default function Dashboard() {
     0,
   );
 
-  const recentOrders = summary?.recent_orders || [];
-  const topProducts = summary?.top_products || [];
+  const recentOrders = useMemo(() => {
+    const orders =
+      summary?.recent_orders ?? summary?.recentOrders ?? summary?.orders ?? [];
 
-  // Chart palette — swaps for dark mode since Recharts props
-  // are plain JS values, not Tailwind classes.
+    return Array.isArray(orders) ? orders : [];
+  }, [summary]);
+
+  const topProducts = useMemo(() => {
+    const products =
+      summary?.top_products ??
+      summary?.topProducts ??
+      summary?.best_selling_products ??
+      summary?.bestSellingProducts ??
+      [];
+
+    return Array.isArray(products) ? products : [];
+  }, [summary]);
+
   const chartColors = isDark
     ? {
         grid: "rgba(255,255,255,0.1)",
@@ -179,7 +196,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-3">
-      {/* ================= HEADER ================= */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="font-display text-[28px] font-medium text-ink dark:text-white">
@@ -188,7 +204,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ================= STAT CARDS ================= */}
       {summaryLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
@@ -231,11 +246,8 @@ export default function Dashboard() {
         </div>
       ) : null}
 
-      {/* ================= CONTENT GRID ================= */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-        {/* LEFT SIDE */}
         <div className="space-y-6 xl:col-span-8">
-          {/* SALES OVERVIEW */}
           <div className="rounded-xl border border-hairline bg-surface p-5 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -343,7 +355,6 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* RECENT ORDERS */}
           <div className="overflow-hidden rounded-xl border border-hairline bg-surface dark:border-white/10 dark:bg-white/[0.03]">
             <div className="flex items-center justify-between border-b border-hairline px-5 py-5 dark:border-white/10 sm:px-6">
               <div>
@@ -367,12 +378,13 @@ export default function Dashboard() {
             </div>
 
             {recentOrders.length === 0 ? (
-              <div className="flex min-h-[220px] items-center justify-center px-6">
+              <div className="flex min-h-[180px] items-center justify-center px-6">
                 <div className="text-center">
                   <ShoppingBag
                     size={24}
                     className="mx-auto mb-3 text-stone/50 dark:text-stone-500/50"
                   />
+
                   <p className="text-[13px] text-stone dark:text-stone-400">
                     No recent orders available
                   </p>
@@ -393,59 +405,92 @@ export default function Dashboard() {
                   </thead>
 
                   <tbody>
-                    {recentOrders.slice(0, 5).map((order) => (
-                      <tr
-                        key={order.id}
-                        className="border-b border-hairline/70 last:border-0 dark:border-white/10"
-                      >
-                        <TableCell>
-                          <span className="font-mono text-[12px] text-ink dark:text-white">
-                            #{order.id}
-                          </span>
-                        </TableCell>
+                    {recentOrders.slice(0, 5).map((order) => {
+                      const customer =
+                        order.customer_name ||
+                        order.customerName ||
+                        order.user?.name ||
+                        order.customer?.name ||
+                        "Customer";
 
-                        <TableCell>
-                          <div>
-                            <p className="text-[12.5px] font-medium text-ink dark:text-white">
-                              {order.customer_name ||
-                                order.user?.name ||
-                                "Customer"}
-                            </p>
+                      const payment =
+                        order.payment_method ||
+                        order.paymentMethod ||
+                        order.payment?.method ||
+                        "—";
 
-                            {order.product_name && (
-                              <p className="mt-0.5 text-[11px] text-stone dark:text-stone-400">
-                                {order.product_name}
+                      const amount =
+                        order.total ??
+                        order.total_amount ??
+                        order.totalAmount ??
+                        order.amount ??
+                        order.grand_total ??
+                        0;
+
+                      const date =
+                        order.created_at ||
+                        order.createdAt ||
+                        order.date ||
+                        order.order_date;
+
+                      const status = order.status || "pending";
+
+                      return (
+                        <tr
+                          key={order.id}
+                          className="border-b border-hairline/70 last:border-0 dark:border-white/10"
+                        >
+                          <TableCell>
+                            <span className="font-mono text-[12px] text-ink dark:text-white">
+                              #{order.id}
+                            </span>
+                          </TableCell>
+
+                          <TableCell>
+                            <div className="min-w-0">
+                              <p className="max-w-[150px] truncate text-[12.5px] font-medium text-ink dark:text-white">
+                                {customer}
                               </p>
-                            )}
-                          </div>
-                        </TableCell>
 
-                        <TableCell>
-                          <span className="text-[12px] text-stone dark:text-stone-400">
-                            {formatDate(order.created_at || order.date)}
-                          </span>
-                        </TableCell>
+                              {order.items?.length > 0 && (
+                                <p className="mt-0.5 text-[11px] text-stone dark:text-stone-400">
+                                  {order.items.length}{" "}
+                                  {order.items.length === 1 ? "item" : "items"}
+                                </p>
+                              )}
 
-                        <TableCell>
-                          <span className="text-[12px] capitalize text-stone dark:text-stone-400">
-                            {order.payment_method || "—"}
-                          </span>
-                        </TableCell>
+                              {order.product_name && (
+                                <p className="mt-0.5 max-w-[150px] truncate text-[11px] text-stone dark:text-stone-400">
+                                  {order.product_name}
+                                </p>
+                              )}
+                            </div>
+                          </TableCell>
 
-                        <TableCell>
-                          <span className="font-mono text-[12px] text-ink dark:text-white">
-                            $
-                            {Number(order.total || order.amount || 0).toFixed(
-                              2,
-                            )}
-                          </span>
-                        </TableCell>
+                          <TableCell>
+                            <span className="text-[12px] text-stone dark:text-stone-400">
+                              {formatDate(date)}
+                            </span>
+                          </TableCell>
 
-                        <TableCell>
-                          <OrderStatus status={order.status || "pending"} />
-                        </TableCell>
-                      </tr>
-                    ))}
+                          <TableCell>
+                            <span className="text-[12px] capitalize text-stone dark:text-stone-400">
+                              {payment}
+                            </span>
+                          </TableCell>
+
+                          <TableCell>
+                            <span className="font-mono text-[12px] text-ink dark:text-white">
+                              ${Number(amount).toFixed(2)}
+                            </span>
+                          </TableCell>
+
+                          <TableCell>
+                            <OrderStatus status={status} />
+                          </TableCell>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -453,9 +498,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* RIGHT SIDE */}
         <div className="space-y-6 xl:col-span-4">
-          {/* ORDER BREAKDOWN */}
           <div className="rounded-xl border border-hairline bg-surface p-5 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -521,7 +564,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="space-y-3 border-t border-hairline pt-1.5 dark:border-white/10">
+                <div className="space-y-3 border-t border-hairline pt-4 dark:border-white/10">
                   {orderBreakdown.map((item) => (
                     <div
                       key={item.name}
@@ -548,7 +591,6 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* TOP SELLING PRODUCTS */}
           <div className="rounded-xl border border-hairline bg-surface p-5 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
             <div className="mb-5 flex items-center justify-between">
               <div>
@@ -564,55 +606,88 @@ export default function Dashboard() {
 
             {topProducts.length === 0 ? (
               <div className="flex min-h-[180px] items-center justify-center">
-                <p className="text-[13px] text-stone dark:text-stone-400">
-                  No product data available
-                </p>
+                <div className="text-center">
+                  <Package
+                    size={24}
+                    className="mx-auto mb-3 text-stone/50 dark:text-stone-500/50"
+                  />
+
+                  <p className="text-[13px] text-stone dark:text-stone-400">
+                    No product data available
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
-                {topProducts.slice(0, 4).map((product, index) => (
-                  <div
-                    key={product.id || index}
-                    className="flex items-center gap-3"
-                  >
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-hairline bg-paper dark:border-white/10 dark:bg-white/5">
-                      {product.image ? (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <Package
-                          size={18}
-                          className="text-stone/60 dark:text-stone-400/60"
-                        />
-                      )}
-                    </div>
+                {topProducts.slice(0, 4).map((product, index) => {
+                  const productName =
+                    product.name ||
+                    product.product_name ||
+                    product.product?.name ||
+                    "Product";
 
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[12.5px] font-medium text-ink dark:text-white">
-                        {product.name || "Product"}
-                      </p>
+                  const image =
+                    product.image ||
+                    product.image_url ||
+                    product.product_image ||
+                    product.product?.image ||
+                    product.product?.images?.[0]?.url ||
+                    product.product?.images?.[0]?.image_url ||
+                    null;
 
-                      <p className="mt-0.5 text-[11px] text-stone dark:text-stone-400">
-                        {Number(
-                          product.sales || product.quantity_sold || 0,
-                        ).toLocaleString()}{" "}
-                        sold
-                      </p>
-                    </div>
+                  const sold =
+                    product.sales ??
+                    product.quantity_sold ??
+                    product.total_sold ??
+                    product.quantity ??
+                    product.total_quantity ??
+                    0;
 
-                    <div className="text-right">
-                      <p className="font-mono text-[12px] text-ink dark:text-white">
-                        $
-                        {Number(product.revenue || product.price || 0).toFixed(
-                          2,
+                  const revenue =
+                    product.revenue ??
+                    product.total_revenue ??
+                    product.sales_amount ??
+                    product.product_revenue ??
+                    0;
+
+                  return (
+                    <div
+                      key={product.id || product.product_id || index}
+                      className="flex items-center gap-3"
+                    >
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-hairline bg-paper dark:border-white/10 dark:bg-white/5">
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={productName}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Package
+                            size={18}
+                            className="text-stone/60 dark:text-stone-400/60"
+                          />
                         )}
-                      </p>
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[12.5px] font-medium text-ink dark:text-white">
+                          {productName}
+                        </p>
+
+                        <p className="mt-0.5 text-[11px] text-stone dark:text-stone-400">
+                          {Number(sold).toLocaleString()} sold
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <p className="font-mono text-[12px] text-ink dark:text-white">
+                          ${Number(revenue).toFixed(2)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -630,8 +705,6 @@ export default function Dashboard() {
     </div>
   );
 }
-
-/* ================= COMPONENTS ================= */
 
 function DashboardStatCard({
   icon: Icon,
@@ -660,7 +733,7 @@ function DashboardStatCard({
         {value}
       </p>
 
-      <p className=" text-[12.5px] text-stone dark:text-stone-400">{label}</p>
+      <p className="text-[12.5px] text-stone dark:text-stone-400">{label}</p>
     </div>
   );
 }
@@ -691,7 +764,7 @@ function TableHeader({ children }) {
 }
 
 function TableCell({ children }) {
-  return <td className="px-5 py-4 sm:px-6">{children}</td>;
+  return <td className="px-5 py-3 sm:px-6">{children}</td>;
 }
 
 function OrderStatus({ status }) {
@@ -704,24 +777,42 @@ function OrderStatus({ status }) {
         "bg-moss-tint text-moss dark:bg-emerald-500/15 dark:text-emerald-400",
       label: "Completed",
     },
+
     delivered: {
       icon: CheckCircle2,
       className:
         "bg-moss-tint text-moss dark:bg-emerald-500/15 dark:text-emerald-400",
       label: "Delivered",
     },
+
     pending: {
       icon: Clock3,
       className:
         "bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-400",
       label: "Pending",
     },
+
     processing: {
       icon: Clock3,
       className:
         "bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400",
       label: "Processing",
     },
+
+    paid: {
+      icon: CheckCircle2,
+      className:
+        "bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400",
+      label: "Paid",
+    },
+
+    shipped: {
+      icon: Package,
+      className:
+        "bg-purple-50 text-purple-600 dark:bg-purple-500/15 dark:text-purple-400",
+      label: "Shipped",
+    },
+
     cancelled: {
       icon: XCircle,
       className: "bg-red-50 text-clay dark:bg-red-500/15 dark:text-red-400",
@@ -732,7 +823,7 @@ function OrderStatus({ status }) {
   const current = config[normalizedStatus] || {
     icon: Clock3,
     className: "bg-paper text-stone dark:bg-white/10 dark:text-stone-400",
-    label: status,
+    label: status || "Unknown",
   };
 
   const Icon = current.icon;
@@ -755,7 +846,7 @@ function ChartSkeleton() {
       <div className="absolute inset-x-0 top-[65%] h-px bg-hairline/40 dark:bg-white/10" />
       <div className="absolute inset-x-0 bottom-8 h-px bg-hairline/50 dark:bg-white/10" />
 
-      <div className="absolute left-8 right-2 bottom-8 top-5 flex items-end gap-2">
+      <div className="absolute bottom-8 left-8 right-2 top-5 flex items-end gap-2">
         <div className="h-[35%] flex-1 rounded-t-md bg-hairline/30 dark:bg-white/10" />
         <div className="h-[55%] flex-1 rounded-t-md bg-hairline/40 dark:bg-white/10" />
         <div className="h-[45%] flex-1 rounded-t-md bg-hairline/30 dark:bg-white/10" />
