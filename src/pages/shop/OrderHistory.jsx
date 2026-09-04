@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Star } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Star, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 import { useToast } from "../../context/useToast";
@@ -11,6 +11,41 @@ const statusStyles = {
   completed: "bg-moss-tint text-moss-deep",
   cancelled: "bg-clay-tint text-clay",
 };
+
+const ORDERS_CACHE_KEY = "botaniq-orderhistory-v1";
+const ORDERS_CACHE_TTL = 1000 * 60 * 5; // 5 minutes — orders change more than categories
+
+// ─────────────────────────────────────────────
+// Cache helpers
+// ─────────────────────────────────────────────
+function readOrdersCache() {
+  try {
+    const raw = sessionStorage.getItem(ORDERS_CACHE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.orders)) return null;
+
+    return {
+      orders: parsed.orders,
+      reviewableItems: parsed.reviewableItems || [],
+      cachedAt: Number(parsed.cachedAt) || 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeOrdersCache(orders, reviewableItems) {
+  try {
+    sessionStorage.setItem(
+      ORDERS_CACHE_KEY,
+      JSON.stringify({ orders, reviewableItems, cachedAt: Date.now() }),
+    );
+  } catch {
+    // Storage can fail in private browsing or when quota is exceeded.
+  }
+}
 
 // ─────────────────────────────────────────────
 // Order Skeleton
@@ -75,39 +110,156 @@ function OrderHistorySkeleton() {
 }
 
 // ─────────────────────────────────────────────
+// Error State
+// ─────────────────────────────────────────────
+function ErrorState({ message, onRetry }) {
+  const [retrying, setRetrying] = useState(false);
+
+  const handleRetry = async () => {
+    if (retrying) return;
+
+    setRetrying(true);
+
+    try {
+      await onRetry();
+    } finally {
+      setRetrying(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-xl border border-clay/15 bg-clay-tint px-4 py-3 text-[13px] text-clay">
+      <span>{message}</span>
+
+      <button
+        type="button"
+        onClick={handleRetry}
+        disabled={retrying}
+        className="flex shrink-0 items-center gap-1.5 font-medium underline underline-offset-2 transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <RefreshCw
+          size={13}
+          strokeWidth={1.75}
+          className={retrying ? "animate-spin" : ""}
+        />
+        {retrying ? "Retrying" : "Retry"}
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
 // Order History
 // ─────────────────────────────────────────────
 export default function OrderHistory() {
-  const [orders, setOrders] = useState([]);
-  const [reviewableItems, setReviewableItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cached = readOrdersCache();
+
+  const [orders, setOrders] = useState(cached?.orders ?? []);
+  const [reviewableItems, setReviewableItems] = useState(
+    cached?.reviewableItems ?? [],
+  );
+
+  const [loading, setLoading] = useState(!cached?.orders?.length);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(false);
   const [reviewForm, setReviewForm] = useState(null);
 
   const { showToast } = useToast();
   const navigate = useNavigate();
 
+  const mountedRef = useRef(false);
+  const controllerRef = useRef(null);
+  const hasDataRef = useRef((cached?.orders?.length ?? 0) > 0);
+
   useEffect(() => {
-    const loadOrders = async () => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      controllerRef.current?.abort();
+    };
+  }, []);
+
+  const loadOrders = useCallback(
+    async ({ silent = false } = {}) => {
+      controllerRef.current?.abort();
+
+      const controller = new AbortController();
+      controllerRef.current = controller;
+
+      if (silent || hasDataRef.current) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
+      setError(false);
+
       try {
         const [ordersRes, reviewableRes] = await Promise.all([
-          api.get("/orders"),
-          api.get("/reviewable-items"),
+          api.get("/orders", { signal: controller.signal }),
+          api.get("/reviewable-items", { signal: controller.signal }),
         ]);
 
-        setOrders(ordersRes.data);
-        setReviewableItems(reviewableRes.data);
+        if (!mountedRef.current) return;
+
+        const nextOrders = ordersRes.data || [];
+        const nextReviewable = reviewableRes.data || [];
+
+        hasDataRef.current = nextOrders.length > 0;
+
+        setOrders(nextOrders);
+        setReviewableItems(nextReviewable);
+
+        writeOrdersCache(nextOrders, nextReviewable);
       } catch (err) {
-        showToast(
-          err.response?.data?.message || "Failed to load orders",
-          "error",
-        );
+        if (err?.name === "CanceledError" || err?.name === "AbortError") return;
+        if (!mountedRef.current) return;
+
+        setError(true);
+
+        // Only toast on a foreground (non-silent) failure — a silent
+        // background refresh failing shouldn't interrupt the user.
+        if (!silent) {
+          showToast(
+            err.response?.data?.message || "Failed to load orders",
+            "error",
+          );
+        }
       } finally {
+        if (!mountedRef.current) return;
+
         setLoading(false);
+        setRefreshing(false);
       }
+    },
+    [showToast],
+  );
+
+  // Initial load: render cached data immediately, refresh quietly.
+  useEffect(() => {
+    loadOrders({ silent: hasDataRef.current });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Refresh when tab regains focus (e.g. after completing checkout
+  // in another tab, or coming back from an order detail page).
+  const lastVisibilityRefresh = useRef(0);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+
+      const now = Date.now();
+      if (now - lastVisibilityRefresh.current < 30 * 1000) return;
+
+      lastVisibilityRefresh.current = now;
+      loadOrders({ silent: true });
     };
 
-    loadOrders();
-  }, [showToast]);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
+  }, [loadOrders]);
 
   const isReviewable = (productId) =>
     reviewableItems.some((item) => item.product_id === productId);
@@ -128,9 +280,11 @@ export default function OrderHistory() {
 
       showToast("Review submitted — thank you!");
 
-      setReviewableItems((prev) =>
-        prev.filter((item) => item.id !== reviewForm.orderItemId),
-      );
+      setReviewableItems((prev) => {
+        const next = prev.filter((item) => item.id !== reviewForm.orderItemId);
+        writeOrdersCache(orders, next);
+        return next;
+      });
 
       setReviewForm(null);
     } catch (err) {
@@ -142,28 +296,49 @@ export default function OrderHistory() {
   };
 
   // ─────────────────────────────────────────────
-  // Loading
+  // Full-page skeleton — only when there's truly no
+  // cached data to show yet.
   // ─────────────────────────────────────────────
-  if (loading) {
+  const showFullSkeleton = loading && orders.length === 0;
+
+  if (showFullSkeleton) {
     return <OrderHistorySkeleton />;
   }
 
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
       {/* Header */}
-      <h1 className="font-display text-[28px] font-medium text-ink mb-8">
-        Your orders
-      </h1>
+      <div className="flex items-center gap-3 mb-8">
+        <h1 className="font-display text-[28px] font-medium text-ink">
+          Your orders
+        </h1>
 
-      {/* Empty */}
-      {orders.length === 0 ? (
+        {refreshing && (
+          <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.1em] text-stone/60">
+            <RefreshCw size={11} className="animate-spin" />
+            Updating
+          </span>
+        )}
+      </div>
+
+      {/* Error (only when there's nothing cached to fall back on) */}
+      {error && orders.length === 0 ? (
+        <ErrorState
+          message="Couldn't load your orders."
+          onRetry={() => loadOrders()}
+        />
+      ) : orders.length === 0 ? (
         <div className="py-16 text-center">
           <p className="text-[13.5px] text-stone">
             You haven't placed any orders yet.
           </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div
+          className={`space-y-4 transition-opacity duration-300 ${
+            refreshing ? "opacity-70" : "opacity-100"
+          }`}
+        >
           {orders.map((order) => (
             <div
               key={order.id}

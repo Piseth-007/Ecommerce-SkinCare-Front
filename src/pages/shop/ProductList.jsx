@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   SlidersHorizontal,
@@ -11,6 +11,7 @@ import {
   ChevronRight,
   PackageX,
   Check,
+  RefreshCw,
 } from "lucide-react";
 import api from "../../api/axios";
 import ProductCard from "../../components/storefront/ProductCart";
@@ -22,15 +23,71 @@ const SORTS = [
   { value: "rating", label: "Top Rated" },
 ];
 
+const FILTERS_CACHE_KEY = "botaniq-productlist-v1:filters";
+const FILTERS_CACHE_TTL = 1000 * 60 * 10; // 10 minutes
+
+/* =========================================================
+   FILTER DATA CACHE HELPERS
+   (categories / brands / skin types rarely change, so we
+   hydrate instantly from cache and refresh silently)
+========================================================= */
+
+function readFiltersCache() {
+  try {
+    const raw = sessionStorage.getItem(FILTERS_CACHE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed?.data) return null;
+
+    return {
+      data: parsed.data,
+      cachedAt: Number(parsed.cachedAt) || 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeFiltersCache(data) {
+  try {
+    sessionStorage.setItem(
+      FILTERS_CACHE_KEY,
+      JSON.stringify({ data, cachedAt: Date.now() }),
+    );
+  } catch {
+    // ignore quota / private-mode errors
+  }
+}
+
 export default function ProductList() {
   const [searchParams, setSearchParams] = useSearchParams();
+
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [brands, setBrands] = useState([]);
-  const [skinTypes, setSkinTypes] = useState([]);
   const [meta, setMeta] = useState(null);
+
+  // Filter option lists (categories/brands/skinTypes)
+  const cachedFilters = readFiltersCache();
+
+  const [categories, setCategories] = useState(
+    cachedFilters?.data?.categories ?? [],
+  );
+  const [brands, setBrands] = useState(cachedFilters?.data?.brands ?? []);
+  const [skinTypes, setSkinTypes] = useState(
+    cachedFilters?.data?.skinTypes ?? [],
+  );
+
+  // Product loading state, split into "first load" vs "refetching"
+  // so we don't flash a full skeleton on every filter tweak.
   const [loading, setLoading] = useState(true);
+  const [fetching, setFetching] = useState(false);
+  const [error, setError] = useState(false);
+
   const [showFilters, setShowFilters] = useState(false);
+
+  const mountedRef = useRef(false);
+  const productsControllerRef = useRef(null);
+  const hasLoadedOnceRef = useRef(false);
 
   const page = searchParams.get("page") || 1;
   const search = searchParams.get("search") || "";
@@ -42,23 +99,80 @@ export default function ProductList() {
   const maxPrice = searchParams.get("max_price") || "";
 
   useEffect(() => {
-    api
-      .get("/categories")
-      .then((res) => setCategories(res.data?.data || res.data || []));
-
-    api
-      .get("/brands")
-      .then((res) => setBrands(res.data?.data || res.data || []));
-
-    api
-      .get("/skin-types")
-      .then((res) => setSkinTypes(res.data?.data || res.data || []));
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      productsControllerRef.current?.abort();
+    };
   }, []);
 
+  /* =======================================================
+     FILTER OPTIONS
+     Hydrate from cache instantly, refresh in background,
+     skip the request entirely if cache is still fresh.
+  ======================================================= */
+
   useEffect(() => {
-    setLoading(true);
-    api
-      .get("/products", {
+    const isFresh =
+      cachedFilters && Date.now() - cachedFilters.cachedAt < FILTERS_CACHE_TTL;
+
+    if (isFresh) return;
+
+    let cancelled = false;
+
+    Promise.all([
+      api.get("/categories"),
+      api.get("/brands"),
+      api.get("/skin-types"),
+    ])
+      .then(([catRes, brandRes, skinRes]) => {
+        if (cancelled || !mountedRef.current) return;
+
+        const nextCategories = catRes.data?.data || catRes.data || [];
+        const nextBrands = brandRes.data?.data || brandRes.data || [];
+        const nextSkinTypes = skinRes.data?.data || skinRes.data || [];
+
+        setCategories(nextCategories);
+        setBrands(nextBrands);
+        setSkinTypes(nextSkinTypes);
+
+        writeFiltersCache({
+          categories: nextCategories,
+          brands: nextBrands,
+          skinTypes: nextSkinTypes,
+        });
+      })
+      .catch(() => {
+        // Filter sidebar failing silently is fine — it's not
+        // the primary content, and cached/empty state still works.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* =======================================================
+     PRODUCTS
+  ======================================================= */
+
+  const fetchProducts = useCallback(async () => {
+    productsControllerRef.current?.abort();
+
+    const controller = new AbortController();
+    productsControllerRef.current = controller;
+
+    if (hasLoadedOnceRef.current) {
+      setFetching(true);
+    } else {
+      setLoading(true);
+    }
+
+    setError(false);
+
+    try {
+      const res = await api.get("/products", {
         params: {
           page,
           search: search || undefined,
@@ -69,13 +183,39 @@ export default function ProductList() {
           min_price: minPrice || undefined,
           max_price: maxPrice || undefined,
         },
-      })
-      .then((res) => {
-        setProducts(res.data.data);
-        setMeta(res.data);
-      })
-      .finally(() => setLoading(false));
-  }, [page, search, categoryId, brandId, skinTypeId, sort, minPrice, maxPrice]);
+        signal: controller.signal,
+      });
+
+      if (!mountedRef.current) return;
+
+      setProducts(res.data.data || []);
+      setMeta(res.data);
+      hasLoadedOnceRef.current = true;
+    } catch (err) {
+      if (err?.name === "CanceledError" || err?.name === "AbortError") return;
+      if (!mountedRef.current) return;
+
+      setError(true);
+    } finally {
+      if (!mountedRef.current) return;
+
+      setLoading(false);
+      setFetching(false);
+    }
+  }, [
+    page,
+    search,
+    categoryId,
+    brandId,
+    skinTypeId,
+    sort,
+    minPrice,
+    maxPrice,
+  ]);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const updateParam = (key, value) => {
     const next = new URLSearchParams(searchParams);
@@ -137,6 +277,8 @@ export default function ProductList() {
     maxPrice,
   ].filter(Boolean).length;
 
+  const showFullSkeleton = loading && products.length === 0;
+
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
       {/* Header */}
@@ -169,11 +311,20 @@ export default function ProductList() {
         </button>
       </div>
 
-      {meta && (
-        <p className="text-[13px] text-stone mb-4">
-          {meta.total} {meta.total === 1 ? "product" : "products"}
-        </p>
-      )}
+      <div className="flex items-center gap-2 mb-4">
+        {meta && (
+          <p className="text-[13px] text-stone">
+            {meta.total} {meta.total === 1 ? "product" : "products"}
+          </p>
+        )}
+
+        {fetching && products.length > 0 && (
+          <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.1em] text-stone/60">
+            <RefreshCw size={11} className="animate-spin" />
+            Updating
+          </span>
+        )}
+      </div>
 
       {/* Active filter chips */}
       {activeChips.length > 0 && (
@@ -326,7 +477,7 @@ export default function ProductList() {
             </select>
           </div>
 
-          {loading ? (
+          {showFullSkeleton ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="animate-pulse">
@@ -335,6 +486,19 @@ export default function ProductList() {
                   <div className="h-3.5 w-3/4 bg-hairline/60 rounded" />
                 </div>
               ))}
+            </div>
+          ) : error && products.length === 0 ? (
+            <div className="flex flex-col items-center text-center py-20 border border-dashed border-clay/20 rounded-xl">
+              <p className="text-[14px] text-clay mb-3">
+                Couldn't load products.
+              </p>
+              <button
+                onClick={fetchProducts}
+                className="flex items-center gap-1.5 text-[13px] font-medium text-moss hover:text-moss-deep transition-colors"
+              >
+                <RefreshCw size={13} />
+                Retry
+              </button>
             </div>
           ) : products.length === 0 ? (
             <div className="flex flex-col items-center text-center py-20 border border-dashed border-hairline rounded-xl">
@@ -361,7 +525,13 @@ export default function ProductList() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-6 mb-10">
+              <div
+                className={`
+                  grid grid-cols-2 sm:grid-cols-3 gap-5 sm:gap-6 mb-10
+                  transition-opacity duration-300
+                  ${fetching ? "opacity-60" : "opacity-100"}
+                `}
+              >
                 {products.map((p) => (
                   <ProductCard key={p.id} product={p} />
                 ))}
