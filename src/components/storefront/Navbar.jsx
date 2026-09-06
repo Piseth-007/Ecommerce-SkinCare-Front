@@ -161,6 +161,18 @@ export default function Navbar() {
           }
         }
 
+        @keyframes navmega-in {
+          from {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
         @keyframes navmenu-in {
           from {
             opacity: 0;
@@ -191,6 +203,10 @@ export default function Navbar() {
 
         .navdrop-in {
           animation: navdrop-in .18s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .navmega-in {
+          animation: navmega-in .2s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
         .navmenu-in {
@@ -254,6 +270,7 @@ export default function Navbar() {
 
         @media (prefers-reduced-motion: reduce) {
           .navdrop-in,
+          .navmega-in,
           .navmenu-in,
           .nav-cart-badge {
             animation: none !important;
@@ -293,8 +310,10 @@ export default function Navbar() {
             Shop all
           </Link>
 
+          {/* Note: no "relative" wrapper here — the mega menu positions
+              itself against the <header>, which is already a positioned
+              element (sticky), so it can span the full viewport width. */}
           <div
-            className="relative"
             onMouseEnter={() => openDropdown("categories")}
             onMouseLeave={scheduleClose}
           >
@@ -315,19 +334,22 @@ export default function Navbar() {
             </Link>
 
             {openMenu === "categories" && (
-              <NavDropdown
+              <MegaMenu
+                title="Shop by category"
+                description="Explore every category, from cleansers to serums, curated for your skin."
                 items={categories}
                 emptyLabel="No categories yet"
                 buildHref={(item) => `/products?category_id=${item.id}`}
                 viewAllHref="/categories"
                 viewAllLabel="View all categories"
                 onNavigate={() => setOpenMenu(null)}
+                onMouseEnter={() => openDropdown("categories")}
+                onMouseLeave={scheduleClose}
               />
             )}
           </div>
 
           <div
-            className="relative"
             onMouseEnter={() => openDropdown("brands")}
             onMouseLeave={scheduleClose}
           >
@@ -348,13 +370,17 @@ export default function Navbar() {
             </Link>
 
             {openMenu === "brands" && (
-              <NavDropdown
+              <MegaMenu
+                title="Shop by brand"
+                description="Discover the brands behind your favorite formulas."
                 items={brands}
                 emptyLabel="No brands yet"
                 buildHref={(item) => `/products?brand_id=${item.id}`}
                 viewAllHref="/brands"
                 viewAllLabel="View all brands"
                 onNavigate={() => setOpenMenu(null)}
+                onMouseEnter={() => openDropdown("brands")}
+                onMouseLeave={scheduleClose}
                 showLogo
               />
             )}
@@ -719,74 +745,91 @@ export default function Navbar() {
   );
 }
 
-function NavDropdown({
+/* =========================================================
+   MEGA MENU — full viewport width, multi-column
+========================================================= */
+
+function MegaMenu({
+  title,
+  description,
   items,
   emptyLabel,
   buildHref,
   viewAllHref,
   viewAllLabel,
   onNavigate,
+  onMouseEnter,
+  onMouseLeave,
   showLogo = false,
 }) {
   const safeItems = Array.isArray(items) ? items : [];
 
   return (
     <div
-      className="navdrop-in absolute left-1/2 top-full z-30 mt-2 w-64 -translate-x-1/2 rounded-xl border border-hairline bg-surface shadow-[0_16px_40px_rgba(33,31,27,0.12)]"
-      style={{
-        transformOrigin: "top center",
-      }}
-      onMouseEnter={(e) => {
-        e.stopPropagation();
-      }}
+      className="navmega-in absolute left-0 top-full z-30 w-screen border-t border-hairline bg-surface shadow-[0_24px_60px_rgba(33,31,27,0.12)]"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
-      <div className="max-h-80 overflow-y-auto p-1.5">
-        {safeItems.length === 0 ? (
-          <p className="px-3 py-4 text-center text-[12.5px] text-stone">
-            {emptyLabel}
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 py-8 md:grid-cols-[1fr_260px]">
+        <div>
+          <p className="mb-4 text-[11px] font-medium uppercase tracking-[0.14em] text-stone">
+            {title}
           </p>
-        ) : (
-          safeItems.map((item) => (
-            <Link
-              key={item.id}
-              to={buildHref(item)}
-              onClick={onNavigate}
-              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium capitalize text-ink transition-colors hover:bg-paper hover:text-moss"
-            >
-              {showLogo && (
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-paper">
-                  {item.logo_url ? (
-                    <img
-                      src={item.logo_url}
-                      alt=""
-                      className="h-full w-full object-contain"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <span className="text-[10px] font-semibold text-moss">
-                      {item.name?.charAt(0).toUpperCase() || "B"}
+
+          {safeItems.length === 0 ? (
+            <p className="text-[13px] text-stone">{emptyLabel}</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-3 md:grid-cols-4">
+              {safeItems.map((item) => (
+                <Link
+                  key={item.id}
+                  to={buildHref(item)}
+                  onClick={onNavigate}
+                  className="flex items-center gap-2.5 rounded-lg px-2 py-2.5 text-[13.5px] font-medium capitalize text-ink transition-colors hover:bg-paper hover:text-moss"
+                >
+                  {showLogo && (
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md bg-paper">
+                      {item.logo_url ? (
+                        <img
+                          src={item.logo_url}
+                          alt=""
+                          className="h-full w-full object-contain"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span className="text-[10px] font-semibold text-moss">
+                          {item.name?.charAt(0).toUpperCase() || "B"}
+                        </span>
+                      )}
                     </span>
                   )}
-                </span>
-              )}
 
-              <span className="truncate">{item.name}</span>
-            </Link>
-          ))
-        )}
+                  <span className="truncate">{item.name}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-hairline bg-moss-tint p-5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-surface text-moss">
+            <Leaf size={16} strokeWidth={1.75} />
+          </span>
+
+          <p className="mt-4 font-display text-[17px] font-medium text-ink">
+            {description}
+          </p>
+
+          <Link
+            to={viewAllHref}
+            onClick={onNavigate}
+            className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-moss hover:text-moss-deep"
+          >
+            {viewAllLabel}
+            <ArrowRight size={13} strokeWidth={2} />
+          </Link>
+        </div>
       </div>
-
-      {safeItems.length > 0 && (
-        <Link
-          to={viewAllHref}
-          onClick={onNavigate}
-          className="flex items-center justify-between gap-2 rounded-b-xl border-t border-hairline bg-paper/50 px-3.5 py-2.5 text-[12px] font-medium text-moss transition-colors hover:bg-moss-tint"
-        >
-          {viewAllLabel}
-
-          <ArrowRight size={13} strokeWidth={2} />
-        </Link>
-      )}
     </div>
   );
 }

@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { useNavigate, useLocation, Navigate } from "react-router-dom";
-import { Leaf } from "lucide-react";
+import { useNavigate, useLocation, Navigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
+import AuthShell, {
+  AuthField,
+  authInputClass,
+} from "../../components/auth/AuthShell";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -37,73 +40,47 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-paper px-4">
-      <div className="w-full max-w-[380px]">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-10 h-10 rounded-full bg-moss-tint flex items-center justify-center mb-4">
-            <Leaf size={18} className="text-moss" strokeWidth={1.75} />
-          </div>
-          <h1 className="font-display text-[26px] font-medium text-ink">
-            Store admin
-          </h1>
-          <p className="text-[13.5px] text-stone mt-1">
-            Sign in to manage your store
-          </p>
+    <AuthShell
+      eyebrow="Store administration"
+      title="Keep the whole shop in view."
+      description="Sign in to manage products, orders, and the details behind every customer experience."
+      visualTitle="Everything, thoughtfully arranged."
+      visualCopy="A clear space for the work that keeps your store moving beautifully."
+      compact
+    >
+      <form onSubmit={handleSubmit} className="auth-form">
+        <AuthField label="Email">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={authInputClass}
+            placeholder="admin@example.com"
+            required
+          />
+        </AuthField>
+
+        <AuthField label="Password">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={authInputClass}
+            placeholder="Your admin password"
+            required
+          />
+        </AuthField>
+
+        <div className="auth-form-meta">
+          <Link to="/admin/forgot-password">Forgot admin password?</Link>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-surface border border-hairline rounded-2xl p-7 space-y-4 shadow-[0_1px_2px_rgba(33,31,27,0.04)]"
-        >
-          <Field label="Email">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={inputClass}
-              required
-            />
-          </Field>
+        {error && <p className="auth-alert">{error}</p>}
 
-          <Field label="Password">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={inputClass}
-              required
-            />
-          </Field>
-
-          {error && (
-            <p className="text-[13px] text-clay bg-clay-tint border border-clay/15 rounded-lg px-3.5 py-2.5">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-moss text-white text-[13.5px] font-medium hover:bg-moss-deep transition-colors disabled:opacity-50"
-          >
-            {loading ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-const inputClass =
-  "w-full px-3.5 py-2.5 rounded-lg border border-hairline bg-paper text-ink text-[14px] focus:outline-none focus:ring-2 focus:ring-moss/30 focus:border-moss transition-shadow";
-
-function Field({ label, children }) {
-  return (
-    <div>
-      <label className="block text-[12px] font-medium uppercase tracking-[0.08em] text-stone mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
+        <button type="submit" disabled={loading} className="auth-submit">
+          {loading ? "Signing in…" : "Sign in"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

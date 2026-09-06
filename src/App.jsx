@@ -37,6 +37,9 @@ const Contact = lazy(() => import("./pages/shop/Contact"));
 const Login = lazy(() => import("./pages/auth/Login"));
 const Register = lazy(() => import("./pages/auth/Register"));
 const AdminLogin = lazy(() => import("./pages/auth/AdminLogin"));
+const AdminForgotPassword = lazy(
+  () => import("./pages/auth/AdminForgotPassword"),
+);
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
@@ -152,39 +155,18 @@ function App() {
                     />
 
                     {/* Auth */}
-                    <Route
-                      path="/login"
-                      element={
-                        <StorefrontLayout>
-                          <Login />
-                        </StorefrontLayout>
-                      }
-                    />
-                    <Route
-                      path="/register"
-                      element={
-                        <StorefrontLayout>
-                          <Register />
-                        </StorefrontLayout>
-                      }
-                    />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
                     <Route
                       path="/forgot-password"
-                      element={
-                        <StorefrontLayout>
-                          <ForgotPassword />
-                        </StorefrontLayout>
-                      }
+                      element={<ForgotPassword />}
                     />
-                    <Route
-                      path="/reset-password"
-                      element={
-                        <StorefrontLayout>
-                          <ResetPassword />
-                        </StorefrontLayout>
-                      }
-                    />
+                    <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/admin/login" element={<AdminLogin />} />
+                    <Route
+                      path="/admin/forgot-password"
+                      element={<AdminForgotPassword />}
+                    />
 
                     {/* Storefront — requires login */}
                     <Route

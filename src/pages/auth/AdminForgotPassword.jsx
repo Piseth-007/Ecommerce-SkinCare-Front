@@ -7,21 +7,25 @@ import AuthShell, {
   authInputClass,
 } from "../../components/auth/AuthShell";
 
-export default function ForgotPassword() {
+export default function AdminForgotPassword() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     setError("");
     setLoading(true);
+
     try {
       await api.post("/forgot-password", { email });
       setSent(true);
-    } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong");
+    } catch (requestError) {
+      setError(
+        requestError.response?.data?.message ||
+          "We could not send a reset link right now.",
+      );
     } finally {
       setLoading(false);
     }
@@ -29,11 +33,12 @@ export default function ForgotPassword() {
 
   return (
     <AuthShell
-      eyebrow="Account recovery"
-      title="A fresh start is close."
-      description="Enter your email and we’ll send a secure link to reset your password."
-      visualTitle="Your routine is worth returning to."
-      visualCopy="We’ll help you get back to the products and rituals that make you feel at home in your skin."
+      eyebrow="Admin account recovery"
+      title="Get back to the work."
+      description="Enter your admin email and we’ll send a secure password reset link."
+      visualTitle="The details behind every order."
+      visualCopy="Reset your access and return to the calm, clear space that keeps your store moving."
+      compact
     >
       <div className="auth-form">
         {sent ? (
@@ -46,13 +51,13 @@ export default function ForgotPassword() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="auth-form">
-            <AuthField label="Email">
+            <AuthField label="Admin email">
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) => setEmail(event.target.value)}
                 className={authInputClass}
-                placeholder="you@example.com"
+                placeholder="admin@example.com"
                 required
               />
             </AuthField>
@@ -67,12 +72,7 @@ export default function ForgotPassword() {
       </div>
 
       <p className="auth-switch">
-        <Link
-          to="/login"
-          className="text-moss font-medium hover:text-moss-deep"
-        >
-          Back to sign in
-        </Link>
+        <Link to="/admin/login">Back to admin sign in</Link>
       </p>
     </AuthShell>
   );

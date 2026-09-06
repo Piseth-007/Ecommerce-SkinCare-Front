@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   Truck,
@@ -37,6 +38,29 @@ const INGREDIENTS = [
   "Vitamin C",
   "Panthenol",
 ];
+
+/* =========================================================
+   HERO MOTION CONFIG (only the hero uses framer-motion)
+========================================================= */
+
+const easeSmooth = [0.22, 1, 0.36, 1];
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const fadeUpSmall = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0 },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.12 },
+  },
+};
 
 /* =========================================================
    CACHE HELPERS
@@ -185,7 +209,7 @@ function useCachedResource({ cacheKey, fetcher, initialData = [] }) {
 }
 
 /* =========================================================
-   REVEAL HOOK
+   REVEAL HOOK (still used by trust / categories / journal / arrivals)
 ========================================================= */
 
 function useReveal(threshold = 0.12, fallbackMs = 1200) {
@@ -350,10 +374,9 @@ export default function Home() {
   const refreshing = refreshingProducts || refreshingCategories;
 
   /* =======================================================
-     REVEALS
+     REVEALS (trust / categories / journal / arrivals only —
+     hero no longer uses this, it animates on mount instead)
   ======================================================= */
-
-  const [heroRef, heroVisible] = useReveal(0.05, 500);
 
   const [trustRef, trustVisible] = useReveal(0.1, 700);
 
@@ -723,11 +746,10 @@ export default function Home() {
       </div>
 
       {/* ===================================================
-          HERO
+          HERO — framer-motion, everything else unchanged
       =================================================== */}
 
       <section
-        ref={heroRef}
         className="
           relative
           min-h-[680px]
@@ -864,19 +886,18 @@ export default function Home() {
               lg:grid-cols-[1.05fr_.95fr]
             "
           >
-            {/* HERO CONTENT */}
-            <div
-              className={`
-                max-w-xl
-                transition-all
-                duration-1000
-                ease-out
-                ${heroVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}
-              `}
+            {/* HERO CONTENT — framer-motion stagger */}
+            <motion.div
+              className="max-w-xl"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
             >
               {/* Eyebrow */}
-              <div
-                className={`
+              <motion.div
+                variants={fadeUpSmall}
+                transition={{ duration: 0.7, ease: easeSmooth }}
+                className="
                   mb-6
                   flex
                   items-center
@@ -886,72 +907,63 @@ export default function Home() {
                   uppercase
                   tracking-[0.16em]
                   text-moss
-                  transition-all
-                  duration-700
-                  ${heroVisible ? "translate-x-0 opacity-100" : "-translate-x-4 opacity-0"}
-                `}
+                "
               >
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss-tint">
                   <Leaf size={13} strokeWidth={1.8} />
                 </span>
                 Clean, effective skincare
-              </div>
+              </motion.div>
 
               {/* Heading */}
-              <h1
-                className={`
+              <motion.h1
+                variants={fadeUp}
+                transition={{ duration: 0.85, ease: easeSmooth }}
+                className="
                   font-display
                   text-[42px]
                   font-medium
                   leading-[1.05]
                   tracking-[-0.025em]
                   text-ink
-                  transition-all
-                  delay-100
-                  duration-1000
                   sm:text-[58px]
                   lg:text-[68px]
-                  ${heroVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}
-                `}
+                "
               >
                 Skincare that respects{" "}
                 <span className="relative italic text-moss-deep">
                   your skin's story.
                   <span className="absolute -bottom-1 left-0 h-px w-full origin-left bg-moss/30" />
                 </span>
-              </h1>
+              </motion.h1>
 
               {/* Description */}
-              <p
-                className={`
+              <motion.p
+                variants={fadeUp}
+                transition={{ duration: 0.85, ease: easeSmooth }}
+                className="
                   mt-7
                   max-w-md
                   text-[15.5px]
                   leading-relaxed
                   text-stone
-                  transition-all
-                  delay-200
-                  duration-1000
-                  ${heroVisible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}
-                `}
+                "
               >
                 Thoughtfully formulated products for every skin type,
                 thoughtfully selected for your everyday ritual.
-              </p>
+              </motion.p>
 
               {/* CTA */}
-              <div
-                className={`
+              <motion.div
+                variants={fadeUp}
+                transition={{ duration: 0.85, ease: easeSmooth }}
+                className="
                   mt-9
                   flex
                   flex-wrap
                   items-center
                   gap-3
-                  transition-all
-                  delay-300
-                  duration-1000
-                  ${heroVisible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0"}
-                `}
+                "
               >
                 <Link
                   to="/products"
@@ -1094,11 +1106,13 @@ export default function Home() {
                     "
                   />
                 </button>
-              </div>
+              </motion.div>
 
               {/* Trust */}
-              <div
-                className={`
+              <motion.div
+                variants={fadeUpSmall}
+                transition={{ duration: 0.7, ease: easeSmooth }}
+                className="
                   mt-9
                   flex
                   flex-wrap
@@ -1109,11 +1123,7 @@ export default function Home() {
                   uppercase
                   tracking-[0.08em]
                   text-stone
-                  transition-all
-                  delay-500
-                  duration-1000
-                  ${heroVisible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}
-                `}
+                "
               >
                 <span className="flex items-center gap-1.5">
                   <Sparkles size={12} className="text-moss" />
@@ -1126,21 +1136,15 @@ export default function Home() {
                   <Star size={12} className="text-moss" />
                   Customer loved
                 </span>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
-            {/* HERO VISUAL */}
-            <div
-              className={`
-                relative
-                hidden
-                h-[480px]
-                transition-all
-                delay-300
-                duration-1000
-                lg:block
-                ${heroVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"}
-              `}
+            {/* HERO VISUAL — framer-motion fade/slide in */}
+            <motion.div
+              className="relative hidden h-[480px] lg:block"
+              initial={{ opacity: 0, y: 32 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, ease: easeSmooth, delay: 0.25 }}
             >
               <div
                 className="
@@ -1331,7 +1335,7 @@ export default function Home() {
                   border-moss/10
                 "
               />
-            </div>
+            </motion.div>
           </div>
 
           {/* Discover */}
@@ -1364,10 +1368,6 @@ export default function Home() {
 
         {/* ===============================================
             HERO BACKGROUND WAVES
-            Three layered SVG waves, all scrolling
-            left -> right at different speeds, plus a
-            subtle vertical drift and a light shimmer
-            sweep to feel like real moving water.
         =============================================== */}
         <div
           className="
@@ -1402,7 +1402,7 @@ export default function Home() {
             />
           </svg>
 
-          {/* Mid layer — same direction, medium speed & opacity */}
+          {/* Mid layer */}
           <svg
             className="
               botaniq-wave-scroll-mid
@@ -1424,7 +1424,7 @@ export default function Home() {
             />
           </svg>
 
-          {/* Front layer — fastest, most visible, sits on the border */}
+          {/* Front layer */}
           <svg
             className="
               botaniq-wave-scroll-fast
@@ -1446,7 +1446,7 @@ export default function Home() {
             />
           </svg>
 
-          {/* Soft light sweep drifting across the waves */}
+          {/* Soft light sweep */}
           <div
             className="
               botaniq-wave-shimmer
@@ -1503,7 +1503,7 @@ export default function Home() {
       </section>
 
       {/* ===================================================
-          TRUST STRIP
+          TRUST STRIP — unchanged (useReveal + CSS)
       =================================================== */}
 
       <section
@@ -1542,7 +1542,7 @@ export default function Home() {
       </section>
 
       {/* ===================================================
-          CATEGORIES
+          CATEGORIES — unchanged (useReveal + CSS)
       =================================================== */}
 
       <section
@@ -1709,7 +1709,7 @@ export default function Home() {
       </section>
 
       {/* ===================================================
-          JOURNAL
+          JOURNAL — unchanged (useReveal + CSS)
       =================================================== */}
 
       <section
@@ -1803,7 +1803,7 @@ export default function Home() {
       </section>
 
       {/* ===================================================
-          NEW ARRIVALS
+          NEW ARRIVALS — unchanged (useReveal + CSS)
       =================================================== */}
 
       <section
@@ -1954,7 +1954,7 @@ export default function Home() {
       </section>
 
       {/* ===================================================
-          FINAL CTA
+          FINAL CTA — unchanged
       =================================================== */}
 
       <section
@@ -2049,7 +2049,7 @@ export default function Home() {
       </section>
 
       {/* ===================================================
-          BACK TO TOP
+          BACK TO TOP — unchanged
       =================================================== */}
 
       <button
@@ -2131,8 +2131,6 @@ function ProductSkeletonGrid() {
 function ProductSkeleton() {
   return (
     <div>
-      {/* Image */}
-
       <div
         className="
           botaniq-skeleton
@@ -2141,8 +2139,6 @@ function ProductSkeleton() {
           bg-hairline/20
         "
       />
-
-      {/* Brand */}
 
       <div
         className="
@@ -2154,8 +2150,6 @@ function ProductSkeleton() {
         "
       />
 
-      {/* Name */}
-
       <div
         className="
           botaniq-skeleton
@@ -2165,8 +2159,6 @@ function ProductSkeleton() {
           rounded
         "
       />
-
-      {/* Price */}
 
       <div
         className="
@@ -2242,8 +2234,6 @@ function CompactCategoryCard({ category, index }) {
         md:min-w-0
       "
     >
-      {/* Background */}
-
       <div
         className="
           pointer-events-none
@@ -2261,8 +2251,6 @@ function CompactCategoryCard({ category, index }) {
         "
       />
 
-      {/* Number */}
-
       <span
         className="
           relative
@@ -2276,8 +2264,6 @@ function CompactCategoryCard({ category, index }) {
       >
         {String(index + 1).padStart(2, "0")}
       </span>
-
-      {/* Icon */}
 
       <div
         className="
@@ -2301,8 +2287,6 @@ function CompactCategoryCard({ category, index }) {
       >
         <Leaf size={14} strokeWidth={1.5} className="text-moss" />
       </div>
-
-      {/* Content */}
 
       <div
         className="
@@ -2352,8 +2336,6 @@ function CompactCategoryCard({ category, index }) {
           <ArrowRight size={11} />
         </span>
       </div>
-
-      {/* Bottom line */}
 
       <div
         className="

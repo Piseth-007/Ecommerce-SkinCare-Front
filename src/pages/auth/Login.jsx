@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Leaf } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
+import AuthShell, {
+  AuthField,
+  authInputClass,
+} from "../../components/auth/AuthShell";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -28,94 +31,61 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-paper px-4 py-16">
-      <div className="w-full max-w-[380px]">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-10 h-10 rounded-full bg-moss-tint flex items-center justify-center mb-4">
-            <Leaf size={18} className="text-moss" strokeWidth={1.75} />
-          </div>
-          <h1 className="font-display text-[26px] font-medium text-ink">
-            Welcome back
-          </h1>
-          <p className="text-[13.5px] text-stone mt-1">
-            Sign in to your account
-          </p>
+    <AuthShell
+      eyebrow="Welcome back"
+      title="Your skin, your ritual."
+      description="Sign in to continue your thoughtful skincare routine."
+      visualTitle="Small rituals. Visible results."
+      visualCopy="Discover formulas made to make your everyday routine feel a little more considered."
+    >
+      <form onSubmit={handleSubmit} className="auth-form">
+        <AuthField label="Email">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={authInputClass}
+            placeholder="you@example.com"
+            required
+          />
+        </AuthField>
+
+        <AuthField label="Password">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={authInputClass}
+            placeholder="••••••••"
+            required
+          />
+        </AuthField>
+
+        <div className="auth-form-meta">
+          <Link
+            to="/forgot-password"
+            className="text-[12.5px] text-moss hover:text-moss-deep font-medium"
+          >
+            Forgot password?
+          </Link>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-surface border border-hairline rounded-2xl p-7 space-y-4 shadow-[0_1px_2px_rgba(33,31,27,0.04)]"
+        {error && <p className="auth-alert">{error}</p>}
+
+        <button type="submit" disabled={loading} className="auth-submit">
+          {loading ? "Signing in…" : "Sign in"}
+        </button>
+      </form>
+
+      <p className="auth-switch">
+        Don't have an account?{" "}
+        <Link
+          to="/register"
+          className="text-moss font-medium hover:text-moss-deep"
         >
-          <Field label="Email">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={inputClass}
-              placeholder="you@example.com"
-              required
-            />
-          </Field>
-
-          <Field label="Password">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={inputClass}
-              placeholder="••••••••"
-              required
-            />
-          </Field>
-
-          <div className="flex justify-end -mt-1">
-            <Link
-              to="/forgot-password"
-              className="text-[12.5px] text-moss hover:text-moss-deep font-medium"
-            >
-              Forgot password?
-            </Link>
-          </div>
-
-          {error && (
-            <p className="text-[13px] text-clay bg-clay-tint border border-clay/15 rounded-lg px-3.5 py-2.5">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-moss text-white text-[13.5px] font-medium hover:bg-moss-deep transition-colors disabled:opacity-50"
-          >
-            {loading ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
-
-        <p className="text-center text-[13px] text-stone mt-5">
-          Don't have an account?{" "}
-          <Link
-            to="/register"
-            className="text-moss font-medium hover:text-moss-deep"
-          >
-            Create one
-          </Link>
-        </p>
-      </div>
-    </div>
-  );
-}
-
-const inputClass =
-  "w-full px-3.5 py-2.5 rounded-lg border border-hairline bg-paper text-ink text-[14px] placeholder:text-stone/60 focus:outline-none focus:ring-2 focus:ring-moss/30 focus:border-moss transition-shadow";
-
-function Field({ label, children }) {
-  return (
-    <div>
-      <label className="block text-[12px] font-medium uppercase tracking-[0.08em] text-stone mb-2">
-        {label}
-      </label>
-      {children}
-    </div>
+          Create one
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

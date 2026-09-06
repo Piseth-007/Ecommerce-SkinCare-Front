@@ -13,6 +13,8 @@ A React and Vite storefront for browsing products, managing a shopping cart, com
 - Dynamic store profile details shared between the admin settings and storefront
 - Shared scroll-progress indicator and persisted light/dark theme
 - Protected administrator login and dashboard
+- Standalone animated split-layout authentication screens without storefront navigation
+- Admin password recovery from `/admin/forgot-password`
 - Admin CRUD screens for products, categories, brands, and products stock data
 - Admin order, review, contact, notification, and store-settings management
 - Toast notifications, confirmation dialogs, loading skeletons, and responsive layouts
@@ -25,6 +27,7 @@ A React and Vite storefront for browsing products, managing a shopping cart, com
 - Axios
 - Tailwind CSS
 - Lucide React
+- Framer Motion
 - Recharts
 - `qrcode.react`
 
@@ -96,6 +99,9 @@ Vite will print the local URL, normally `http://localhost:5173`.
 - `/forgot-password`
 - `/reset-password`
 - `/admin/login`
+- `/admin/forgot-password`
+
+Customer and admin authentication pages render without the storefront Navbar and Footer. Login, registration, and recovery screens share the responsive split image/form layout with animated transitions between auth states.
 
 ### Administration
 
