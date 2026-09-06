@@ -1,6 +1,6 @@
 # E-Commerce Frontend
 
-A React and Vite storefront for browsing products, managing a shopping cart, completing orders, and viewing order history. The project also includes a protected admin dashboard for managing products, categories, brands, orders, and reviews.
+A React and Vite storefront for browsing products, managing a shopping cart, completing orders, and viewing order history. The project also includes a protected admin dashboard for managing products, categories, brands, orders, reviews, contacts, and store settings.
 
 ## Features
 
@@ -8,10 +8,13 @@ A React and Vite storefront for browsing products, managing a shopping cart, com
 - Customer registration, login, logout, and password reset flows
 - Authenticated checkout with saved shipping addresses
 - Bakong KHQR payment flow with QR code generation and payment status checks
+- Payment success state with order-ticket loading feedback
 - Customer order history
+- Dynamic store profile details shared between the admin settings and storefront
+- Shared scroll-progress indicator and persisted light/dark theme
 - Protected administrator login and dashboard
-- Admin CRUD screens for products, categories, and brands
-- Admin order and review management
+- Admin CRUD screens for products, categories, brands, and products stock data
+- Admin order, review, contact, notification, and store-settings management
 - Toast notifications, confirmation dialogs, loading skeletons, and responsive layouts
 
 ## Tech Stack
@@ -31,7 +34,8 @@ A React and Vite storefront for browsing products, managing a shopping cart, com
 src/
 |- api/            Axios API client
 |- components/     Shared, storefront, and admin components
-|- context/        Authentication, cart, toast, and confirmation state
+|- context/        Authentication, cart, store settings, toast, and confirmation state
+|- hooks/          Shared resource and theme hooks
 `- pages/          Storefront, authentication, and admin pages
 ```
 
@@ -74,9 +78,16 @@ Vite will print the local URL, normally `http://localhost:5173`.
 - `/` - Home page
 - `/products` - Product listing
 - `/products/:id` - Product details
+- `/categories` - Category listing
+- `/brands` - Brand listing
+- `/about` - About page
+- `/contact` - Contact page using the configured store details
 - `/cart` - Shopping cart
 - `/checkout` - Authenticated checkout
 - `/orders` - Authenticated order history
+- `/orders/:id` - Authenticated order details
+- `/favorites` - Authenticated favorites
+- `/profile` - Authenticated profile
 
 ### Authentication
 
@@ -93,6 +104,18 @@ Vite will print the local URL, normally `http://localhost:5173`.
 - `/admin/categories`
 - `/admin/brands`
 - `/admin/orders`
+- `/admin/contacts`
 - `/admin/reviews`
+- `/admin/settings`
 
 Admin routes require an authenticated administrator account.
+
+## Store Settings
+
+Administrators can update the store name, logo, contact email, phone number, address, Bakong payment credentials, and notification preferences from `/admin/settings`.
+
+Store identity and contact information are exposed through the public `GET /api/settings/store` endpoint and displayed by the storefront Navbar, Footer, and Contact page. The storefront falls back to the default Botaniq details while the request is loading or unavailable.
+
+## Theme and Notifications
+
+The light/dark theme is controlled from the storefront or admin Navbar and persisted in `localStorage`. The admin sidebar and Navbar provide order notifications, contact/review counts, low-stock alerts, and direct links to the relevant records.
