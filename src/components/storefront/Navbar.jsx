@@ -23,12 +23,15 @@ import {
 import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/useCard";
 import { FavoritesContext } from "../../context/FavoriteContext";
+import { useStoreSettings } from "../../context/StoreSettingsContext";
+import { useTheme } from "../../hooks/useTheme";
 import api from "../../api/axios";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
   const { itemCount: favoriteCount } = useContext(FavoritesContext);
+  const store = useStoreSettings();
 
   const navigate = useNavigate();
 
@@ -37,30 +40,20 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("darkMode") === "true";
-  });
+  const { isDark: darkMode, toggleTheme } = useTheme();
 
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
-
   const [openMenu, setOpenMenu] = useState(null);
 
   const closeTimer = useRef(null);
 
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", darkMode);
-    localStorage.setItem("darkMode", String(darkMode));
-  }, [darkMode]);
-
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => !prev);
-  };
-
-  // --------------------------------------------------
-  // Fetch categories + brands
-  // --------------------------------------------------
+  const profileImage =
+    user?.profile_image ||
+    user?.avatar ||
+    user?.image_url ||
+    user?.profile?.image_url ||
+    null;
 
   useEffect(() => {
     let mounted = true;
@@ -105,19 +98,11 @@ export default function Navbar() {
     };
   }, []);
 
-  // --------------------------------------------------
-  // Cleanup dropdown timer
-  // --------------------------------------------------
-
   useEffect(() => {
     return () => {
       clearTimeout(closeTimer.current);
     };
   }, []);
-
-  // --------------------------------------------------
-  // Logout
-  // --------------------------------------------------
 
   const handleLogout = async () => {
     try {
@@ -130,10 +115,6 @@ export default function Navbar() {
       navigate("/");
     }
   };
-
-  // --------------------------------------------------
-  // Search
-  // --------------------------------------------------
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -148,10 +129,6 @@ export default function Navbar() {
     setSearchTerm("");
   };
 
-  // --------------------------------------------------
-  // Dropdown
-  // --------------------------------------------------
-
   const openDropdown = (key) => {
     clearTimeout(closeTimer.current);
     setOpenMenu(key);
@@ -164,10 +141,6 @@ export default function Navbar() {
       setOpenMenu(null);
     }, 150);
   };
-
-  // --------------------------------------------------
-  // Close mobile menu
-  // --------------------------------------------------
 
   const closeMobileMenu = () => {
     setMenuOpen(false);
@@ -269,6 +242,16 @@ export default function Navbar() {
             cubic-bezier(.22, 1, .36, 1) both;
         }
 
+        .nav-profile-image {
+          transition:
+            transform .2s cubic-bezier(.22, 1, .36, 1),
+            opacity .2s ease;
+        }
+
+        .nav-profile-image:hover {
+          transform: scale(1.04);
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .navdrop-in,
           .navmenu-in,
@@ -277,41 +260,38 @@ export default function Navbar() {
           }
 
           .nav-action,
-          .nav-link::after {
+          .nav-link::after,
+          .nav-profile-image {
             transition: none !important;
           }
         }
       `}</style>
 
-      {/* ==================================================
-          DESKTOP / TOP BAR
-      ================================================== */}
-
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-4">
-        {/* Logo */}
-
         <Link
           to="/"
           className="nav-action flex items-center gap-2 shrink-0"
           aria-label="Botaniq home"
         >
-          <Leaf size={18} className="text-moss" strokeWidth={1.75} />
+          {store.logo?.url ? (
+            <img
+              src={store.logo.url}
+              alt=""
+              className="h-7 w-7 rounded-md object-cover"
+            />
+          ) : (
+            <Leaf size={18} className="text-moss" strokeWidth={1.75} />
+          )}
 
           <span className="font-display text-[18px] font-medium text-ink">
-            Botaniq
+            {store.name || "Botaniq"}
           </span>
         </Link>
 
-        {/* Desktop navigation */}
-
         <nav className="hidden md:flex items-center justify-center gap-5 lg:gap-6 text-[13.5px] font-medium text-stone">
-          {/* Shop */}
-
           <Link to="/products" className="nav-link hover:text-ink">
             Shop all
           </Link>
-
-          {/* Categories */}
 
           <div
             className="relative"
@@ -346,8 +326,6 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Brands */}
-
           <div
             className="relative"
             onMouseEnter={() => openDropdown("brands")}
@@ -381,48 +359,21 @@ export default function Navbar() {
               />
             )}
           </div>
+
           <Link to="/products?sort=rating" className="nav-link hover:text-ink">
             Best rated
           </Link>
 
-          {/* About */}
-
           <Link to="/about" className="nav-link hover:text-ink">
             About
           </Link>
-
-          {/* Contact */}
 
           <Link to="/contact" className="nav-link hover:text-ink">
             Contact
           </Link>
         </nav>
 
-        {/* ==================================================
-            ACTIONS
-        ================================================== */}
-
         <div className="flex items-center gap-0.5 sm:gap-1 justify-self-end">
-          {/* Dark mode */}
-
-          <button
-            type="button"
-            onClick={toggleDarkMode}
-            className="nav-action flex h-9 w-9 items-center justify-center rounded-lg text-stone hover:bg-paper hover:text-ink"
-            aria-label={
-              darkMode ? "Switch to light mode" : "Switch to dark mode"
-            }
-            title={darkMode ? "Light mode" : "Dark mode"}
-          >
-            {darkMode ? (
-              <Sun size={17} strokeWidth={1.75} />
-            ) : (
-              <Moon size={17} strokeWidth={1.75} />
-            )}
-          </button>
-
-          {/* Search */}
-
           <div className="relative">
             <button
               type="button"
@@ -440,15 +391,11 @@ export default function Navbar() {
 
             {searchOpen && (
               <>
-                {/* Search backdrop */}
-
                 <div
                   className="fixed inset-0 z-10"
                   onClick={() => setSearchOpen(false)}
                   aria-hidden="true"
                 />
-
-                {/* Search form */}
 
                 <form
                   onSubmit={handleSearchSubmit}
@@ -475,8 +422,6 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Cart */}
-
           <Link
             to="/cart"
             className="nav-action relative p-2 rounded-lg text-stone hover:bg-paper hover:text-ink"
@@ -493,8 +438,6 @@ export default function Navbar() {
               </span>
             )}
           </Link>
-
-          {/* Favorites */}
 
           <Link
             to="/favorites"
@@ -515,46 +458,61 @@ export default function Navbar() {
             )}
           </Link>
 
-          {/* Account */}
-
           {user ? (
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setAccountOpen((v) => !v)}
-                className="nav-action p-2 rounded-lg text-stone hover:bg-paper hover:text-ink"
+                className="nav-action ml-1 flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-hairline bg-paper text-stone hover:text-ink"
                 aria-label="Account menu"
                 aria-expanded={accountOpen}
               >
-                <User size={18} strokeWidth={1.75} />
+                {profileImage ? (
+                  <img
+                    src={profileImage}
+                    alt={user.name || "Profile"}
+                    className="nav-profile-image h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <User size={18} strokeWidth={1.75} />
+                )}
               </button>
 
               {accountOpen && (
                 <>
-                  {/* Account backdrop */}
-
                   <div
                     className="fixed inset-0 z-10"
                     onClick={() => setAccountOpen(false)}
                     aria-hidden="true"
                   />
 
-                  {/* Account dropdown */}
-
                   <div className="navdrop-in absolute right-0 top-11 z-20 w-52 bg-surface border border-hairline rounded-xl shadow-[0_8px_24px_rgba(33,31,27,0.1)] py-1.5">
-                    {/* User info */}
-
                     <div className="px-3.5 py-2.5 border-b border-hairline">
-                      <p className="text-[13px] font-medium text-ink truncate">
-                        {user.name || "User"}
-                      </p>
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full border border-hairline bg-paper flex items-center justify-center">
+                          {profileImage ? (
+                            <img
+                              src={profileImage}
+                              alt={user.name || "Profile"}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <User size={15} strokeWidth={1.75} />
+                          )}
+                        </div>
 
-                      <p className="text-[12px] text-stone truncate">
-                        {user.email || ""}
-                      </p>
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-medium text-ink truncate">
+                            {user.name || "User"}
+                          </p>
+
+                          <p className="text-[12px] text-stone truncate">
+                            {user.email || ""}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-
-                    {/* Orders */}
 
                     <Link
                       to="/orders"
@@ -565,8 +523,6 @@ export default function Navbar() {
                       My orders
                     </Link>
 
-                    {/* Profile */}
-
                     <Link
                       to="/profile"
                       onClick={() => setAccountOpen(false)}
@@ -575,8 +531,6 @@ export default function Navbar() {
                       <User size={15} strokeWidth={1.75} />
                       My profile
                     </Link>
-
-                    {/* Logout */}
 
                     <button
                       type="button"
@@ -599,7 +553,21 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* Mobile menu button */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="nav-action flex h-9 w-9 items-center justify-center rounded-lg text-stone hover:bg-paper hover:text-ink"
+            aria-label={
+              darkMode ? "Switch to light mode" : "Switch to dark mode"
+            }
+            title={darkMode ? "Light mode" : "Dark mode"}
+          >
+            {darkMode ? (
+              <Sun size={17} strokeWidth={1.75} />
+            ) : (
+              <Moon size={17} strokeWidth={1.75} />
+            )}
+          </button>
 
           <button
             type="button"
@@ -617,17 +585,11 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* ==================================================
-          MOBILE MENU
-      ================================================== */}
-
       {menuOpen && (
         <nav
           className="navmenu-in md:hidden border-t border-hairline px-6 py-3 flex flex-col gap-1"
           aria-label="Mobile navigation"
         >
-          {/* Shop */}
-
           <Link
             to="/products"
             onClick={closeMobileMenu}
@@ -636,8 +598,6 @@ export default function Navbar() {
             <ShoppingBag size={15} strokeWidth={1.75} />
             Shop all
           </Link>
-
-          {/* Categories */}
 
           <Link
             to="/categories"
@@ -648,8 +608,6 @@ export default function Navbar() {
             Categories
           </Link>
 
-          {/* Brands */}
-
           <Link
             to="/brands"
             onClick={closeMobileMenu}
@@ -658,8 +616,6 @@ export default function Navbar() {
             <Award size={15} strokeWidth={1.75} />
             Brands
           </Link>
-
-          {/* Favorites */}
 
           <Link
             to="/favorites"
@@ -675,8 +631,6 @@ export default function Navbar() {
             )}
           </Link>
 
-          {/* Best rated */}
-
           <Link
             to="/products?sort=rating"
             onClick={closeMobileMenu}
@@ -685,8 +639,6 @@ export default function Navbar() {
             <Award size={15} strokeWidth={1.75} />
             Best rated
           </Link>
-
-          {/* About */}
 
           <Link
             to="/about"
@@ -697,8 +649,6 @@ export default function Navbar() {
             About
           </Link>
 
-          {/* Contact */}
-
           <Link
             to="/contact"
             onClick={closeMobileMenu}
@@ -708,10 +658,33 @@ export default function Navbar() {
             Contact
           </Link>
 
-          {/* Mobile account actions */}
-
           {user && (
             <div className="mt-2 pt-2 border-t border-hairline">
+              <div className="flex items-center gap-3 py-2.5 mb-1">
+                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full border border-hairline bg-paper flex items-center justify-center text-stone">
+                  {profileImage ? (
+                    <img
+                      src={profileImage}
+                      alt={user.name || "Profile"}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <User size={17} strokeWidth={1.75} />
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-[13px] font-medium text-ink truncate">
+                    {user.name || "User"}
+                  </p>
+
+                  <p className="text-[12px] text-stone truncate">
+                    {user.email || ""}
+                  </p>
+                </div>
+              </div>
+
               <Link
                 to="/orders"
                 onClick={closeMobileMenu}
@@ -745,10 +718,6 @@ export default function Navbar() {
     </header>
   );
 }
-
-// ======================================================
-// NAV DROPDOWN
-// ======================================================
 
 function NavDropdown({
   items,

@@ -5,10 +5,6 @@ import FavoriteButton from "./FavoriteButton";
 import FadeImage from "../common/FadeImage";
 
 export default function ProductCard({ product }) {
-  /* =========================================================
-     SAFE PRODUCT DATA
-  ========================================================= */
-
   const productId = product?.id;
 
   const image = product?.images?.[0]?.url || "";
@@ -17,10 +13,6 @@ export default function ProductCard({ product }) {
 
   const brandName =
     product?.brand?.name || product?.category?.name || "Skincare";
-
-  /* =========================================================
-     PRICE
-  ========================================================= */
 
   const price = Math.max(0, Number(product?.price) || 0);
 
@@ -32,10 +24,6 @@ export default function ProductCard({ product }) {
     ? Math.max(0, price - (price * discount) / 100)
     : price;
 
-  /* =========================================================
-     REVIEWS
-  ========================================================= */
-
   const rating = Math.min(
     5,
     Math.max(0, Number(product?.reviews_avg_rating) || 0),
@@ -43,25 +31,13 @@ export default function ProductCard({ product }) {
 
   const reviewCount = Math.max(0, Number(product?.reviews_count) || 0);
 
-  /* =========================================================
-     STOCK
-  ========================================================= */
-
   const stock = Math.max(0, Number(product?.stock) || 0);
 
   const isOutOfStock = stock <= 0;
 
   const isLowStock = stock > 0 && stock <= 5;
 
-  /* =========================================================
-     DELIVERY
-  ========================================================= */
-
   const hasFreeDelivery = Boolean(product?.free_delivery) && !isOutOfStock;
-
-  /* =========================================================
-     PRICE FORMAT
-  ========================================================= */
 
   const formatPrice = (value) =>
     new Intl.NumberFormat("en-US", {
@@ -69,15 +45,7 @@ export default function ProductCard({ product }) {
       maximumFractionDigits: 2,
     }).format(value);
 
-  /* =========================================================
-     RATING
-  ========================================================= */
-
   const roundedRating = Math.round(rating);
-
-  /* =========================================================
-     RENDER
-  ========================================================= */
 
   return (
     <article
@@ -87,10 +55,6 @@ export default function ProductCard({ product }) {
         ${isOutOfStock ? "opacity-[0.92]" : ""}
       `}
     >
-      {/* =====================================================
-          PRODUCT LINK
-      ===================================================== */}
-
       <Link
         to={`/products/${productId}`}
         aria-label={`View ${productName}`}
@@ -103,10 +67,6 @@ export default function ProductCard({ product }) {
           focus-visible:ring-offset-2
         "
       >
-        {/* ===================================================
-            IMAGE CONTAINER
-        =================================================== */}
-
         <div
           className="
             relative
@@ -124,10 +84,6 @@ export default function ProductCard({ product }) {
             group-hover:shadow-[0_18px_40px_rgba(63,88,67,0.10)]
           "
         >
-          {/* ================================================
-              IMAGE
-          ================================================= */}
-
           {image ? (
             <FadeImage
               src={image}
@@ -183,10 +139,6 @@ export default function ProductCard({ product }) {
             </div>
           )}
 
-          {/* ================================================
-              TOP LEFT BADGES
-          ================================================= */}
-
           {(hasDiscount || hasFreeDelivery) && (
             <div
               className="
@@ -200,13 +152,11 @@ export default function ProductCard({ product }) {
                 gap-1.5
               "
             >
-              {/* Discount */}
-
               {hasDiscount && !isOutOfStock && (
                 <span
                   className="
                       rounded-full
-                      bg-moss
+                      bg-red-600
                       px-2.5
                       py-1
                       text-[9px]
@@ -220,8 +170,6 @@ export default function ProductCard({ product }) {
                   -{discount}%
                 </span>
               )}
-
-              {/* Free delivery */}
 
               {hasFreeDelivery && (
                 <span
@@ -251,10 +199,6 @@ export default function ProductCard({ product }) {
             </div>
           )}
 
-          {/* ================================================
-              FAVORITE
-          ================================================= */}
-
           <div
             className="
               absolute
@@ -272,10 +216,6 @@ export default function ProductCard({ product }) {
           >
             <FavoriteButton productId={productId} size={16} />
           </div>
-
-          {/* ================================================
-              OUT OF STOCK
-          ================================================= */}
 
           {isOutOfStock && (
             <div
@@ -310,10 +250,6 @@ export default function ProductCard({ product }) {
               </span>
             </div>
           )}
-
-          {/* ================================================
-              QUICK VIEW
-          ================================================= */}
 
           {!isOutOfStock && (
             <div
@@ -354,10 +290,6 @@ export default function ProductCard({ product }) {
             </div>
           )}
 
-          {/* ================================================
-              IMAGE OVERLAY
-          ================================================= */}
-
           <div
             className="
               pointer-events-none
@@ -374,10 +306,6 @@ export default function ProductCard({ product }) {
               group-hover:opacity-100
             "
           />
-
-          {/* ================================================
-              BOTTOM GLOW
-          ================================================= */}
 
           {!isOutOfStock && (
             <div
@@ -402,15 +330,7 @@ export default function ProductCard({ product }) {
           )}
         </div>
 
-        {/* ===================================================
-            PRODUCT INFORMATION
-        ================================================= */}
-
         <div className="pt-3">
-          {/* ================================================
-              BRAND + RATING
-          ================================================= */}
-
           <div
             className="
               mb-1.5
@@ -466,10 +386,6 @@ export default function ProductCard({ product }) {
             )}
           </div>
 
-          {/* ================================================
-              PRODUCT NAME
-          ================================================= */}
-
           <h3
             className="
               truncate
@@ -485,10 +401,6 @@ export default function ProductCard({ product }) {
           >
             {productName}
           </h3>
-
-          {/* ================================================
-              PRICE + STOCK
-          ================================================= */}
 
           <div
             className="
@@ -551,10 +463,6 @@ export default function ProductCard({ product }) {
             )}
           </div>
 
-          {/* ================================================
-              RATING DETAILS
-          ================================================= */}
-
           {reviewCount > 0 && (
             <div
               className="
@@ -595,10 +503,6 @@ export default function ProductCard({ product }) {
               </span>
             </div>
           )}
-
-          {/* ================================================
-              INTERACTION LINE
-          ================================================= */}
 
           {!isOutOfStock && (
             <div
@@ -643,10 +547,6 @@ export default function ProductCard({ product }) {
               />
             </div>
           )}
-
-          {/* ================================================
-              OUT OF STOCK FOOTER
-          ================================================= */}
 
           {isOutOfStock && (
             <div

@@ -32,12 +32,14 @@ export default function ProductDetail() {
 
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [relatedLoading, setRelatedLoading] = useState(true);
   const [error, setError] = useState(false);
 
   const [adding, setAdding] = useState(false);
@@ -45,10 +47,6 @@ export default function ProductDetail() {
   const [showCartSheet, setShowCartSheet] = useState(false);
 
   const [liked, setLiked] = useState(false);
-
-  /* =========================================================
-     LOAD PRODUCT
-  ========================================================= */
 
   useEffect(() => {
     let mounted = true;
@@ -70,11 +68,13 @@ export default function ProductDetail() {
         const response = await api.get(`/products/${id}`);
 
         if (mounted) {
-          setProduct(response.data);
+          const data = response.data?.data || response.data;
+          setProduct(data);
         }
       } catch {
         if (mounted) {
           setError(true);
+          setProduct(null);
         }
       } finally {
         if (mounted) {
@@ -100,7 +100,8 @@ export default function ProductDetail() {
         const response = await api.get(`/products/${id}/reviews`);
 
         if (mounted) {
-          setReviews(response.data || []);
+          const data = response.data?.data || response.data || [];
+          setReviews(Array.isArray(data) ? data : []);
         }
       } catch {
         if (mounted) {
@@ -120,8 +121,89 @@ export default function ProductDetail() {
     };
   }, [id]);
 
-  const images = product?.images || [];
-  const skinTypes = product?.skin_types || [];
+  useEffect(() => {
+    let mounted = true;
+
+    const loadRelatedProducts = async () => {
+      if (!product?.id) {
+        setRelatedProducts([]);
+        setRelatedLoading(false);
+        return;
+      }
+
+      const categoryId = product.category_id ?? product.category?.id ?? null;
+
+      if (categoryId === null || categoryId === undefined) {
+        setRelatedProducts([]);
+        setRelatedLoading(false);
+        return;
+      }
+
+      setRelatedLoading(true);
+
+      try {
+        const response = await api.get("/products");
+
+        const data = response.data?.data || response.data || [];
+        const products = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+            ? data.data
+            : [];
+
+        const currentProductId = String(product.id);
+        const currentCategoryId = String(categoryId);
+
+        const matchingProducts = products.filter((item) => {
+          const itemCategoryId = item.category_id ?? item.category?.id ?? null;
+
+          if (itemCategoryId === null || itemCategoryId === undefined) {
+            return false;
+          }
+
+          return (
+            String(itemCategoryId) === currentCategoryId &&
+            String(item.id) !== currentProductId
+          );
+        });
+
+        const shuffled = [...matchingProducts];
+
+        for (let index = shuffled.length - 1; index > 0; index -= 1) {
+          const randomIndex = Math.floor(Math.random() * (index + 1));
+
+          [shuffled[index], shuffled[randomIndex]] = [
+            shuffled[randomIndex],
+            shuffled[index],
+          ];
+        }
+
+        if (mounted) {
+          setRelatedProducts(shuffled.slice(0, 4));
+        }
+      } catch {
+        if (mounted) {
+          setRelatedProducts([]);
+        }
+      } finally {
+        if (mounted) {
+          setRelatedLoading(false);
+        }
+      }
+    };
+
+    loadRelatedProducts();
+
+    return () => {
+      mounted = false;
+    };
+  }, [product]);
+
+  const images = Array.isArray(product?.images) ? product.images : [];
+
+  const skinTypes = Array.isArray(product?.skin_types)
+    ? product.skin_types
+    : [];
 
   const price = Number(product?.price || 0);
   const discount = Number(product?.discount || 0);
@@ -135,7 +217,9 @@ export default function ProductDetail() {
   const isLowStock = stock > 0 && stock <= 5;
 
   const finalPrice = useMemo(() => {
-    if (!hasDiscount) return price;
+    if (!hasDiscount) {
+      return price;
+    }
 
     return price - (price * discount) / 100;
   }, [price, discount, hasDiscount]);
@@ -148,12 +232,22 @@ export default function ProductDetail() {
       maximumFractionDigits: 2,
     }).format(value);
 
-  /* =========================================================
-     IMAGE NAVIGATION
-  ========================================================= */
+  const getImageUrl = (image) => {
+    if (!image) {
+      return null;
+    }
+
+    if (typeof image === "string") {
+      return image;
+    }
+
+    return image.url || image.image_url || image.path || null;
+  };
 
   const nextImage = () => {
-    if (images.length <= 1) return;
+    if (images.length <= 1) {
+      return;
+    }
 
     setActiveImage((current) =>
       current === images.length - 1 ? 0 : current + 1,
@@ -161,16 +255,14 @@ export default function ProductDetail() {
   };
 
   const previousImage = () => {
-    if (images.length <= 1) return;
+    if (images.length <= 1) {
+      return;
+    }
 
     setActiveImage((current) =>
       current === 0 ? images.length - 1 : current - 1,
     );
   };
-
-  /* =========================================================
-     QUANTITY
-  ========================================================= */
 
   const decreaseQuantity = () => {
     setQuantity((current) => Math.max(1, current - 1));
@@ -180,18 +272,15 @@ export default function ProductDetail() {
     setQuantity((current) => Math.min(stock, current + 1));
   };
 
-  /* =========================================================
-     ADD TO CART
-  ========================================================= */
-
   const handleAddToCart = async () => {
     if (!user) {
       showToast("Please sign in to add items to your cart", "error");
-
       return;
     }
 
-    if (!product || isOutOfStock || adding) return;
+    if (!product || isOutOfStock || adding) {
+      return;
+    }
 
     setAdding(true);
 
@@ -215,6 +304,7 @@ export default function ProductDetail() {
       setAdding(false);
     }
   };
+
   if (loading) {
     return <ProductDetailSkeleton />;
   }
@@ -246,6 +336,8 @@ export default function ProductDetail() {
       </div>
     );
   }
+
+  const categoryId = product.category_id ?? product.category?.id ?? null;
 
   return (
     <div className="overflow-hidden bg-paper text-ink">
@@ -287,8 +379,13 @@ export default function ProductDetail() {
         }
 
         @keyframes cart-sheet-backdrop {
-          from { opacity: 0; }
-          to { opacity: 1; }
+          from {
+            opacity: 0;
+          }
+
+          to {
+            opacity: 1;
+          }
         }
 
         @keyframes cart-sheet-rise {
@@ -296,6 +393,7 @@ export default function ProductDetail() {
             opacity: 0;
             transform: translateY(100%);
           }
+
           to {
             opacity: 1;
             transform: translateY(0);
@@ -307,6 +405,7 @@ export default function ProductDetail() {
             opacity: 0;
             transform: translateY(10px);
           }
+
           to {
             opacity: 1;
             transform: translateY(0);
@@ -358,10 +457,10 @@ export default function ProductDetail() {
 
           <span className="text-hairline">/</span>
 
-          {product.category?.name && (
+          {product.category?.name && categoryId && (
             <>
               <Link
-                to={`/products?category_id=${product.category.id}`}
+                to={`/products?category_id=${categoryId}`}
                 className="capitalize transition-colors hover:text-moss"
               >
                 {product.category.name}
@@ -378,15 +477,15 @@ export default function ProductDetail() {
       </div>
 
       <main className="mx-auto max-w-6xl px-6 pb-20 pt-7">
-        <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-14 p-10">
+        <div className="grid items-start gap-10 p-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
           <div className="product-detail-fade">
             <div className="group relative aspect-square overflow-hidden rounded-2xl border border-hairline bg-surface">
               <div className="product-detail-pulse pointer-events-none absolute -right-16 -top-16 z-0 h-40 w-40 rounded-full bg-moss/[0.06] blur-2xl" />
 
-              {images[activeImage]?.url ? (
+              {getImageUrl(images[activeImage]) ? (
                 <img
-                  key={images[activeImage].url}
-                  src={images[activeImage].url}
+                  key={getImageUrl(images[activeImage])}
+                  src={getImageUrl(images[activeImage])}
                   alt={product.name}
                   className="product-detail-image relative z-10 h-full w-full object-cover"
                 />
@@ -402,15 +501,11 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* Sale badge */}
-
               {hasDiscount && !isOutOfStock && (
                 <span className="absolute left-4 top-4 z-20 rounded-full bg-moss px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.08em] text-white shadow-sm">
                   -{discount}%
                 </span>
               )}
-
-              {/* Free delivery */}
 
               {product.free_delivery && !isOutOfStock && (
                 <span className="absolute right-4 top-4 z-20 flex items-center gap-1.5 rounded-full border border-white/70 bg-white/85 px-3 py-1.5 text-[9px] font-medium uppercase tracking-[0.06em] text-moss backdrop-blur-md">
@@ -419,8 +514,6 @@ export default function ProductDetail() {
                 </span>
               )}
 
-              {/* Out of stock */}
-
               {isOutOfStock && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-paper/30 backdrop-blur-[2px]">
                   <span className="rounded-full border border-hairline bg-white/90 px-5 py-2.5 text-[10px] font-medium uppercase tracking-[0.12em] text-stone shadow-sm">
@@ -428,8 +521,6 @@ export default function ProductDetail() {
                   </span>
                 </div>
               )}
-
-              {/* Previous */}
 
               {images.length > 1 && (
                 <>
@@ -442,8 +533,6 @@ export default function ProductDetail() {
                     <ChevronLeft size={17} />
                   </button>
 
-                  {/* Next */}
-
                   <button
                     type="button"
                     onClick={nextImage}
@@ -455,8 +544,6 @@ export default function ProductDetail() {
                 </>
               )}
 
-              {/* Image counter */}
-
               {images.length > 1 && (
                 <div className="absolute bottom-4 right-4 z-20 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-[9px] font-mono text-stone backdrop-blur-md">
                   {activeImage + 1} / {images.length}
@@ -464,51 +551,49 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* =================================================
-                THUMBNAILS
-            ================================================= */}
-
             {images.length > 1 && (
               <div className="scrollbar-hide mt-3 flex gap-2 overflow-x-auto">
-                {images.map((image, index) => (
-                  <button
-                    key={image.public_id || image.url || index}
-                    type="button"
-                    onClick={() => setActiveImage(index)}
-                    className={`relative h-[74px] w-[74px] shrink-0 overflow-hidden rounded-xl border transition-all duration-300 ${
-                      index === activeImage
-                        ? "border-moss shadow-[0_6px_20px_rgba(63,88,67,0.12)]"
-                        : "border-hairline opacity-65 hover:border-moss/30 hover:opacity-100"
-                    }`}
-                  >
-                    <img
-                      src={image.url}
-                      alt=""
-                      className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                    />
+                {images.map((image, index) => {
+                  const imageUrl = getImageUrl(image);
 
-                    {index === activeImage && (
-                      <span className="absolute inset-0 border-2 border-moss/20" />
-                    )}
-                  </button>
-                ))}
+                  return (
+                    <button
+                      key={image.public_id || image.id || imageUrl || index}
+                      type="button"
+                      onClick={() => setActiveImage(index)}
+                      className={`relative h-[74px] w-[74px] shrink-0 overflow-hidden rounded-xl border transition-all duration-300 ${
+                        index === activeImage
+                          ? "border-moss shadow-[0_6px_20px_rgba(63,88,67,0.12)]"
+                          : "border-hairline opacity-65 hover:border-moss/30 hover:opacity-100"
+                      }`}
+                    >
+                      {imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt=""
+                          className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-stone">
+                          <ImageOff size={17} />
+                        </div>
+                      )}
+
+                      {index === activeImage && (
+                        <span className="absolute inset-0 border-2 border-moss/20" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
 
-          {/* =================================================
-              PRODUCT INFO
-          ================================================= */}
-
           <div className="product-detail-fade lg:sticky lg:top-24">
-            {/* Brand */}
-
             <div className="flex items-center justify-between gap-4">
               <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-moss">
                 {product.brand?.name || product.category?.name || "Skincare"}
               </p>
-
-              {/* Wishlist */}
 
               <button
                 type="button"
@@ -528,21 +613,15 @@ export default function ProductDetail() {
               </button>
             </div>
 
-            {/* Category */}
-
             {product.category?.name && (
               <p className="mt-2 text-[10px] uppercase tracking-[0.1em] text-stone">
                 {product.category.name}
               </p>
             )}
 
-            {/* Title */}
-
             <h1 className="mt-3 font-display text-[32px] font-medium leading-[1.08] tracking-[-0.02em] text-ink sm:text-[38px]">
               {product.name}
             </h1>
-
-            {/* Rating */}
 
             {reviewCount > 0 ? (
               <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -576,11 +655,7 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* Divider */}
-
             <div className="my-6 h-px bg-hairline" />
-
-            {/* Price */}
 
             <div className="flex items-baseline gap-3">
               <span className="font-mono text-[26px] font-medium text-ink">
@@ -600,17 +675,11 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Description */}
-
             {product.description && (
               <p className="mt-6 text-[14px] leading-[1.8] text-stone">
                 {product.description}
               </p>
             )}
-
-            {/* =================================================
-                SKIN TYPES
-            ================================================= */}
 
             {skinTypes.length > 0 && (
               <div className="mt-6">
@@ -621,20 +690,16 @@ export default function ProductDetail() {
                 <div className="flex flex-wrap gap-2">
                   {skinTypes.map((skinType) => (
                     <span
-                      key={skinType.id}
+                      key={skinType.id || skinType.name}
                       title={skinType.description || undefined}
                       className="rounded-full border border-hairline bg-moss-tint px-3 py-1.5 text-[11px] font-medium text-moss"
                     >
-                      {skinType.name}
+                      {skinType.name || skinType}
                     </span>
                   ))}
                 </div>
               </div>
             )}
-
-            {/* =================================================
-                FREE DELIVERY
-            ================================================= */}
 
             {product.free_delivery && (
               <div className="mt-4 flex items-center gap-2 text-[12px] font-medium text-moss">
@@ -642,10 +707,6 @@ export default function ProductDetail() {
                 Free delivery on this item
               </div>
             )}
-
-            {/* =================================================
-                STOCK
-            ================================================= */}
 
             <div className="mt-6">
               {isOutOfStock ? (
@@ -665,10 +726,6 @@ export default function ProductDetail() {
                 </div>
               )}
             </div>
-
-            {/* =================================================
-                QUANTITY + CART
-            ================================================= */}
 
             <div className="mt-7 flex gap-3">
               <div
@@ -734,8 +791,6 @@ export default function ProductDetail() {
               </button>
             </div>
 
-            {/* Total */}
-
             {!isOutOfStock && quantity > 1 && (
               <div className="mt-3 flex items-center justify-between text-[11px] text-stone">
                 <span>Quantity</span>
@@ -745,10 +800,6 @@ export default function ProductDetail() {
                 </span>
               </div>
             )}
-
-            {/* =================================================
-                BENEFITS
-            ================================================= */}
 
             <div className="mt-8 grid grid-cols-1 divide-y divide-hairline border-y border-hairline">
               <ProductBenefit
@@ -775,6 +826,7 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
+
         <section className="mt-20 border-t border-hairline pt-14">
           <div className="grid gap-12 lg:grid-cols-[260px_1fr]">
             <div>
@@ -824,8 +876,6 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Review list */}
-
             <div>
               {reviewsLoading ? (
                 <ReviewsSkeleton />
@@ -858,9 +908,11 @@ export default function ProductDetail() {
           </div>
         </section>
 
-        {/* =====================================================
-            BACK TO SHOP
-        ===================================================== */}
+        <RelatedProducts
+          products={relatedProducts}
+          loading={relatedLoading}
+          categoryId={categoryId}
+        />
 
         <div className="mt-16 border-t border-hairline pt-7">
           <Link
@@ -885,7 +937,7 @@ export default function ProductDetail() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="cart-sheet-title"
-            className="cart-sheet-panel w-full rounded-t-3xl bg-white px-6 pb-8 pt-4 shadow-2xl sm:mx-auto sm:max-w-lg"
+            className="cart-sheet-panel w-full rounded-t-3xl bg-surface px-6 pb-8 pt-4 shadow-2xl sm:mx-auto sm:max-w-lg"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-hairline" />
@@ -894,6 +946,7 @@ export default function ProductDetail() {
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-moss-tint text-moss">
                 <Check size={20} strokeWidth={2} />
               </div>
+
               <div>
                 <h2
                   id="cart-sheet-title"
@@ -901,6 +954,7 @@ export default function ProductDetail() {
                 >
                   Added to your cart
                 </h2>
+
                 <p className="mt-1 text-[13px] text-stone">
                   {quantity} × {product.name}
                 </p>
@@ -915,6 +969,7 @@ export default function ProductDetail() {
               >
                 Continue shopping
               </button>
+
               <Link
                 to="/checkout"
                 className="flex items-center justify-center gap-2 rounded-xl bg-moss px-4 py-3 text-[13px] font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-moss-deep active:translate-y-0 active:scale-[0.98]"
@@ -930,9 +985,136 @@ export default function ProductDetail() {
   );
 }
 
-/* =========================================================
-   PRODUCT BENEFIT
-========================================================= */
+function RelatedProducts({ products, loading, categoryId }) {
+  if (loading) {
+    return (
+      <section className="mt-20 border-t border-hairline pt-14">
+        <div className="mb-8">
+          <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-moss">
+            You may also like
+          </p>
+
+          <h2 className="mt-2 font-display text-[27px] font-medium text-ink">
+            More from this category
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="animate-pulse">
+              <div className="aspect-square rounded-xl bg-hairline/30" />
+
+              <div className="mt-3 h-3 w-16 rounded bg-hairline/40" />
+
+              <div className="mt-2 h-4 w-full rounded bg-hairline/40" />
+
+              <div className="mt-2 h-4 w-20 rounded bg-hairline/30" />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (!products.length) {
+    return null;
+  }
+
+  return (
+    <section className="mt-20 border-t border-hairline pt-14">
+      <div className="mb-8 flex items-end justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-moss">
+            You may also like
+          </p>
+
+          <h2 className="mt-2 font-display text-[27px] font-medium text-ink">
+            More from this category
+          </h2>
+        </div>
+
+        {categoryId && (
+          <Link
+            to={`/products?category_id=${categoryId}`}
+            className="hidden text-[11px] font-medium text-stone transition-colors hover:text-moss sm:block"
+          >
+            View all
+          </Link>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4">
+        {products.map((product) => (
+          <RelatedProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RelatedProductCard({ product }) {
+  const image =
+    product.images?.[0]?.url ||
+    product.images?.[0]?.image_url ||
+    product.image_url ||
+    (typeof product.images?.[0] === "string" ? product.images[0] : null);
+
+  const price = Number(product.price || 0);
+  const discount = Number(product.discount || 0);
+
+  const hasDiscount = discount > 0;
+
+  const finalPrice = hasDiscount ? price - (price * discount) / 100 : price;
+
+  return (
+    <Link to={`/products/${product.id}`} className="group block">
+      <div className="relative aspect-square overflow-hidden rounded-xl border border-hairline bg-surface">
+        {image ? (
+          <img
+            src={image}
+            alt={product.name || "Product"}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-stone">
+            <ImageOff size={22} strokeWidth={1.4} />
+          </div>
+        )}
+
+        {hasDiscount && (
+          <span className="absolute left-3 top-3 rounded-full bg-moss px-2.5 py-1 text-[9px] font-medium text-white">
+            -{discount}%
+          </span>
+        )}
+      </div>
+
+      <div className="pt-3">
+        {product.brand?.name && (
+          <p className="truncate text-[10px] uppercase tracking-[0.08em] text-stone">
+            {product.brand.name}
+          </p>
+        )}
+
+        <h3 className="mt-1 line-clamp-2 text-[13px] leading-snug text-ink transition-colors duration-200 group-hover:text-moss">
+          {product.name}
+        </h3>
+
+        <div className="mt-2 flex items-center gap-2">
+          <span className="font-mono text-[12px] text-ink">
+            ${finalPrice.toFixed(2)}
+          </span>
+
+          {hasDiscount && (
+            <span className="font-mono text-[10px] text-stone/50 line-through">
+              ${price.toFixed(2)}
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 function ProductBenefit({ icon: Icon, title, text }) {
   return (
@@ -953,10 +1135,6 @@ function ProductBenefit({ icon: Icon, title, text }) {
     </div>
   );
 }
-
-/* =========================================================
-   REVIEW ITEM
-========================================================= */
 
 function ReviewItem({ review }) {
   const rating = Number(review.rating || 0);
@@ -1015,20 +1193,12 @@ function ReviewItem({ review }) {
   );
 }
 
-/* =========================================================
-   PRODUCT DETAIL SKELETON
-========================================================= */
-
 function ProductDetailSkeleton() {
   return (
     <div className="mx-auto max-w-6xl animate-pulse px-6 pb-20 pt-8">
-      {/* Breadcrumb */}
-
       <div className="h-3 w-48 rounded bg-hairline/50" />
 
       <div className="mt-8 grid gap-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
-        {/* Image */}
-
         <div>
           <div className="aspect-square rounded-2xl bg-hairline/30" />
 
@@ -1041,8 +1211,6 @@ function ProductDetailSkeleton() {
             ))}
           </div>
         </div>
-
-        {/* Info */}
 
         <div className="pt-2">
           <div className="h-3 w-20 rounded bg-hairline/50" />
@@ -1078,10 +1246,6 @@ function ProductDetailSkeleton() {
     </div>
   );
 }
-
-/* =========================================================
-   REVIEWS SKELETON
-========================================================= */
 
 function ReviewsSkeleton() {
   return (

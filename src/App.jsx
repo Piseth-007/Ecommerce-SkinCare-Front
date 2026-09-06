@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { ToastProvider } from "./context/ToastContext";
 import { ConfirmProvider } from "./context/ConfirmContext";
+import { StoreSettingsProvider } from "./context/StoreSettingsContext";
 
 // Storefront
 import Navbar from "./components/storefront/Navbar";
@@ -14,10 +15,13 @@ import RequireAuth from "./components/RequireAuth";
 // Admin
 import AdminRoute from "./components/admin/AdminRoute";
 import Footer from "./components/storefront/Footer";
+import ScrollProgress from "./components/storefront/ScrollProgress";
 import Profile from "./pages/shop/Profile";
 import Favorites from "./pages/shop/Favorites";
 import { FavoritesProvider } from "./context/FavoriteContext";
 import Contacts from "./pages/admin/Contacts";
+import ScrollToTop from "./components/ScrollToTop";
+import Settings from "./pages/admin/Settings";
 
 const Home = lazy(() => import("./pages/shop/Home"));
 const ProductList = lazy(() => import("./pages/shop/ProductList"));
@@ -38,7 +42,6 @@ const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
 const Products = lazy(() => import("./pages/admin/Products"));
-const Stock = lazy(() => import("./pages/admin/Stock"));
 const Categories = lazy(() => import("./pages/admin/Categories"));
 const Brands = lazy(() => import("./pages/admin/Brands"));
 const Orders = lazy(() => import("./pages/admin/Orders"));
@@ -46,17 +49,19 @@ const Reviews = lazy(() => import("./pages/admin/Reviews"));
 
 function StorefrontLayout({ children }) {
   return (
-    <>
+    <StoreSettingsProvider>
+      <ScrollProgress />
       <Navbar />
       {children}
       <Footer />
-    </>
+    </StoreSettingsProvider>
   );
 }
 
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <CartProvider>
           <ToastProvider>
@@ -223,7 +228,6 @@ function App() {
                     >
                       <Route path="/admin/dashboard" element={<Dashboard />} />
                       <Route path="/admin/products" element={<Products />} />
-                      <Route path="/admin/stock" element={<Stock />} />
                       <Route
                         path="/admin/categories"
                         element={<Categories />}
@@ -232,6 +236,7 @@ function App() {
                       <Route path="/admin/orders" element={<Orders />} />
                       <Route path="/admin/contacts" element={<Contacts />} />
                       <Route path="/admin/reviews" element={<Reviews />} />
+                      <Route path="/admin/settings" element={<Settings />} />
                     </Route>
                   </Routes>
                 </Suspense>

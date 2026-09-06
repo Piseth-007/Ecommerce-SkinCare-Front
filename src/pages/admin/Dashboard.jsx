@@ -42,6 +42,8 @@ const PIE_COLORS = {
   cancelled: "#C96A5B",
 };
 
+const CANCELLED_STATUSES = ["cancelled", "canceled", "rejected", "refunded"];
+
 function useDarkMode() {
   const [isDark, setIsDark] = useState(() =>
     document.documentElement.classList.contains("dark"),
@@ -71,24 +73,35 @@ export default function Dashboard() {
   const { showToast } = useContext(ToastContext);
 
   const [summary, setSummary] = useState(null);
+  const [orders, setOrders] = useState([]);
   const [trend, setTrend] = useState([]);
   const [range, setRange] = useState("7d");
 
   const [summaryLoading, setSummaryLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(true);
   const [trendLoading, setTrendLoading] = useState(true);
 
   useEffect(() => {
-    const loadSummary = async () => {
+    const loadDashboard = async () => {
       try {
         setSummaryLoading(true);
+        setOrdersLoading(true);
 
-        const res = await api.get("/admin/dashboard/summary");
+        const [summaryResponse, ordersResponse] = await Promise.all([
+          api.get("/admin/dashboard/summary"),
+          api.get("/admin/orders"),
+        ]);
 
-        const data = res.data?.data ?? res.data;
+        const summaryData = summaryResponse.data?.data ?? summaryResponse.data;
 
-        setSummary(data || null);
+        const ordersData = ordersResponse.data?.data ?? ordersResponse.data;
+
+        setSummary(summaryData || null);
+
+        setOrders(extractOrders(ordersData));
       } catch (err) {
         setSummary(null);
+        setOrders([]);
 
         showToast(
           err.response?.data?.message || "Failed to load dashboard",
@@ -96,10 +109,11 @@ export default function Dashboard() {
         );
       } finally {
         setSummaryLoading(false);
+        setOrdersLoading(false);
       }
     };
 
-    loadSummary();
+    loadDashboard();
   }, [showToast]);
 
   useEffect(() => {
@@ -129,50 +143,173 @@ export default function Dashboard() {
     loadTrend();
   }, [range, showToast]);
 
+  const recentOrders = useMemo(() => {
+    if (!Array.isArray(orders)) {
+      return [];
+    }
+
+    return [...orders]
+      .sort((a, b) => {
+        const dateA = new Date(
+          a.created_at || a.createdAt || a.order_date || a.date || 0,
+        ).getTime();
+
+        const dateB = new Date(
+          b.created_at || b.createdAt || b.order_date || b.date || 0,
+        ).getTime();
+
+        return dateB - dateA;
+      })
+      .slice(0, 5);
+  }, [orders]);
+
+  const topProducts = useMemo(() => {
+    if (!Array.isArray(orders)) {
+      return [];
+    }
+
+    const productMap = new Map();
+
+    orders.forEach((order) => {
+      const status = String(order.status || "").toLowerCase();
+
+      if (CANCELLED_STATUSES.includes(status)) {
+        return;
+      }
+
+      const items = Array.isArray(order.items)
+        ? order.items
+        : Array.isArray(order.order_items)
+          ? order.order_items
+          : [];
+
+      items.forEach((item) => {
+        const product =
+          item.product || item.product_detail || item.productData || null;
+
+        const productId = item.product_id ?? item.productId ?? product?.id;
+
+        if (productId === undefined || productId === null) {
+          return;
+        }
+
+        const quantity = Number(
+          item.quantity ?? item.qty ?? item.order_quantity ?? 1,
+        );
+
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+          return;
+        }
+
+        const price = Number(
+          item.price ??
+            item.unit_price ??
+            item.unitPrice ??
+            product?.price ??
+            0,
+        );
+
+        const revenue = price * quantity;
+
+        const productName =
+          item.product_name || item.productName || product?.name || "Product";
+
+        const image =
+          item.image ||
+          item.image_url ||
+          item.product_image ||
+          item.productImage ||
+          product?.image ||
+          product?.image_url ||
+          product?.images?.[0]?.url ||
+          product?.images?.[0]?.image_url ||
+          (typeof product?.images?.[0] === "string"
+            ? product.images[0]
+            : null) ||
+          null;
+
+        const existing = productMap.get(String(productId));
+
+        if (existing) {
+          existing.sold += quantity;
+          existing.revenue += revenue;
+
+          if (!existing.image && image) {
+            existing.image = image;
+          }
+        } else {
+          productMap.set(String(productId), {
+            id: productId,
+            name: productName,
+            image,
+            sold: quantity,
+            revenue,
+          });
+        }
+      });
+    });
+
+    return Array.from(productMap.values())
+      .sort((a, b) => {
+        if (b.sold !== a.sold) {
+          return b.sold - a.sold;
+        }
+
+        return b.revenue - a.revenue;
+      })
+      .slice(0, 4);
+  }, [orders]);
+
   const orderBreakdown = useMemo(() => {
-    if (!summary) return [];
+    if (!Array.isArray(orders)) {
+      return [];
+    }
+
+    let completed = 0;
+    let pending = 0;
+    let cancelled = 0;
+
+    orders.forEach((order) => {
+      const status = String(order.status || "")
+        .trim()
+        .toLowerCase();
+
+      if (status === "completed" || status === "delivered") {
+        completed += 1;
+      } else if (
+        status === "cancelled" ||
+        status === "canceled" ||
+        status === "rejected"
+      ) {
+        cancelled += 1;
+      } else {
+        pending += 1;
+      }
+    });
 
     return [
       {
         name: "Completed",
-        value: Number(summary.orders_completed || 0),
+        value: completed,
         color: PIE_COLORS.completed,
       },
       {
         name: "Pending",
-        value: Number(summary.orders_pending || 0),
+        value: pending,
         color: PIE_COLORS.pending,
       },
       {
         name: "Cancelled",
-        value: Number(summary.orders_cancelled || 0),
+        value: cancelled,
         color: PIE_COLORS.cancelled,
       },
     ];
-  }, [summary]);
+  }, [orders]);
 
   const totalBreakdownOrders = orderBreakdown.reduce(
     (total, item) => total + item.value,
     0,
   );
-
-  const recentOrders = useMemo(() => {
-    const orders =
-      summary?.recent_orders ?? summary?.recentOrders ?? summary?.orders ?? [];
-
-    return Array.isArray(orders) ? orders : [];
-  }, [summary]);
-
-  const topProducts = useMemo(() => {
-    const products =
-      summary?.top_products ??
-      summary?.topProducts ??
-      summary?.best_selling_products ??
-      summary?.bestSellingProducts ??
-      [];
-
-    return Array.isArray(products) ? products : [];
-  }, [summary]);
 
   const chartColors = isDark
     ? {
@@ -300,7 +437,12 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart
                   data={trend}
-                  margin={{ top: 10, right: 5, left: -20, bottom: 0 }}
+                  margin={{
+                    top: 10,
+                    right: 5,
+                    left: -20,
+                    bottom: 0,
+                  }}
                   barCategoryGap="25%"
                 >
                   <CartesianGrid
@@ -311,13 +453,19 @@ export default function Dashboard() {
 
                   <XAxis
                     dataKey="label"
-                    tick={{ fontSize: 11, fill: chartColors.axisText }}
+                    tick={{
+                      fontSize: 11,
+                      fill: chartColors.axisText,
+                    }}
                     axisLine={false}
                     tickLine={false}
                   />
 
                   <YAxis
-                    tick={{ fontSize: 11, fill: chartColors.axisText }}
+                    tick={{
+                      fontSize: 11,
+                      fill: chartColors.axisText,
+                    }}
                     axisLine={false}
                     tickLine={false}
                     tickFormatter={(value) => `$${value}`}
@@ -336,8 +484,12 @@ export default function Dashboard() {
                       color: chartColors.tooltipText,
                       boxShadow: "0 8px 24px rgba(33,31,27,0.08)",
                     }}
-                    labelStyle={{ color: chartColors.tooltipText }}
-                    itemStyle={{ color: chartColors.tooltipText }}
+                    labelStyle={{
+                      color: chartColors.tooltipText,
+                    }}
+                    itemStyle={{
+                      color: chartColors.tooltipText,
+                    }}
                     formatter={(value) => [
                       `$${Number(value).toFixed(2)}`,
                       "Sales",
@@ -363,7 +515,7 @@ export default function Dashboard() {
                 </h2>
 
                 <p className="mt-1 text-[12px] text-stone dark:text-stone-400">
-                  Latest orders from your customers
+                  Latest 5 orders from your customers
                 </p>
               </div>
 
@@ -377,7 +529,9 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {recentOrders.length === 0 ? (
+            {ordersLoading ? (
+              <OrdersSkeleton />
+            ) : recentOrders.length === 0 ? (
               <div className="flex min-h-[180px] items-center justify-center px-6">
                 <div className="text-center">
                   <ShoppingBag
@@ -405,7 +559,7 @@ export default function Dashboard() {
                   </thead>
 
                   <tbody>
-                    {recentOrders.slice(0, 5).map((order) => {
+                    {recentOrders.map((order) => {
                       const customer =
                         order.customer_name ||
                         order.customerName ||
@@ -435,6 +589,8 @@ export default function Dashboard() {
 
                       const status = order.status || "pending";
 
+                      const items = order.items || order.order_items || [];
+
                       return (
                         <tr
                           key={order.id}
@@ -452,16 +608,10 @@ export default function Dashboard() {
                                 {customer}
                               </p>
 
-                              {order.items?.length > 0 && (
+                              {Array.isArray(items) && items.length > 0 && (
                                 <p className="mt-0.5 text-[11px] text-stone dark:text-stone-400">
-                                  {order.items.length}{" "}
-                                  {order.items.length === 1 ? "item" : "items"}
-                                </p>
-                              )}
-
-                              {order.product_name && (
-                                <p className="mt-0.5 max-w-[150px] truncate text-[11px] text-stone dark:text-stone-400">
-                                  {order.product_name}
+                                  {items.length}{" "}
+                                  {items.length === 1 ? "item" : "items"}
                                 </p>
                               )}
                             </div>
@@ -557,9 +707,7 @@ export default function Dashboard() {
                     </span>
 
                     <span className="mt-1 font-mono text-[26px] font-medium text-ink dark:text-white">
-                      {Number(
-                        totalBreakdownOrders || summary?.total_orders || 0,
-                      ).toLocaleString()}
+                      {totalBreakdownOrders.toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -573,7 +721,9 @@ export default function Dashboard() {
                       <div className="flex items-center gap-2.5">
                         <span
                           className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: item.color }}
+                          style={{
+                            backgroundColor: item.color,
+                          }}
                         />
 
                         <span className="text-[12px] text-stone dark:text-stone-400">
@@ -599,12 +749,14 @@ export default function Dashboard() {
                 </h2>
 
                 <p className="mt-1 text-[12px] text-stone dark:text-stone-400">
-                  Best performers this period
+                  Products with the most orders
                 </p>
               </div>
             </div>
 
-            {topProducts.length === 0 ? (
+            {ordersLoading ? (
+              <TopProductsSkeleton />
+            ) : topProducts.length === 0 ? (
               <div className="flex min-h-[180px] items-center justify-center">
                 <div className="text-center">
                   <Package
@@ -619,75 +771,43 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {topProducts.slice(0, 4).map((product, index) => {
-                  const productName =
-                    product.name ||
-                    product.product_name ||
-                    product.product?.name ||
-                    "Product";
-
-                  const image =
-                    product.image ||
-                    product.image_url ||
-                    product.product_image ||
-                    product.product?.image ||
-                    product.product?.images?.[0]?.url ||
-                    product.product?.images?.[0]?.image_url ||
-                    null;
-
-                  const sold =
-                    product.sales ??
-                    product.quantity_sold ??
-                    product.total_sold ??
-                    product.quantity ??
-                    product.total_quantity ??
-                    0;
-
-                  const revenue =
-                    product.revenue ??
-                    product.total_revenue ??
-                    product.sales_amount ??
-                    product.product_revenue ??
-                    0;
-
-                  return (
-                    <div
-                      key={product.id || product.product_id || index}
-                      className="flex items-center gap-3"
-                    >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-hairline bg-paper dark:border-white/10 dark:bg-white/5">
-                        {image ? (
-                          <img
-                            src={image}
-                            alt={productName}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <Package
-                            size={18}
-                            className="text-stone/60 dark:text-stone-400/60"
-                          />
-                        )}
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[12.5px] font-medium text-ink dark:text-white">
-                          {productName}
-                        </p>
-
-                        <p className="mt-0.5 text-[11px] text-stone dark:text-stone-400">
-                          {Number(sold).toLocaleString()} sold
-                        </p>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="font-mono text-[12px] text-ink dark:text-white">
-                          ${Number(revenue).toFixed(2)}
-                        </p>
-                      </div>
+                {topProducts.map((product, index) => (
+                  <div
+                    key={product.id || index}
+                    className="flex items-center gap-3"
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-hairline bg-paper dark:border-white/10 dark:bg-white/5">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <Package
+                          size={18}
+                          className="text-stone/60 dark:text-stone-400/60"
+                        />
+                      )}
                     </div>
-                  );
-                })}
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[12.5px] font-medium text-ink dark:text-white">
+                        {product.name}
+                      </p>
+
+                      <p className="mt-0.5 text-[11px] text-stone dark:text-stone-400">
+                        {Number(product.sold).toLocaleString()} sold
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="font-mono text-[12px] text-ink dark:text-white">
+                        ${Number(product.revenue).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -704,6 +824,26 @@ export default function Dashboard() {
       </div>
     </div>
   );
+}
+
+function extractOrders(data) {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data;
+  }
+
+  if (Array.isArray(data?.orders)) {
+    return data.orders;
+  }
+
+  if (Array.isArray(data?.items)) {
+    return data.items;
+  }
+
+  return [];
 }
 
 function DashboardStatCard({
@@ -835,6 +975,45 @@ function OrderStatus({ status }) {
       <Icon size={11} />
       {current.label}
     </span>
+  );
+}
+
+function OrdersSkeleton() {
+  return (
+    <div className="animate-pulse space-y-0">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div
+          key={index}
+          className="grid grid-cols-6 gap-6 border-b border-hairline px-5 py-4 last:border-0 dark:border-white/10 sm:px-6"
+        >
+          <div className="h-3 rounded bg-hairline/40 dark:bg-white/10" />
+          <div className="h-3 rounded bg-hairline/40 dark:bg-white/10" />
+          <div className="h-3 rounded bg-hairline/40 dark:bg-white/10" />
+          <div className="h-3 rounded bg-hairline/40 dark:bg-white/10" />
+          <div className="h-3 rounded bg-hairline/40 dark:bg-white/10" />
+          <div className="h-5 w-16 rounded-full bg-hairline/40 dark:bg-white/10" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TopProductsSkeleton() {
+  return (
+    <div className="animate-pulse space-y-4">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="flex items-center gap-3">
+          <div className="h-12 w-12 shrink-0 rounded-lg bg-hairline/40 dark:bg-white/10" />
+
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-3 w-3/4 rounded bg-hairline/40 dark:bg-white/10" />
+            <div className="h-2.5 w-1/3 rounded bg-hairline/30 dark:bg-white/10" />
+          </div>
+
+          <div className="h-3 w-14 rounded bg-hairline/40 dark:bg-white/10" />
+        </div>
+      ))}
+    </div>
   );
 }
 

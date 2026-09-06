@@ -71,10 +71,16 @@ export function AuthProvider({ children }) {
   const updateProfileImage = async (file) => {
     const formData = new FormData();
     formData.append("profile_image", file);
-    const res = await api.post("/profile/image", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+
+    const res = await api.post("/profile/image", formData);
+
     setUser((prev) => ({ ...prev, profile_image: res.data.profile_image }));
+    return res.data;
+  };
+
+  const removeProfileImage = async () => {
+    const res = await api.delete("/profile/image");
+    setUser((prev) => ({ ...prev, profile_image: null }));
     return res.data;
   };
 
@@ -90,6 +96,7 @@ export function AuthProvider({ children }) {
         updateProfile,
         updatePassword,
         updateProfileImage,
+        removeProfileImage,
         loading,
       }}
     >

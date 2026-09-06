@@ -381,9 +381,12 @@ export default function Checkout() {
 
     try {
       const response = await api.get(`/payments/${paymentId}/status`);
-      const result = response.data;
+      const result = response.data?.data || response.data;
+      const status = String(
+        result?.status || result?.payment_status || "",
+      ).toLowerCase();
 
-      if (result.status === "paid") {
+      if (status === "paid" || status === "success" || status === "completed") {
         if (paymentCompletedRef.current) {
           return true;
         }
@@ -400,12 +403,12 @@ export default function Checkout() {
           setPaymentData(null);
 
           navigate(`/orders`);
-        }, 800);
+        }, 1600);
 
         return true;
       }
 
-      if (result.status === "expired") {
+      if (status === "expired") {
         setPaymentStatus("expired");
 
         if (manual) {
@@ -872,23 +875,38 @@ export default function Checkout() {
                 <X size={20} className="text-stone" />
               </button>
             </div>
-            <div
-              ref={qrCanvasRef}
-              className="bg-paper p-5 rounded-xl flex justify-center"
-            >
-              {paymentData.qr_string ? (
-                <QRCodeCanvas
-                  value={paymentData.qr_string}
-                  size={256}
-                  level="M"
-                  includeMargin
-                />
-              ) : (
-                <div className="w-64 h-64 flex items-center justify-center text-stone text-sm">
-                  QR code not available
+            {paymentStatus === "paid" ? (
+              <div className="rounded-xl border border-moss/20 bg-moss-tint px-6 py-12 text-center">
+                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-moss text-white shadow-sm">
+                  <CheckCircle2 size={42} strokeWidth={1.8} />
                 </div>
-              )}
-            </div>
+                <h3 className="mt-5 text-[18px] font-medium text-ink">
+                  Payment successful
+                </h3>
+                <div className="mt-3 flex items-center justify-center gap-2 text-[12px] text-moss">
+                  <Loader2 size={15} className="animate-spin" />
+                  <span>Preparing your order ticket...</span>
+                </div>
+              </div>
+            ) : (
+              <div
+                ref={qrCanvasRef}
+                className="bg-paper p-5 rounded-xl flex justify-center"
+              >
+                {paymentData.qr_string ? (
+                  <QRCodeCanvas
+                    value={paymentData.qr_string}
+                    size={256}
+                    level="M"
+                    includeMargin
+                  />
+                ) : (
+                  <div className="w-64 h-64 flex items-center justify-center text-stone text-sm">
+                    QR code not available
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* PAYMENT STATUS */}
             <div className="text-center">

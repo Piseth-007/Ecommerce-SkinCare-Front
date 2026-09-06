@@ -11,20 +11,53 @@ import {
   X,
   ChevronRight,
   Mail,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
+import { useAdminNotifications } from "../../context/AdminNotificationsContext";
 
 const links = [
   { to: "/admin/dashboard", label: "Overview", icon: LayoutDashboard },
   { to: "/admin/products", label: "Products", icon: Package },
   { to: "/admin/categories", label: "Categories", icon: Tag },
   { to: "/admin/brands", label: "Brands", icon: Award },
-  { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
-  { to: "/admin/contacts", label: "Contacts", icon: Mail },
-  { to: "/admin/reviews", label: "Reviews", icon: MessageSquare },
+  {
+    to: "/admin/orders",
+    label: "Orders",
+    icon: ShoppingBag,
+    notifyKey: "orders",
+  },
+  {
+    to: "/admin/contacts",
+    label: "Contacts",
+    icon: Mail,
+    notifyKey: "contacts",
+  },
+  {
+    to: "/admin/reviews",
+    label: "Reviews",
+    icon: MessageSquare,
+    notifyKey: "reviews",
+  },
+  { to: "/admin/settings", label: "Settings", icon: SettingsIcon },
 ];
+
+function NotifyBadge({ count, isActive }) {
+  if (!count) return null;
+  return (
+    <span
+      className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10.5px] font-semibold ${
+        isActive ? "bg-white/90 text-moss" : "bg-clay text-white"
+      }`}
+    >
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
+
 export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
   const { user, logout } = useAuth();
+  const { counts } = useAdminNotifications();
 
   const userInitial = user?.name?.charAt(0)?.toUpperCase() || "A";
 
@@ -35,7 +68,6 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
   return (
     <>
-      {/* Mobile Overlay */}
       {sidebarOpen && (
         <button
           type="button"
@@ -45,13 +77,11 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col border-r border-hairline bg-surface shadow-sm transition-transform duration-300 ease-out lg:translate-x-0 lg:shadow-none ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Logo */}
         <div className="flex items-center justify-between border-b border-hairline px-5 py-3.5">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-moss-tint">
@@ -75,10 +105,9 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
           </button>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-5">
           <div className="space-y-1.5">
-            {links.map(({ to, label, icon: Icon }) => (
+            {links.map(({ to, label, icon: Icon, notifyKey }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -105,6 +134,13 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
 
                     <span className="flex-1">{label}</span>
 
+                    {notifyKey && (
+                      <NotifyBadge
+                        count={counts[notifyKey]}
+                        isActive={isActive}
+                      />
+                    )}
+
                     {isActive && (
                       <ChevronRight
                         size={14}
@@ -119,13 +155,20 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
           </div>
         </nav>
 
-        {/* User Section */}
         <div className="border-t border-hairline p-3">
           <div className="mb-2 flex items-center gap-3 rounded-lg bg-paper/70 px-3 py-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-moss">
-              <span className="text-[13px] font-medium text-white">
-                {userInitial}
-              </span>
+              {user?.profile_image ? (
+                <img
+                  src={user.profile_image}
+                  alt=""
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                <span className="text-[13px] font-medium text-white">
+                  {userInitial}
+                </span>
+              )}
             </div>
 
             <div className="min-w-0 flex-1">

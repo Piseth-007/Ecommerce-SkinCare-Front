@@ -231,55 +231,6 @@ function useReveal(threshold = 0.12, fallbackMs = 1200) {
 }
 
 /* =========================================================
-   SCROLL PROGRESS
-========================================================= */
-
-function useScrollProgress() {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (ticking) return;
-
-      ticking = true;
-
-      window.requestAnimationFrame(() => {
-        const documentElement = document.documentElement;
-
-        const scrollTop = documentElement.scrollTop || document.body.scrollTop;
-
-        const scrollHeight =
-          Math.max(documentElement.scrollHeight, document.body.scrollHeight) -
-          documentElement.clientHeight;
-
-        const percentage =
-          scrollHeight > 0
-            ? Math.min(100, (scrollTop / scrollHeight) * 100)
-            : 0;
-
-        setProgress(percentage);
-
-        ticking = false;
-      });
-    };
-
-    window.addEventListener("scroll", handleScroll, {
-      passive: true,
-    });
-
-    handleScroll();
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
-  return progress;
-}
-
-/* =========================================================
    BACK TO TOP
 ========================================================= */
 
@@ -415,8 +366,6 @@ export default function Home() {
   /* =======================================================
      GLOBAL UI
   ======================================================= */
-
-  const scrollProgress = useScrollProgress();
 
   const showBackToTop = useBackToTop();
 
@@ -771,35 +720,6 @@ export default function Home() {
       >
         <RefreshCw size={12} className="animate-spin text-moss" />
         Updating
-      </div>
-
-      {/* ===================================================
-          SCROLL PROGRESS
-      =================================================== */}
-
-      <div
-        className="
-          fixed
-          left-0
-          right-0
-          top-0
-          z-[100]
-          h-[2px]
-          bg-transparent
-        "
-      >
-        <div
-          className="
-            h-full
-            origin-left
-            bg-moss
-            transition-[width]
-            duration-150
-          "
-          style={{
-            width: `${scrollProgress}%`,
-          }}
-        />
       </div>
 
       {/* ===================================================
@@ -2525,7 +2445,6 @@ function TrustItem({ icon: Icon, label }) {
   );
 }
 
-
 function ErrorState({ message, onRetry }) {
   const [retrying, setRetrying] = useState(false);
 
@@ -2586,10 +2505,9 @@ function ErrorState({ message, onRetry }) {
 
         {retrying ? "Retrying" : "Retry"}
       </button>
-    </div>  
+    </div>
   );
 }
-
 
 function ArrowDown() {
   return (

@@ -54,7 +54,8 @@ function Timeline({ status }) {
 
 function ItemRow({ item }) {
   const product = item.product || {};
-  const image = product.images?.[0] || product.image_url || item.image_url;
+  const rawImage = product.images[0] || product.image_url || item.image_url;
+  const image = typeof rawImage === "string" ? rawImage : rawImage?.url || rawImage?.image_url || rawImage?.path
   const skinTypes = product.skin_types || product.skinTypes || [];
   return (
     <div className="flex gap-4 py-5 border-b border-hairline">
@@ -125,6 +126,7 @@ export default function OrderDetail() {
       setError("");
       try {
         const response = await api.get(`/orders/${id}`);
+        console.log(response.data);
         if (mounted) setOrder(dataOf(response));
       } catch (err) {
         if (mounted)

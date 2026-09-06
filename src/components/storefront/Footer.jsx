@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Leaf, ArrowRight, ShieldCheck, Check } from "lucide-react";
-import { createElement } from "react";  
+import { createElement } from "react";
+import { useStoreSettings } from "../../context/StoreSettingsContext";
 const SOCIAL_ICONS = {
   instagram: (
     <svg
@@ -44,6 +45,7 @@ const SOCIAL_ICONS = {
 };
 
 export default function Footer() {
+  const store = useStoreSettings();
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
@@ -108,9 +110,17 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto px-6 py-14 grid grid-cols-2 md:grid-cols-5 gap-8">
         <div className="col-span-2">
           <Link to="/" className="flex items-center gap-2 mb-3">
-            <Leaf size={18} className="text-moss" strokeWidth={1.75} />
+            {store.logo?.url ? (
+              <img
+                src={store.logo.url}
+                alt=""
+                className="h-7 w-7 rounded-md object-cover"
+              />
+            ) : (
+              <Leaf size={18} className="text-moss" strokeWidth={1.75} />
+            )}
             <span className="font-display text-[18px] font-medium text-ink">
-              Botaniq
+              {store.name || "Botaniq"}
             </span>
           </Link>
 
@@ -159,7 +169,8 @@ export default function Footer() {
       <div className="border-t border-hairline">
         <div className="max-w-6xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[12px] text-stone font-mono">
-            © {new Date().getFullYear()} Botaniq. All rights reserved.
+            © {new Date().getFullYear()} {store.name || "Botaniq"}. All rights
+            reserved.
           </p>
 
           <div className="flex items-center gap-5">

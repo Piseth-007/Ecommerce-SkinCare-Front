@@ -7,8 +7,10 @@ import {
   Moon,
   ShoppingBag,
   AlertTriangle,
+  X,
 } from "lucide-react";
 import api from "../../api/axios";
+import { useTheme } from "../../hooks/useTheme";
 
 const LOW_STOCK_THRESHOLD = 5;
 const POLL_INTERVAL_MS = 60000; // refresh every 60s
@@ -16,35 +18,45 @@ const POLL_INTERVAL_MS = 60000; // refresh every 60s
 export default function Navbar({ onMenuClick }) {
   const navigate = useNavigate();
 
-  const [darkMode, setDarkMode] = useState(false);
+  const { isDark: darkMode, toggleTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pendingOrders, setPendingOrders] = useState([]);
   const [lowStockProducts, setLowStockProducts] = useState([]);
 
   const dropdownRef = useRef(null);
-
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => {
-      const next = !prev;
-      document.documentElement.classList.toggle("dark", next);
-      return next;
-    });
-  };
+  const dismissedOrderIdsRef = useRef(new Set());
+  const dismissedStockIdsRef = useRef(new Set());
 
   const loadAlerts = async () => {
     try {
-      const [ordersRes, productsRes] = await Promise.all([
+      const [pendingOrdersRes, paidOrdersRes, productsRes] = await Promise.all([
         api.get("/admin/orders", { params: { status: "pending" } }),
+        api.get("/admin/orders", { params: { status: "paid" } }),
         api.get("/products"),
       ]);
 
-      const orders = ordersRes.data?.data || [];
+      const pendingOrders = pendingOrdersRes.data?.data || [];
+      const paidOrders = paidOrdersRes.data?.data || [];
+      const orders = [...pendingOrders, ...paidOrders]
+        .filter(
+          (order, index, allOrders) =>
+            allOrders.findIndex((item) => item.id === order.id) === index,
+        )
+        .filter((order) => !dismissedOrderIdsRef.current.has(order.id))
+        .sort(
+          (first, second) =>
+            new Date(second.created_at || 0) - new Date(first.created_at || 0),
+        );
       const products = productsRes.data?.data || productsRes.data || [];
 
       const lowStock = products.filter((product) => {
         const stock = Number(product.stock || 0);
-        return stock > 0 && stock <= LOW_STOCK_THRESHOLD;
+        return (
+          stock > 0 &&
+          stock <= LOW_STOCK_THRESHOLD &&
+          !dismissedStockIdsRef.current.has(product.id)
+        );
       });
 
       setPendingOrders(orders);
@@ -78,9 +90,28 @@ export default function Navbar({ onMenuClick }) {
 
   const totalAlerts = pendingOrders.length + lowStockProducts.length;
 
-  const goToOrders = () => {
+  const goToOrders = (orderId) => {
     setOpen(false);
-    navigate("/admin/orders");
+    navigate(orderId ? `/admin/orders?order=${orderId}` : "/admin/orders");
+  };
+
+  const toggleNotifications = () => {
+    setOpen((previousOpen) => {
+      const nextOpen = !previousOpen;
+      if (nextOpen) loadAlerts();
+      return nextOpen;
+    });
+  };
+
+  const clearNotifications = () => {
+    pendingOrders.forEach((order) =>
+      dismissedOrderIdsRef.current.add(order.id),
+    );
+    lowStockProducts.forEach((product) =>
+      dismissedStockIdsRef.current.add(product.id),
+    );
+    setPendingOrders([]);
+    setLowStockProducts([]);
   };
 
   const goToProducts = () => {
@@ -110,7 +141,7 @@ export default function Navbar({ onMenuClick }) {
         <div className="relative" ref={dropdownRef}>
           <button
             type="button"
-            onClick={() => setOpen((prev) => !prev)}
+            onClick={toggleNotifications}
             className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-hairline text-stone transition-colors hover:bg-paper hover:text-ink"
             aria-label="Notifications"
           >
@@ -162,7 +193,7 @@ export default function Navbar({ onMenuClick }) {
                       <button
                         key={`order-${order.id}`}
                         type="button"
-                        onClick={goToOrders}
+                        onClick={() => goToOrders(order.id)}
                         className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-paper"
                       >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-moss-tint">
@@ -235,6 +266,16 @@ export default function Navbar({ onMenuClick }) {
                   >
                     View Stock
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={clearNotifications}
+                    className="flex items-center justify-center gap-1 rounded-lg px-2 py-1.5 text-[11.5px] font-medium text-stone transition-colors hover:bg-paper hover:text-ink"
+                    title="Clear notifications"
+                  >
+                    <X size={13} />
+                    Clear
+                  </button>
                 </div>
               )}
             </div>
@@ -244,7 +285,7 @@ export default function Navbar({ onMenuClick }) {
         {/* Dark Mode */}
         <button
           type="button"
-          onClick={toggleDarkMode}
+          onClick={toggleTheme}
           className="flex h-9 w-9 items-center justify-center rounded-lg border border-hairline text-stone transition-colors hover:bg-paper hover:text-ink"
           aria-label="Toggle dark mode"
         >

@@ -1,4 +1,3 @@
-
 import { useContext, useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 import api from "../../api/axios";
 import { RowSkeleton } from "../../components/Skeleton";
+import { useAdminNotifications } from "../../context/AdminNotificationsContext";
 import { ToastContext } from "../../context/ToastContext";
 
 export default function Contacts() {
@@ -27,6 +27,11 @@ export default function Contacts() {
   const [deletingId, setDeletingId] = useState(null);
 
   const { showToast } = useContext(ToastContext);
+  const { refresh, markViewed } = useAdminNotifications();
+
+  useEffect(() => {
+    markViewed("contacts");
+  }, [markViewed]);
 
   /* =========================================================
      LOAD CONTACTS
@@ -45,10 +50,10 @@ export default function Contacts() {
       const res = await api.get("/admin/contacts");
 
       setContacts(res.data?.data || res.data || []);
+      refresh();
     } catch (err) {
       const message =
-        err.response?.data?.message ||
-        "Failed to load contact messages.";
+        err.response?.data?.message || "Failed to load contact messages.";
 
       setError(message);
 
@@ -81,9 +86,7 @@ export default function Contacts() {
 
       await api.delete(`/admin/contacts/${contactId}`);
 
-      setContacts((prev) =>
-        prev.filter((contact) => contact.id !== contactId),
-      );
+      setContacts((prev) => prev.filter((contact) => contact.id !== contactId));
 
       if (expanded === contactId) {
         setExpanded(null);
@@ -92,8 +95,7 @@ export default function Contacts() {
       showToast("Contact message deleted successfully.");
     } catch (err) {
       showToast(
-        err.response?.data?.message ||
-          "Failed to delete contact message.",
+        err.response?.data?.message || "Failed to delete contact message.",
         "error",
       );
     } finally {
@@ -114,17 +116,14 @@ export default function Contacts() {
       const id = String(contact.id || "");
 
       const name =
-        contact.name?.toLowerCase() ||
-        contact.user?.name?.toLowerCase() ||
-        "";
+        contact.name?.toLowerCase() || contact.user?.name?.toLowerCase() || "";
 
       const email =
         contact.email?.toLowerCase() ||
         contact.user?.email?.toLowerCase() ||
         "";
 
-      const message =
-        contact.message?.toLowerCase() || "";
+      const message = contact.message?.toLowerCase() || "";
 
       return (
         id.includes(keyword) ||
@@ -136,9 +135,7 @@ export default function Contacts() {
   }, [contacts, search]);
 
   const toggleContact = (id) => {
-    setExpanded((current) =>
-      current === id ? null : id,
-    );
+    setExpanded((current) => (current === id ? null : id));
   };
 
   const clearSearch = () => {
@@ -180,9 +177,7 @@ export default function Contacts() {
           <RefreshCw
             size={16}
             strokeWidth={1.75}
-            className={
-              refreshing ? "animate-spin" : ""
-            }
+            className={refreshing ? "animate-spin" : ""}
           />
         </button>
       </div>
@@ -201,9 +196,7 @@ export default function Contacts() {
 
           <input
             value={search}
-            onChange={(e) =>
-              setSearch(e.target.value)
-            }
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search customer or message..."
             className="w-full rounded-lg border border-hairline bg-surface py-2 pl-9 pr-9 text-[13px] text-ink placeholder:text-stone/50 transition-colors focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/20"
           />
@@ -246,12 +239,7 @@ export default function Contacts() {
       {loading ? (
         <div className="overflow-hidden rounded-xl border border-hairline bg-surface">
           <div className="hidden border-b border-hairline px-5 py-3 md:grid md:grid-cols-[0.8fr_1.5fr_1.8fr_1fr]">
-            {[
-              "ID",
-              "Customer",
-              "Message",
-              "Date",
-            ].map((item) => (
+            {["ID", "Customer", "Message", "Date"].map((item) => (
               <p
                 key={item}
                 className="text-[10.5px] font-medium uppercase tracking-widest text-stone"
@@ -261,19 +249,14 @@ export default function Contacts() {
             ))}
           </div>
 
-          {Array.from({ length: 6 }).map(
-            (_, index) => (
-              <RowSkeleton key={index} />
-            ),
-          )}
+          {Array.from({ length: 6 }).map((_, index) => (
+            <RowSkeleton key={index} />
+          ))}
         </div>
       ) : contacts.length === 0 ? (
         <EmptyState />
       ) : filteredContacts.length === 0 ? (
-        <SearchEmptyState
-          search={search}
-          onClear={clearSearch}
-        />
+        <SearchEmptyState search={search} onClear={clearSearch} />
       ) : (
         <div className="overflow-hidden rounded-xl border border-hairline bg-surface">
           <div className="overflow-x-auto">
@@ -292,18 +275,10 @@ export default function Contacts() {
                   <ContactRow
                     key={contact.id}
                     contact={contact}
-                    expanded={
-                      expanded === contact.id
-                    }
-                    deleting={
-                      deletingId === contact.id
-                    }
-                    onToggle={() =>
-                      toggleContact(contact.id)
-                    }
-                    onDelete={() =>
-                      handleDelete(contact.id)
-                    }
+                    expanded={expanded === contact.id}
+                    deleting={deletingId === contact.id}
+                    onToggle={() => toggleContact(contact.id)}
+                    onDelete={() => handleDelete(contact.id)}
                   />
                 ))}
               </tbody>
@@ -319,31 +294,17 @@ export default function Contacts() {
    CONTACT ROW
 ========================================================= */
 
-function ContactRow({
-  contact,
-  expanded,
-  deleting,
-  onToggle,
-  onDelete,
-}) {
-  const name =
-    contact.name ||
-    contact.user?.name ||
-    "Unknown customer";
+function ContactRow({ contact, expanded, deleting, onToggle, onDelete }) {
+  const name = contact.name || contact.user?.name || "Unknown customer";
 
-  const email =
-    contact.email ||
-    contact.user?.email ||
-    "";
+  const email = contact.email || contact.user?.email || "";
 
   return (
     <>
       <tr
         onClick={onToggle}
         className={`cursor-pointer border-b border-hairline transition-colors ${
-          expanded
-            ? "bg-paper/50"
-            : "hover:bg-paper/60"
+          expanded ? "bg-paper/50" : "hover:bg-paper/60"
         }`}
       >
         {/* ID */}
@@ -352,18 +313,12 @@ function ContactRow({
           <div className="flex items-center gap-2">
             <div
               className={`flex h-6 w-6 items-center justify-center rounded-md transition-transform ${
-                expanded
-                  ? "rotate-180 bg-moss-tint"
-                  : "bg-paper"
+                expanded ? "rotate-180 bg-moss-tint" : "bg-paper"
               }`}
             >
               <ChevronDown
                 size={14}
-                className={
-                  expanded
-                    ? "text-moss"
-                    : "text-stone"
-                }
+                className={expanded ? "text-moss" : "text-stone"}
               />
             </div>
 
@@ -378,11 +333,7 @@ function ContactRow({
         <td className="px-5 py-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-moss-tint">
-              <User
-                size={14}
-                className="text-moss"
-                strokeWidth={1.75}
-              />
+              <User size={14} className="text-moss" strokeWidth={1.75} />
             </div>
 
             <div className="min-w-0">
@@ -403,9 +354,7 @@ function ContactRow({
 
         <td className="max-w-[350px] px-5 py-4">
           <p
-            className={`text-[13px] text-ink ${
-              expanded ? "" : "line-clamp-2"
-            }`}
+            className={`text-[13px] text-ink ${expanded ? "" : "line-clamp-2"}`}
           >
             {contact.message || "No message"}
           </p>
@@ -416,17 +365,13 @@ function ContactRow({
         <td className="px-5 py-4">
           <p className="text-[13px] text-ink">
             {contact.created_at
-              ? new Date(
-                  contact.created_at,
-                ).toLocaleDateString()
+              ? new Date(contact.created_at).toLocaleDateString()
               : "-"}
           </p>
 
           {contact.created_at && (
             <p className="mt-0.5 text-[11.5px] text-stone">
-              {new Date(
-                contact.created_at,
-              ).toLocaleTimeString([], {
+              {new Date(contact.created_at).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
               })}
@@ -441,21 +386,13 @@ function ContactRow({
 
       {expanded && (
         <tr className="border-b border-hairline bg-paper/30">
-          <td
-            colSpan={4}
-            className="px-5 py-5"
-          >
+          <td colSpan={4} className="px-5 py-5">
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_auto]">
-
               {/* Message */}
 
               <div className="rounded-xl border border-hairline bg-surface p-5">
                 <div className="mb-4 flex items-center gap-2">
-                  <Mail
-                    size={16}
-                    className="text-moss"
-                    strokeWidth={1.75}
-                  />
+                  <Mail size={16} className="text-moss" strokeWidth={1.75} />
 
                   <p className="text-[10.5px] font-medium uppercase tracking-widest text-stone">
                     Customer Message
@@ -467,17 +404,12 @@ function ContactRow({
                     {name}
                   </p>
 
-                  {email && (
-                    <p className="text-[12px] text-stone">
-                      {email}
-                    </p>
-                  )}
+                  {email && <p className="text-[12px] text-stone">{email}</p>}
                 </div>
 
                 <div className="rounded-lg bg-paper p-4">
                   <p className="whitespace-pre-wrap text-[13.5px] leading-6 text-ink">
-                    {contact.message ||
-                      "No message available."}
+                    {contact.message || "No message available."}
                   </p>
                 </div>
 
@@ -485,11 +417,7 @@ function ContactRow({
                   <div className="mt-4 flex items-center gap-2 text-[11.5px] text-stone">
                     <Clock size={13} />
 
-                    <span>
-                      {new Date(
-                        contact.created_at,
-                      ).toLocaleString()}
-                    </span>
+                    <span>{new Date(contact.created_at).toLocaleString()}</span>
                   </div>
                 )}
               </div>
@@ -497,22 +425,15 @@ function ContactRow({
               {/* Actions */}
 
               <div className="flex flex-col gap-3 lg:min-w-[190px]">
-
                 {/* Email */}
 
                 {email && (
                   <a
                     href={`mailto:${email}`}
-                    onClick={(e) =>
-                      e.stopPropagation()
-                    }
+                    onClick={(e) => e.stopPropagation()}
                     className="flex items-center justify-center gap-2 rounded-lg border border-hairline bg-surface px-4 py-2.5 text-[12.5px] font-medium text-ink transition-colors hover:bg-paper"
                   >
-                    <Mail
-                      size={14}
-                      strokeWidth={1.75}
-                    />
-
+                    <Mail size={14} strokeWidth={1.75} />
                     Email customer
                   </a>
                 )}
@@ -523,16 +444,10 @@ function ContactRow({
                   href="https://t.me/"
                   target="_blank"
                   rel="noreferrer"
-                  onClick={(e) =>
-                    e.stopPropagation()
-                  }
+                  onClick={(e) => e.stopPropagation()}
                   className="flex items-center justify-center gap-2 rounded-lg bg-moss px-4 py-2.5 text-[12.5px] font-medium text-white transition-colors hover:bg-moss-deep"
                 >
-                  <MessageCircle
-                    size={14}
-                    strokeWidth={1.75}
-                  />
-
+                  <MessageCircle size={14} strokeWidth={1.75} />
                   Contact via Telegram
                 </a>
 
@@ -548,17 +463,10 @@ function ContactRow({
                   className="flex items-center justify-center gap-2 rounded-lg border border-clay/20 bg-clay-tint px-4 py-2.5 text-[12.5px] font-medium text-clay transition-colors hover:bg-clay/10 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {deleting ? (
-                    <RefreshCw
-                      size={14}
-                      className="animate-spin"
-                    />
+                    <RefreshCw size={14} className="animate-spin" />
                   ) : (
-                    <Trash2
-                      size={14}
-                      strokeWidth={1.75}
-                    />
+                    <Trash2 size={14} strokeWidth={1.75} />
                   )}
-
                   Delete message
                 </button>
               </div>
@@ -590,11 +498,7 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center rounded-xl border border-dashed border-hairline bg-surface px-6 py-20 text-center">
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-moss-tint">
-        <Inbox
-          size={22}
-          className="text-moss"
-          strokeWidth={1.75}
-        />
+        <Inbox size={22} className="text-moss" strokeWidth={1.75} />
       </div>
 
       <p className="mb-1 text-[15px] font-medium text-ink">
@@ -602,8 +506,7 @@ function EmptyState() {
       </p>
 
       <p className="max-w-sm text-[13px] leading-6 text-stone">
-        Messages from your customers will appear
-        here.
+        Messages from your customers will appear here.
       </p>
     </div>
   );
@@ -613,29 +516,18 @@ function EmptyState() {
    SEARCH EMPTY STATE
 ========================================================= */
 
-function SearchEmptyState({
-  search,
-  onClear,
-}) {
+function SearchEmptyState({ search, onClear }) {
   return (
     <div className="flex flex-col items-center rounded-xl border border-dashed border-hairline bg-surface px-6 py-16 text-center">
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-paper">
-        <Search
-          size={20}
-          className="text-stone"
-          strokeWidth={1.75}
-        />
+        <Search size={20} className="text-stone" strokeWidth={1.75} />
       </div>
 
-      <p className="mb-1 text-[14px] font-medium text-ink">
-        No messages found
-      </p>
+      <p className="mb-1 text-[14px] font-medium text-ink">No messages found</p>
 
       <p className="mb-5 text-[13px] text-stone">
         No results found for{" "}
-        <span className="font-medium text-ink">
-          "{search}"
-        </span>
+        <span className="font-medium text-ink">"{search}"</span>
       </p>
 
       <button

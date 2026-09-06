@@ -10,26 +10,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import api from "../../api/axios";
-
-const CONTACT_INFO = [
-  {
-    icon: Mail,
-    label: "Email us",
-    value: "hello@botaniq.com",
-    href: "mailto:hello@botaniq.com",
-  },
-  {
-    icon: Phone,
-    label: "Call us",
-    value: "+855 12 345 678",
-    href: "tel:+85512345678",
-  },
-  {
-    icon: MapPin,
-    label: "Visit us",
-    value: "Phnom Penh, Cambodia",
-  },
-];
+import { useStoreSettings } from "../../context/StoreSettingsContext";
 
 const FAQS = [
   {
@@ -53,6 +34,26 @@ const initialForm = {
 };
 
 export default function Contact() {
+  const store = useStoreSettings();
+  const contactInfo = [
+    {
+      icon: Mail,
+      label: "Email us",
+      value: store.contact_email || "hello@botaniq.com",
+      href: `mailto:${store.contact_email || "hello@botaniq.com"}`,
+    },
+    {
+      icon: Phone,
+      label: "Call us",
+      value: store.contact_phone || "+855 12 345 678",
+      href: `tel:${store.contact_phone || "+855 12 345 678"}`,
+    },
+    {
+      icon: MapPin,
+      label: "Visit us",
+      value: store.address || "Phnom Penh, Cambodia",
+    },
+  ];
   const [form, setForm] = useState(initialForm);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -247,7 +248,7 @@ export default function Contact() {
             className="contact-fade-up space-y-4"
             style={{ animationDelay: "100ms" }}
           >
-            {CONTACT_INFO.map((item) => {
+            {contactInfo.map((item) => {
               const Content = (
                 <div className="group flex items-center gap-4 rounded-2xl border border-hairline bg-surface p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-moss/30 hover:shadow-[0_12px_28px_rgba(33,31,27,0.06)]">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-moss-tint transition-all duration-300 group-hover:bg-moss">
