@@ -18,6 +18,7 @@ import ProductCard from "../../components/storefront/ProductCart";
 
 const SORTS = [
   { value: "", label: "Newest" },
+  { value: "latest_updated", label: "Recently Updated" },
   { value: "price_asc", label: "Price: Low to High" },
   { value: "price_desc", label: "Price: High to Low" },
   { value: "rating", label: "Top Rated" },

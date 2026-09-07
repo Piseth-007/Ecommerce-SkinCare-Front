@@ -16,12 +16,13 @@ import {
 
 import api from "../../api/axios";
 import ProductCard from "../../components/storefront/ProductCart";
+import FadeImage from "../../components/common/FadeImage";
 
 /* =========================================================
    CONSTANTS
 ========================================================= */
 
-const CACHE_VERSION = "botaniq-home-v2";
+const CACHE_VERSION = "botaniq-home-v3";
 
 const PRODUCT_CACHE_KEY = `${CACHE_VERSION}:products`;
 const CATEGORY_CACHE_KEY = `${CACHE_VERSION}:categories`;
@@ -327,7 +328,7 @@ export default function Home() {
   const fetchProducts = useCallback(async (signal) => {
     const response = await api.get("/products", {
       params: {
-        sort: "newest",
+        sort: "latest_updated",
       },
       signal,
     });
@@ -372,6 +373,34 @@ export default function Home() {
   } = categoriesResource;
 
   const refreshing = refreshingProducts || refreshingCategories;
+
+  const latestProduct = useMemo(() => {
+    if (!products || products.length === 0) return null;
+    return [...products].sort((a, b) => {
+      const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
+      const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
+      return dateB - dateA;
+    })[0];
+  }, [products]);
+
+  const latestProductImage = useMemo(() => {
+    if (!latestProduct) return "";
+    const images = Array.isArray(latestProduct.images)
+      ? latestProduct.images
+      : [];
+    const primary = images.find((img) => img?.is_primary);
+    if (primary?.url) return primary.url;
+    if (images[0]?.url) return images[0].url;
+    if (typeof images[0] === "string") return images[0];
+    return "";
+  }, [latestProduct]);
+
+  const formatPrice = useCallback((value) => {
+    return new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  }, []);
 
   /* =======================================================
      REVEALS (trust / categories / journal / arrivals only —
@@ -1141,21 +1170,25 @@ export default function Home() {
 
             {/* HERO VISUAL — framer-motion fade/slide in */}
             <motion.div
-              className="relative hidden h-[480px] lg:block"
+              className="relative flex min-h-[460px] sm:min-h-[500px] w-full max-w-sm sm:max-w-md mx-auto items-center justify-center lg:max-w-none lg:h-[500px]"
               initial={{ opacity: 0, y: 32 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, ease: easeSmooth, delay: 0.25 }}
             >
+              {/* Background ambient glow 1 */}
               <div
                 className="
+                  pointer-events-none
                   absolute
-                  left-[18%]
-                  top-[12%]
-                  h-[290px]
-                  w-[290px]
+                  left-[15%]
+                  top-[10%]
+                  h-[300px]
+                  w-[300px]
                   rounded-full
-                  bg-moss/[0.06]
-                  blur-2xl
+                  bg-moss/[0.08]
+                  blur-3xl
+                  transition-transform
+                  duration-1000
                 "
                 style={{
                   transform: reducedMotion
@@ -1164,16 +1197,42 @@ export default function Home() {
                 }}
               />
 
+              {/* Background ambient glow 2 */}
               <div
                 className="
+                  pointer-events-none
                   absolute
-                  left-[12%]
-                  top-[8%]
-                  h-[330px]
-                  w-[330px]
+                  right-[10%]
+                  bottom-[10%]
+                  h-[280px]
+                  w-[280px]
+                  rounded-full
+                  bg-sage/[0.12]
+                  blur-3xl
+                  transition-transform
+                  duration-1000
+                "
+                style={{
+                  transform: reducedMotion
+                    ? undefined
+                    : `translate3d(${mouse.x * -18}px, ${mouse.y * -18}px, 0)`,
+                }}
+              />
+
+              {/* Organic backdrop shape */}
+              <div
+                className="
+                  pointer-events-none
+                  absolute
+                  left-1/2
+                  top-1/2
+                  h-[340px]
+                  w-[340px]
+                  sm:h-[390px]
+                  sm:w-[390px]
                   rounded-[45%_55%_52%_48%]
                   border
-                  border-white/70
+                  border-white/75
                   bg-gradient-to-br
                   from-white/80
                   to-moss-tint/60
@@ -1182,154 +1241,245 @@ export default function Home() {
                 "
                 style={{
                   transform: reducedMotion
-                    ? undefined
-                    : `translate3d(${mouse.x * -12}px, ${mouse.y * -12}px, 0) rotate(${mouse.x * 3}deg)`,
+                    ? "translate(-50%, -50%)"
+                    : `translate(calc(-50% + ${mouse.x * -12}px), calc(-50% + ${mouse.y * -12}px)) rotate(${mouse.x * 3}deg)`,
                 }}
               />
 
-              {/* Bottle */}
-              <div
-                className="botaniq-float absolute left-[31%] top-[19%] z-10"
-                style={{ animationDelay: "-2s" }}
-              >
-                <div
-                  className="
-                    mx-auto
-                    h-16
-                    w-24
-                    rounded-t-2xl
-                    border
-                    border-ink/10
-                    bg-white
-                    shadow-xl
-                  "
-                />
-
-                <div
-                  className="
-                    relative
-                    h-64
-                    w-36
-                    rounded-[20px_20px_30px_30px]
-                    border
-                    border-ink/10
-                    bg-gradient-to-br
-                    from-white
-                    via-paper
-                    to-moss-tint
-                    shadow-[0_25px_45px_rgba(40,55,43,0.18)]
-                  "
-                >
-                  <div
-                    className="
-                      absolute
-                      bottom-5
-                      left-4
-                      right-4
-                      top-14
-                      flex
-                      flex-col
-                      items-center
-                      justify-center
-                      rounded-xl
-                      border
-                      border-moss/10
-                      bg-white/70
-                      text-center
-                    "
-                  >
-                    <Leaf
-                      size={25}
-                      strokeWidth={1.2}
-                      className="mb-3 text-moss"
-                    />
-
-                    <span className="font-display text-[15px] italic text-moss-deep">
-                      BOTANIQ
-                    </span>
-
-                    <span className="mt-1 text-[7px] uppercase tracking-[0.18em] text-stone">
-                      Skin ritual
-                    </span>
+              {/* Centerpiece: Latest Updated Product Card or Skeleton or Fallback */}
+              {showProductSkeleton ? (
+                <div className="relative z-10 w-[290px] sm:w-[330px] rounded-3xl border border-white/80 bg-white/85 p-4 sm:p-5 shadow-[0_25px_50px_rgba(40,55,43,0.12)] backdrop-blur-xl">
+                  <div className="mb-3 flex items-center justify-between">
+                    <div className="h-5 w-24 rounded-full botaniq-skeleton" />
+                    <div className="h-5 w-12 rounded-full botaniq-skeleton" />
+                  </div>
+                  <div className="aspect-square w-full rounded-2xl botaniq-skeleton" />
+                  <div className="mt-3.5 space-y-2">
+                    <div className="h-3 w-1/3 rounded botaniq-skeleton" />
+                    <div className="h-5 w-3/4 rounded botaniq-skeleton" />
+                    <div className="flex items-center justify-between border-t border-hairline/60 pt-3">
+                      <div className="h-5 w-16 rounded botaniq-skeleton" />
+                      <div className="h-4 w-20 rounded botaniq-skeleton" />
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : latestProduct ? (
+                <div
+                  className="botaniq-float relative z-10 w-[290px] sm:w-[330px]"
+                  style={{
+                    animationDelay: "-2s",
+                    transform: reducedMotion
+                      ? undefined
+                      : `translate3d(${mouse.x * 8}px, ${mouse.y * 8}px, 0)`,
+                  }}
+                >
+                  <Link
+                    to={`/products/${latestProduct.id}`}
+                    className="group/card block rounded-3xl border border-white/85 bg-white/90 p-4 sm:p-5 shadow-[0_25px_50px_rgba(40,55,43,0.14)] backdrop-blur-xl transition-all duration-500 hover:-translate-y-1.5 hover:border-moss/30 hover:shadow-[0_32px_65px_rgba(40,55,43,0.22)]"
+                    aria-label={`View latest product: ${latestProduct.name}`}
+                  >
+                    {/* Top Header: Badge & Discount */}
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-moss-tint px-2.5 py-1 text-[10.5px] font-medium uppercase tracking-[0.12em] text-moss">
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-moss opacity-75" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-moss" />
+                        </span>
+                        Latest Update
+                      </span>
 
-              {/* Floating card */}
+                      {Number(latestProduct.discount) > 0 ? (
+                        <span className="rounded-full bg-terracotta/10 px-2 py-0.5 text-[10.5px] font-semibold text-terracotta">
+                          -{Math.round(Number(latestProduct.discount))}% OFF
+                        </span>
+                      ) : latestProduct.free_delivery ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-moss">
+                          <Truck size={12} strokeWidth={1.8} />
+                          Free Delivery
+                        </span>
+                      ) : null}
+                    </div>
+
+                    {/* Product Image Showcase */}
+                    <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-hairline/70 bg-paper/60 transition-colors duration-500 group-hover/card:border-moss/20">
+                      {latestProductImage ? (
+                        <FadeImage
+                          src={latestProductImage}
+                          alt={latestProduct.name}
+                          loading="eager"
+                          wrapperClassName="h-full w-full"
+                          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover/card:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center text-moss/40">
+                          <Leaf size={32} strokeWidth={1.2} />
+                          <span className="mt-2 text-[11px] font-medium uppercase tracking-wider text-stone">
+                            BOTANIQ
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Product Info */}
+                    <div className="mt-3.5">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone truncate">
+                        {latestProduct.brand?.name ||
+                          latestProduct.category?.name ||
+                          "Skincare Ritual"}
+                      </p>
+
+                      <h3 className="mt-1 font-display text-[16px] sm:text-[17px] font-medium leading-snug text-ink line-clamp-1 transition-colors duration-300 group-hover/card:text-moss-deep">
+                        {latestProduct.name}
+                      </h3>
+
+                      {/* Pricing & Link */}
+                      <div className="mt-3 flex items-center justify-between border-t border-hairline/60 pt-3">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-[15.5px] font-semibold text-ink">
+                            ${formatPrice(
+                              Number(latestProduct.discount) > 0
+                                ? Number(latestProduct.price) -
+                                    (Number(latestProduct.price) *
+                                      Number(latestProduct.discount)) /
+                                      100
+                                : Number(latestProduct.price)
+                            )}
+                          </span>
+                          {Number(latestProduct.discount) > 0 && (
+                            <span className="text-[12px] text-stone line-through">
+                              ${formatPrice(Number(latestProduct.price))}
+                            </span>
+                          )}
+                        </div>
+
+                        <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-moss transition-transform duration-300 group-hover/card:translate-x-1">
+                          View Ritual
+                          <ArrowRight size={13} />
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              ) : (
+                /* Fallback bottle if database is completely empty */
+                <div
+                  className="botaniq-float relative z-10"
+                  style={{ animationDelay: "-2s" }}
+                >
+                  <div className="mx-auto h-16 w-24 rounded-t-2xl border border-ink/10 bg-white shadow-xl" />
+                  <div className="relative h-64 w-36 rounded-[20px_20px_30px_30px] border border-ink/10 bg-gradient-to-br from-white via-paper to-moss-tint shadow-[0_25px_45px_rgba(40,55,43,0.18)]">
+                    <div className="absolute bottom-5 left-4 right-4 top-14 flex flex-col items-center justify-center rounded-xl border border-moss/10 bg-white/70 text-center">
+                      <Leaf size={25} strokeWidth={1.2} className="mb-3 text-moss" />
+                      <span className="font-display text-[15px] italic text-moss-deep">
+                        BOTANIQ
+                      </span>
+                      <span className="mt-1 text-[7px] uppercase tracking-[0.18em] text-stone">
+                        Skin ritual
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Floating card 1: Top-Right */}
               <div
                 className="
                   botaniq-float
                   absolute
-                  right-[4%]
-                  top-[18%]
+                  -right-1
+                  sm:right-2
+                  top-4
+                  sm:top-8
                   z-20
                   rounded-2xl
                   border
-                  border-white/70
-                  bg-white/80
-                  px-4
-                  py-3
+                  border-white/80
+                  bg-white/90
+                  px-3.5
+                  py-2.5
                   shadow-[0_15px_35px_rgba(40,55,43,0.10)]
                   backdrop-blur-md
                 "
                 style={{ animationDelay: "-2s" }}
               >
-                <div className="flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss-tint">
-                    <Leaf size={13} className="text-moss" />
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss-tint text-moss">
+                    {latestProduct?.reviews_avg_rating ? (
+                      <Star size={13} className="fill-moss" />
+                    ) : (
+                      <Leaf size={13} />
+                    )}
                   </span>
 
                   <div>
-                    <p className="text-[10px] font-medium text-ink">
-                      Gentle formulas
+                    <p className="text-[10.5px] font-medium text-ink leading-tight">
+                      {latestProduct?.reviews_avg_rating
+                        ? `${Number(latestProduct.reviews_avg_rating).toFixed(1)} ★ Rating`
+                        : "Gentle formulas"}
                     </p>
-                    <p className="text-[9px] text-stone">Everyday friendly</p>
+                    <p className="text-[9px] text-stone">
+                      {latestProduct?.reviews_count
+                        ? `${latestProduct.reviews_count} verified reviews`
+                        : "Everyday friendly"}
+                    </p>
                   </div>
                 </div>
               </div>
 
-              {/* Floating card 2 */}
+              {/* Floating card 2: Bottom-Left */}
               <div
                 className="
                   botaniq-float-reverse
                   absolute
-                  bottom-[16%]
-                  left-[2%]
+                  -left-1
+                  sm:left-2
+                  bottom-6
+                  sm:bottom-10
                   z-20
                   rounded-2xl
                   border
-                  border-white/70
-                  bg-white/80
-                  px-4
-                  py-3
+                  border-white/80
+                  bg-white/90
+                  px-3.5
+                  py-2.5
                   shadow-[0_15px_35px_rgba(40,55,43,0.10)]
                   backdrop-blur-md
                 "
                 style={{ animationDelay: "-3s" }}
               >
-                <div className="flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss-tint">
-                    <Heart size={13} className="text-moss" />
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss-tint text-moss">
+                    {latestProduct?.free_delivery ? (
+                      <Truck size={13} />
+                    ) : (
+                      <Heart size={13} />
+                    )}
                   </span>
 
                   <div>
-                    <p className="text-[10px] font-medium text-ink">
-                      Made for rituals
+                    <p className="text-[10.5px] font-medium text-ink leading-tight">
+                      {latestProduct?.free_delivery
+                        ? "Free Delivery"
+                        : "Made for rituals"}
                     </p>
                     <p className="text-[9px] text-stone">
-                      Simple. Calm. Effective.
+                      {latestProduct?.free_delivery
+                        ? "On latest arrivals"
+                        : "Simple. Calm. Effective."}
                     </p>
                   </div>
                 </div>
               </div>
 
+              {/* Subtle accent circle */}
               <div
                 className="
+                  pointer-events-none
                   absolute
                   bottom-[4%]
-                  right-[14%]
-                  h-24
-                  w-24
+                  right-[10%]
+                  h-20
+                  w-20
                   rounded-full
                   border
                   border-moss/10
