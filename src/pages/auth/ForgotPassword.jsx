@@ -1,17 +1,24 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Mail, Loader2, AlertCircle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Mail, Loader2, AlertCircle, Sparkles } from "lucide-react";
 import api from "../../api/axios";
+import { useAuth } from "../../context/useAuth";
 import AuthShell, {
   AuthField,
   AuthInput,
 } from "../../components/auth/AuthShell";
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { loginWithGoogle } = useAuth();
+  const navigate = useNavigate();
+  const googleBtnRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,15 +34,72 @@ export default function ForgotPassword() {
     }
   };
 
+  const handleGoogleResponse = async (response) => {
+    setError("");
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle(response.credential);
+      navigate("/");
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Google sign-in failed. Please try again."
+      );
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) {
+      return;
+    }
+
+    const scriptId = "google-identity-services";
+    let script = document.getElementById(scriptId);
+
+    const initGoogle = () => {
+      if (!window.google || !googleBtnRef.current) return;
+
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+      });
+
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: "outline",
+        size: "large",
+        width: googleBtnRef.current.offsetWidth,
+        text: "continue_with",
+      });
+    };
+
+    if (!script) {
+      script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = initGoogle;
+      document.body.appendChild(script);
+    } else {
+      initGoogle();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <AuthShell
       eyebrow="Account recovery"
       title="A fresh start is close."
-      description="Enter your email and we’ll send a secure link to reset your password."
+      description="Enter your email to receive a reset link, or sign in instantly with Google."
       visualTitle="Your routine is worth returning to."
       visualCopy="We’ll help you get back to the products and rituals that make you feel at home in your skin."
-      badge="Account Recovery"
-      tags={["✦ Secure Link", "Instant Recovery", "24/7 Support"]}
+      badge="Instant Recovery"
+      quote={{
+        text: "Thoughtful, simple, and always easy to pick up right where you left off.",
+        author: "Botaniq Care Team",
+      }}
+      tags={["✦ Secure Access", "Instant Google Recovery", "24/7 Support"]}
     >
       <div className="auth-form">
         {sent ? (
@@ -48,7 +112,7 @@ export default function ForgotPassword() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="auth-form">
-            <AuthField label="Email">
+            <AuthField label="Email address">
               <AuthInput
                 icon={Mail}
                 type="email"
@@ -70,7 +134,7 @@ export default function ForgotPassword() {
               {loading ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  <span>Sending…</span>
+                  <span>Sending reset link…</span>
                 </>
               ) : (
                 "Send reset link"
@@ -80,12 +144,39 @@ export default function ForgotPassword() {
         )}
       </div>
 
+      {!sent && (
+        <>
+          <div className="auth-divider">
+            <span>or signed up with Google?</span>
+          </div>
+
+          <div className="w-full flex justify-center min-h-[40px]">
+            {googleLoading ? (
+              <div className="flex items-center gap-2 text-[13px] text-stone py-2">
+                <Loader2 size={15} className="animate-spin text-moss" />
+                <span>Signing in with Google…</span>
+              </div>
+            ) : (
+              <div ref={googleBtnRef} className="w-full [&>div]:!w-full flex justify-center" />
+            )}
+          </div>
+
+          <div className="mt-2.5 p-2.5 rounded-lg bg-moss-tint/70 border border-moss/10 flex items-start gap-2 text-[11.5px] text-stone">
+            <Sparkles size={13} className="text-moss shrink-0 mt-0.5" />
+            <span>
+              If you originally created your account with Google, you don't need a password reset — clicking above logs you in immediately.
+            </span>
+          </div>
+        </>
+      )}
+
       <p className="auth-switch">
+        Remember your password?{" "}
         <Link
           to="/login"
           className="text-moss font-medium hover:text-moss-deep"
         >
-          Back to sign in
+          Sign in
         </Link>
       </p>
     </AuthShell>
