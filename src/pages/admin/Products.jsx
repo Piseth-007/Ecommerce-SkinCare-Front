@@ -31,7 +31,7 @@ const STOCK_FILTERS = [
   { key: "out-of-stock", label: "Out of Stock" },
 ];
 
-const PRODUCTS_PER_PAGE = 12;
+const PRODUCTS_PER_PAGE = 20;
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -71,7 +71,8 @@ export default function Products() {
         setLoading(true);
       }
 
-      const res = await api.get("/products");
+      const res = await api.get("/admin/products");
+      console.log(res);
 
       setProducts(res.data?.data || res.data || []);
     } catch (err) {

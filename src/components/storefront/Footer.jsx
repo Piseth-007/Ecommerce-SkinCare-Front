@@ -143,7 +143,10 @@ export default function Footer() {
             { label: "All products", to: "/products" },
             { label: "Categories", to: "/categories" },
             { label: "Brands", to: "/brands" },
-            { label: "Best rated", to: "/products?sort=rating" },
+            {
+              label: "Best rated",
+              to: "/products?has_rating=1&sort=rating",
+            },
           ]}
         />
 

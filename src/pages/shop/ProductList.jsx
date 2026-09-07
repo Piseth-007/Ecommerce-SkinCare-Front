@@ -94,6 +94,8 @@ export default function ProductList() {
   const categoryId = searchParams.get("category_id") || "";
   const brandId = searchParams.get("brand_id") || "";
   const skinTypeId = searchParams.get("skin_type_id") || "";
+  const hasDiscount = searchParams.get("has_discount") === "1";
+  const hasRating = searchParams.get("has_rating") === "1";
   const sort = searchParams.get("sort") || "";
   const minPrice = searchParams.get("min_price") || "";
   const maxPrice = searchParams.get("max_price") || "";
@@ -179,6 +181,8 @@ export default function ProductList() {
           category_id: categoryId || undefined,
           brand_id: brandId || undefined,
           skin_type_id: skinTypeId || undefined,
+          has_discount: hasDiscount || undefined,
+          has_rating: hasRating || undefined,
           sort: sort || undefined,
           min_price: minPrice || undefined,
           max_price: maxPrice || undefined,
@@ -208,6 +212,8 @@ export default function ProductList() {
     categoryId,
     brandId,
     skinTypeId,
+    hasDiscount,
+    hasRating,
     sort,
     minPrice,
     maxPrice,
@@ -221,7 +227,13 @@ export default function ProductList() {
     const next = new URLSearchParams(searchParams);
     if (value) next.set(key, value);
     else next.delete(key);
-    next.delete("page");
+
+    // Only reset to page 1 when a filter changes — not when
+    // the page itself is the thing being updated.
+    if (key !== "page") {
+      next.delete("page");
+    }
+
     setSearchParams(next);
   };
 
@@ -256,6 +268,22 @@ export default function ProductList() {
       label: skinTypeName || "Skin type",
       onClear: () => updateParam("skin_type_id", ""),
     },
+    hasDiscount && {
+      key: "discount",
+      label: "Promotions",
+      onClear: () => updateParam("has_discount", ""),
+    },
+    hasRating && {
+      key: "rating",
+      label: "Best rated",
+      onClear: () => {
+        const next = new URLSearchParams(searchParams);
+        next.delete("has_rating");
+        if (next.get("sort") === "rating") next.delete("sort");
+        next.delete("page");
+        setSearchParams(next);
+      },
+    },
     (minPrice || maxPrice) && {
       key: "price",
       label: `$${minPrice || "0"} – $${maxPrice || "∞"}`,
@@ -273,6 +301,8 @@ export default function ProductList() {
     categoryId,
     brandId,
     skinTypeId,
+    hasDiscount,
+    hasRating,
     minPrice,
     maxPrice,
   ].filter(Boolean).length;
@@ -289,7 +319,13 @@ export default function ProductList() {
           </p>
 
           <h1 className="font-display text-[30px] font-medium text-ink">
-            {search ? `Results for "${search}"` : "All Products"}
+            {search
+              ? `Results for "${search}"`
+              : hasDiscount
+                ? "Promotions"
+                : hasRating
+                  ? "Best Rated"
+                  : "All Products"}
           </h1>
         </div>
 

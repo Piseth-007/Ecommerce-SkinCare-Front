@@ -11,9 +11,8 @@ import {
   LogOut,
   Package,
   Tag,
+  Percent,
   Award,
-  Info,
-  Mail,
   Sun,
   Moon,
   ChevronDown,
@@ -386,16 +385,18 @@ export default function Navbar() {
             )}
           </div>
 
-          <Link to="/products?sort=rating" className="nav-link hover:text-ink">
+          <Link
+            to="/products?has_rating=1&sort=rating"
+            className="nav-link hover:text-ink"
+          >
             Best rated
           </Link>
 
-          <Link to="/about" className="nav-link hover:text-ink">
-            About
-          </Link>
-
-          <Link to="/contact" className="nav-link hover:text-ink">
-            Contact
+          <Link
+            to="/products?has_discount=1&sort=discount"
+            className="nav-link hover:text-ink"
+          >
+            Promotions
           </Link>
         </nav>
 
@@ -658,7 +659,7 @@ export default function Navbar() {
           </Link>
 
           <Link
-            to="/products?sort=rating"
+            to="/products?has_rating=1&sort=rating"
             onClick={closeMobileMenu}
             className="flex items-center gap-2.5 py-2 text-[13.5px] font-medium text-stone hover:text-ink"
           >
@@ -667,21 +668,12 @@ export default function Navbar() {
           </Link>
 
           <Link
-            to="/about"
+            to="/products?has_discount=1&sort=discount"
             onClick={closeMobileMenu}
             className="flex items-center gap-2.5 py-2 text-[13.5px] font-medium text-stone hover:text-ink"
           >
-            <Info size={15} strokeWidth={1.75} />
-            About
-          </Link>
-
-          <Link
-            to="/contact"
-            onClick={closeMobileMenu}
-            className="flex items-center gap-2.5 py-2 text-[13.5px] font-medium text-stone hover:text-ink"
-          >
-            <Mail size={15} strokeWidth={1.75} />
-            Contact
+            <Percent size={15} strokeWidth={1.75} />
+            Promotions
           </Link>
 
           {user && (

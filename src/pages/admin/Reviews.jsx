@@ -642,7 +642,7 @@ function FilterPill({ label, rating, active, onClick }) {
       onClick={onClick}
       className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-[12px] font-medium transition-all ${
         active
-          ? "bg-ink text-white shadow-[0_2px_4px_rgba(33,31,27,0.1)]"
+          ? "bg-moss text-white shadow-[0_2px_4px_rgba(33,31,27,0.1)]"
           : "text-stone hover:bg-paper hover:text-ink"
       }`}
       aria-pressed={active}
