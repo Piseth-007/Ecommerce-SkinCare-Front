@@ -27,11 +27,7 @@ const SORTS = [
 const FILTERS_CACHE_KEY = "botaniq-productlist-v1:filters";
 const FILTERS_CACHE_TTL = 1000 * 60 * 10; // 10 minutes
 
-/* =========================================================
-   FILTER DATA CACHE HELPERS
-   (categories / brands / skin types rarely change, so we
-   hydrate instantly from cache and refresh silently)
-========================================================= */
+
 
 function readFiltersCache() {
   try {
@@ -229,8 +225,6 @@ export default function ProductList() {
     if (value) next.set(key, value);
     else next.delete(key);
 
-    // Only reset to page 1 when a filter changes — not when
-    // the page itself is the thing being updated.
     if (key !== "page") {
       next.delete("page");
     }
