@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Mail } from "lucide-react";
+import { Mail, Loader2, AlertCircle } from "lucide-react";
 import api from "../../api/axios";
 import AuthShell, {
   AuthField,
-  authInputClass,
+  AuthInput,
 } from "../../components/auth/AuthShell";
 
 export default function AdminForgotPassword() {
@@ -38,6 +38,8 @@ export default function AdminForgotPassword() {
       description="Enter your admin email and we’ll send a secure password reset link."
       visualTitle="The details behind every order."
       visualCopy="Reset your access and return to the calm, clear space that keeps your store moving."
+      badge="Admin Recovery"
+      tags={["✦ Verified Admin Only", "Encrypted Reset", "Store Security"]}
       compact
     >
       <div className="auth-form">
@@ -52,20 +54,32 @@ export default function AdminForgotPassword() {
         ) : (
           <form onSubmit={handleSubmit} className="auth-form">
             <AuthField label="Admin email">
-              <input
+              <AuthInput
+                icon={Mail}
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className={authInputClass}
                 placeholder="admin@example.com"
                 required
               />
             </AuthField>
 
-            {error && <p className="auth-alert">{error}</p>}
+            {error && (
+              <div className="auth-alert">
+                <AlertCircle size={15} className="shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
 
             <button type="submit" disabled={loading} className="auth-submit">
-              {loading ? "Sending…" : "Send reset link"}
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Sending…</span>
+                </>
+              ) : (
+                "Send reset link"
+              )}
             </button>
           </form>
         )}

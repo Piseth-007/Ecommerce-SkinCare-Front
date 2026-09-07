@@ -28,6 +28,16 @@ export function AuthProvider({ children }) {
     return res.data.user;
   };
 
+  // idToken: the credential string from Google Identity Services'
+  // callback (response.credential). Mirrors login() — same storage,
+  // same shape of response from the backend.
+  const loginWithGoogle = async (idToken) => {
+    const res = await api.post("/auth/google", { id_token: idToken });
+    localStorage.setItem("token", res.data.token);
+    setUser(res.data.user);
+    return res.data.user;
+  };
+
   const register = async (data) => {
     const res = await api.post("/register", data);
     localStorage.setItem("token", res.data.token);
@@ -89,6 +99,7 @@ export function AuthProvider({ children }) {
       value={{
         user,
         login,
+        loginWithGoogle,
         register,
         logout,
         forgotPassword,

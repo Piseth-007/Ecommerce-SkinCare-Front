@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate, useLocation, Navigate, Link } from "react-router-dom";
+import { Mail, Lock, Loader2, AlertCircle } from "lucide-react";
 import { useAuth } from "../../context/useAuth";
 import AuthShell, {
   AuthField,
-  authInputClass,
+  AuthInput,
 } from "../../components/auth/AuthShell";
 
 export default function AdminLogin() {
@@ -46,39 +47,60 @@ export default function AdminLogin() {
       description="Sign in to manage products, orders, and the details behind every customer experience."
       visualTitle="Everything, thoughtfully arranged."
       visualCopy="A clear space for the work that keeps your store moving beautifully."
+      badge="Store Administration"
+      tags={["✦ Admin Workspace", "Store Controls", "Analytics & Orders"]}
       compact
     >
       <form onSubmit={handleSubmit} className="auth-form">
         <AuthField label="Email">
-          <input
+          <AuthInput
+            icon={Mail}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={authInputClass}
             placeholder="admin@example.com"
+            autoComplete="username"
             required
           />
         </AuthField>
 
         <AuthField label="Password">
-          <input
+          <AuthInput
+            icon={Lock}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={authInputClass}
             placeholder="Your admin password"
+            autoComplete="current-password"
             required
           />
         </AuthField>
 
         <div className="auth-form-meta">
-          <Link to="/admin/forgot-password">Forgot admin password?</Link>
+          <Link
+            to="/admin/forgot-password"
+            className="text-[12px] text-moss hover:text-moss-deep font-medium transition-colors"
+          >
+            Forgot admin password?
+          </Link>
         </div>
 
-        {error && <p className="auth-alert">{error}</p>}
+        {error && (
+          <div className="auth-alert">
+            <AlertCircle size={15} className="shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
 
         <button type="submit" disabled={loading} className="auth-submit">
-          {loading ? "Signing in…" : "Sign in"}
+          {loading ? (
+            <>
+              <Loader2 size={16} className="animate-spin" />
+              <span>Signing in…</span>
+            </>
+          ) : (
+            "Sign in"
+          )}
         </button>
       </form>
     </AuthShell>

@@ -6,13 +6,11 @@ import { ToastProvider } from "./context/ToastContext";
 import { ConfirmProvider } from "./context/ConfirmContext";
 import { StoreSettingsProvider } from "./context/StoreSettingsContext";
 
-// Storefront
+
 import Navbar from "./components/storefront/Navbar";
 import RequireAuth from "./components/RequireAuth";
 
-// Auth (
 
-// Admin
 import AdminRoute from "./components/admin/AdminRoute";
 import Footer from "./components/storefront/Footer";
 import ScrollProgress from "./components/storefront/ScrollProgress";

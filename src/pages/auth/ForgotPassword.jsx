@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Mail } from "lucide-react";
+import { Mail, Loader2, AlertCircle } from "lucide-react";
 import api from "../../api/axios";
 import AuthShell, {
   AuthField,
-  authInputClass,
+  AuthInput,
 } from "../../components/auth/AuthShell";
 
 export default function ForgotPassword() {
@@ -34,6 +34,8 @@ export default function ForgotPassword() {
       description="Enter your email and we’ll send a secure link to reset your password."
       visualTitle="Your routine is worth returning to."
       visualCopy="We’ll help you get back to the products and rituals that make you feel at home in your skin."
+      badge="Account Recovery"
+      tags={["✦ Secure Link", "Instant Recovery", "24/7 Support"]}
     >
       <div className="auth-form">
         {sent ? (
@@ -42,25 +44,37 @@ export default function ForgotPassword() {
               <Mail size={17} strokeWidth={1.8} />
             </div>
             <strong>Check your inbox</strong>
-            <p>We’ve sent a reset link to {email}.</p>
+            <p>We’ve sent a password reset link to {email}.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="auth-form">
             <AuthField label="Email">
-              <input
+              <AuthInput
+                icon={Mail}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className={authInputClass}
                 placeholder="you@example.com"
                 required
               />
             </AuthField>
 
-            {error && <p className="auth-alert">{error}</p>}
+            {error && (
+              <div className="auth-alert">
+                <AlertCircle size={15} className="shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
 
             <button type="submit" disabled={loading} className="auth-submit">
-              {loading ? "Sending…" : "Send reset link"}
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Sending…</span>
+                </>
+              ) : (
+                "Send reset link"
+              )}
             </button>
           </form>
         )}

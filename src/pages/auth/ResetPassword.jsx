@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { CheckCircle2 } from "lucide-react";
+import {
+  Lock,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  XCircle,
+} from "lucide-react";
 import api from "../../api/axios";
 import AuthShell, {
   AuthField,
-  authInputClass,
+  AuthInput,
 } from "../../components/auth/AuthShell";
 
 export default function ResetPassword() {
@@ -19,9 +25,20 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const passwordsMatch =
+    passwordConfirmation.length > 0 && password === passwordConfirmation;
+  const passwordsMismatch =
+    passwordConfirmation.length > 0 && password !== passwordConfirmation;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (password !== passwordConfirmation) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setLoading(true);
     try {
       await api.post("/reset-password", {
@@ -42,7 +59,10 @@ export default function ResetPassword() {
   if (!token || !email) {
     return (
       <main className="auth-page px-4 py-8">
-        <p className="auth-alert">Invalid or expired reset link.</p>
+        <div className="auth-alert">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>Invalid or expired reset link.</span>
+        </div>
       </main>
     );
   }
@@ -70,29 +90,56 @@ export default function ResetPassword() {
         ) : (
           <form onSubmit={handleSubmit} className="auth-form">
             <AuthField label="New password">
-              <input
+              <AuthInput
+                icon={Lock}
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={authInputClass}
+                placeholder="At least 8 characters"
                 required
               />
             </AuthField>
 
             <AuthField label="Confirm password">
-              <input
+              <AuthInput
+                icon={Lock}
                 type="password"
                 value={passwordConfirmation}
                 onChange={(e) => setPasswordConfirmation(e.target.value)}
-                className={authInputClass}
+                placeholder="Confirm password"
                 required
               />
             </AuthField>
 
-            {error && <p className="auth-alert">{error}</p>}
+            {passwordsMatch && (
+              <div className="flex items-center gap-1.5 text-[11.5px] text-moss font-medium -mt-1">
+                <CheckCircle2 size={13} className="shrink-0" />
+                <span>Passwords match</span>
+              </div>
+            )}
+            {passwordsMismatch && (
+              <div className="flex items-center gap-1.5 text-[11.5px] text-clay font-medium -mt-1">
+                <XCircle size={13} className="shrink-0" />
+                <span>Passwords do not match</span>
+              </div>
+            )}
+
+            {error && (
+              <div className="auth-alert">
+                <AlertCircle size={15} className="shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
 
             <button type="submit" disabled={loading} className="auth-submit">
-              {loading ? "Resetting…" : "Reset password"}
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Resetting…</span>
+                </>
+              ) : (
+                "Reset password"
+              )}
             </button>
           </form>
         )}
