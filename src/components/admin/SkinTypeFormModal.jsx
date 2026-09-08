@@ -7,7 +7,7 @@ export default function SkinTypeFormModal({ skinType, onClose, onSave, saving })
   const [name, setName] = useState(skinType?.name || "");
   const [description, setDescription] = useState(skinType?.description || "");
 
-  // Lock background scroll while modal is open
+ 
   useEffect(() => {
     const original = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -16,7 +16,7 @@ export default function SkinTypeFormModal({ skinType, onClose, onSave, saving })
     };
   }, []);
 
-  // Close on Escape (unless mid-save)
+ 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && !saving) onClose();
@@ -41,7 +41,7 @@ export default function SkinTypeFormModal({ skinType, onClose, onSave, saving })
   return (
     <div
       onMouseDown={handleOverlayClick}
-      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-ink/40 backdrop-blur-[2px] px-4 py-6 sm:items-center"
+      className="fixed inset-0 z-100 flex items-start justify-center overflow-y-auto bg-ink/40 backdrop-blur-[2px] px-4 py-6 sm:items-center"
     >
       <div className="w-full max-w-3xl rounded-xl bg-surface border border-hairline shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
         {/* Header */}

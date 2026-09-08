@@ -33,9 +33,7 @@ export default function Contacts() {
     markViewed("contacts");
   }, [markViewed]);
 
-  /* =========================================================
-     LOAD CONTACTS
-  ========================================================= */
+
 
   const loadContacts = async (isRefresh = false) => {
     try {
@@ -70,9 +68,7 @@ export default function Contacts() {
     loadContacts();
   }, []);
 
-  /* =========================================================
-     DELETE
-  ========================================================= */
+
 
   const handleDelete = async (contactId) => {
     const confirmed = window.confirm(
@@ -103,9 +99,7 @@ export default function Contacts() {
     }
   };
 
-  /* =========================================================
-     SEARCH
-  ========================================================= */
+
 
   const filteredContacts = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -144,9 +138,7 @@ export default function Contacts() {
 
   return (
     <div className="mx-auto max-w-7xl">
-      {/* =====================================================
-          HEADER
-      ===================================================== */}
+
 
       <div className="mb-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -182,9 +174,7 @@ export default function Contacts() {
         </button>
       </div>
 
-      {/* =====================================================
-          SEARCH
-      ===================================================== */}
+   
 
       <div className="mb-5">
         <div className="relative max-w-sm">
@@ -214,9 +204,7 @@ export default function Contacts() {
         </div>
       </div>
 
-      {/* =====================================================
-          ERROR
-      ===================================================== */}
+
 
       {error && !loading && (
         <div className="mb-5 flex items-center justify-between gap-4 rounded-lg border border-clay/15 bg-clay-tint px-4 py-3 text-[13.5px] text-clay">
@@ -232,9 +220,7 @@ export default function Contacts() {
         </div>
       )}
 
-      {/* =====================================================
-          LOADING
-      ===================================================== */}
+
 
       {loading ? (
         <div className="overflow-hidden rounded-xl border border-hairline bg-surface">
@@ -260,7 +246,7 @@ export default function Contacts() {
       ) : (
         <div className="overflow-hidden rounded-xl border border-hairline bg-surface">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-left">
+            <table className="w-full min-w-175 text-left">
               <thead>
                 <tr className="border-b border-hairline bg-paper/30">
                   <TableHead>ID</TableHead>
@@ -290,9 +276,7 @@ export default function Contacts() {
   );
 }
 
-/* =========================================================
-   CONTACT ROW
-========================================================= */
+
 
 function ContactRow({ contact, expanded, deleting, onToggle, onDelete }) {
   const name = contact.name || contact.user?.name || "Unknown customer";
@@ -352,7 +336,7 @@ function ContactRow({ contact, expanded, deleting, onToggle, onDelete }) {
 
         {/* Message */}
 
-        <td className="max-w-[350px] px-5 py-4">
+        <td className="max-w-87.5 px-5 py-4">
           <p
             className={`text-[13px] text-ink ${expanded ? "" : "line-clamp-2"}`}
           >
@@ -380,9 +364,7 @@ function ContactRow({ contact, expanded, deleting, onToggle, onDelete }) {
         </td>
       </tr>
 
-      {/* =====================================================
-          EXPANDED DETAILS
-      ===================================================== */}
+
 
       {expanded && (
         <tr className="border-b border-hairline bg-paper/30">
@@ -422,10 +404,10 @@ function ContactRow({ contact, expanded, deleting, onToggle, onDelete }) {
                 )}
               </div>
 
-              {/* Actions */}
+         
 
-              <div className="flex flex-col gap-3 lg:min-w-[190px]">
-                {/* Email */}
+              <div className="flex flex-col gap-3 lg:min-w-47.5">
+         
 
                 {email && (
                   <a
@@ -478,9 +460,7 @@ function ContactRow({ contact, expanded, deleting, onToggle, onDelete }) {
   );
 }
 
-/* =========================================================
-   TABLE HEAD
-========================================================= */
+
 
 function TableHead({ children }) {
   return (
@@ -490,9 +470,7 @@ function TableHead({ children }) {
   );
 }
 
-/* =========================================================
-   EMPTY STATE
-========================================================= */
+
 
 function EmptyState() {
   return (
@@ -512,9 +490,7 @@ function EmptyState() {
   );
 }
 
-/* =========================================================
-   SEARCH EMPTY STATE
-========================================================= */
+
 
 function SearchEmptyState({ search, onClear }) {
   return (

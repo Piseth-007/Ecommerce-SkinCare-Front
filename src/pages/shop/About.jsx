@@ -67,11 +67,9 @@ export default function About() {
         }
       `}</style>
 
-      {/* =====================================================
-          HERO
-      ===================================================== */}
+
       <section className="relative px-6 pt-20 pb-24 text-center">
-        <div className="about-pulse pointer-events-none absolute left-1/2 top-10 -z-0 h-72 w-72 -translate-x-1/2 rounded-full bg-moss/[0.07] blur-3xl" />
+        <div className="about-pulse pointer-events-none absolute left-1/2 top-10 z-0 h-72 w-72 -translate-x-1/2 rounded-full bg-moss/[0.07] blur-3xl" />
 
         <Reveal>
           <p className="text-[10.5px] font-medium uppercase tracking-[0.16em] text-moss mb-3">
@@ -90,9 +88,7 @@ export default function About() {
         </Reveal>
       </section>
 
-      {/* =====================================================
-          STATS
-      ===================================================== */}
+
       <section className="px-6 pb-20">
         <div className="mx-auto grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
           {STATS.map((stat, index) => (
@@ -117,13 +113,10 @@ export default function About() {
         </div>
       </section>
 
-      {/* =====================================================
-          STORY SPLIT
-      ===================================================== */}
       <section className="px-6 py-20 border-y border-hairline bg-surface">
         <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-2">
           <Reveal>
-            <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-gradient-to-br from-moss/90 to-moss-deep">
+            <div className="relative aspect-4/3 overflow-hidden rounded-2xl bg-linear-to-br from-moss/90 to-moss-deep">
               <div className="absolute inset-0 flex items-center justify-center opacity-25">
                 <Leaf size={120} strokeWidth={0.75} className="text-white" />
               </div>
@@ -199,9 +192,6 @@ export default function About() {
         </div>
       </section>
 
-      {/* =====================================================
-          CTA
-      ===================================================== */}
       <section className="px-6 pb-24">
         <Reveal>
           <div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl bg-moss px-8 py-14 text-center sm:px-16">

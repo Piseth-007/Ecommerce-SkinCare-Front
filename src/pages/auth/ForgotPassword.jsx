@@ -150,14 +150,14 @@ export default function ForgotPassword() {
             <span>or signed up with Google?</span>
           </div>
 
-          <div className="w-full flex justify-center min-h-[40px]">
+          <div className="w-full flex justify-center min-h-10">
             {googleLoading ? (
               <div className="flex items-center gap-2 text-[13px] text-stone py-2">
                 <Loader2 size={15} className="animate-spin text-moss" />
                 <span>Signing in with Google…</span>
               </div>
             ) : (
-              <div ref={googleBtnRef} className="w-full [&>div]:!w-full flex justify-center" />
+              <div ref={googleBtnRef} className="w-full [&>div]:w-full flex justify-center" />
             )}
           </div>
 

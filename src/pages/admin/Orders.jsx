@@ -320,7 +320,7 @@ export default function Orders() {
         <>
           <div className="overflow-hidden rounded-xl border border-hairline bg-surface print:hidden">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[750px] text-left">
+              <table className="w-full min-w-187.5 text-left">
                 <thead>
                   <tr className="border-b border-hairline bg-paper/30">
                     <TableHead>Order</TableHead>
@@ -618,7 +618,7 @@ function Pagination({
         >
           <ChevronLeft size={16} />
         </button>
-        <span className="min-w-[85px] text-center text-[12px] text-stone">
+        <span className="min-w-21.25 text-center text-[12px] text-stone">
           Page <span className="font-medium text-ink">{currentPage}</span> of{" "}
           {totalPages}
         </span>

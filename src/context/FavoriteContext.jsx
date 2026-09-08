@@ -23,7 +23,7 @@ export function FavoritesProvider({ children }) {
   };
 
   const loadFavorites = useCallback(async () => {
-    // User is logged out
+
     if (!user) {
       setFavorites([]);
       setLoading(false);
@@ -39,7 +39,7 @@ export function FavoritesProvider({ children }) {
     } catch (error) {
       console.error("Failed to load favorites:", error);
 
-      // Keep state predictable
+      
       setFavorites([]);
     } finally {
       setLoading(false);
@@ -62,9 +62,6 @@ export function FavoritesProvider({ children }) {
     [favorites],
   );
 
-  // --------------------------------------------------
-  // Toggle favorite
-  // --------------------------------------------------
 
   const toggleFavorite = useCallback(
     async (productId) => {
@@ -78,12 +75,12 @@ export function FavoritesProvider({ children }) {
 
       try {
         if (isFavorited(productId)) {
-          // Remove favorite
+          
           const res = await api.delete(`/favorites/${productId}`);
 
           setFavorites(getFavoriteArray(res));
         } else {
-          // Add favorite
+         
           const res = await api.post("/favorites", {
             product_id: productId,
           });
@@ -93,16 +90,13 @@ export function FavoritesProvider({ children }) {
       } catch (error) {
         console.error("Failed to toggle favorite:", error);
 
-        // Do not modify favorites if request failed
         throw error;
       }
     },
     [user, isFavorited],
   );
 
-  // --------------------------------------------------
-  // Context value
-  // --------------------------------------------------
+
 
   const value = useMemo(
     () => ({

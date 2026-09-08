@@ -13,7 +13,7 @@ const statusStyles = {
 };
 
 const ORDERS_CACHE_KEY = "botaniq-orderhistory-v1";
-const ORDERS_CACHE_TTL = 1000 * 60 * 5; // 5 minutes — orders change more than categories
+const ORDERS_CACHE_TTL = 1000 * 60 * 5; 
 
 // ─────────────────────────────────────────────
 // Cache helpers
@@ -43,7 +43,7 @@ function writeOrdersCache(orders, reviewableItems) {
       JSON.stringify({ orders, reviewableItems, cachedAt: Date.now() }),
     );
   } catch {
-    // Storage can fail in private browsing or when quota is exceeded.
+ 
   }
 }
 
@@ -90,9 +90,7 @@ function OrderSkeleton() {
   );
 }
 
-// ─────────────────────────────────────────────
-// Loading Skeleton
-// ─────────────────────────────────────────────
+
 function OrderHistorySkeleton() {
   return (
     <div className="max-w-3xl mx-auto px-6 py-10">
@@ -314,7 +312,7 @@ export default function OrderHistory() {
         </h1>
 
         {refreshing && (
-          <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.1em] text-stone/60">
+          <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-stone/60">
             <RefreshCw size={11} className="animate-spin" />
             Updating
           </span>

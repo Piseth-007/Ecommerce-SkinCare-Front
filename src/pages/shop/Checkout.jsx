@@ -932,7 +932,7 @@ export default function Checkout() {
                   >
                     <div className="flex items-center justify-center gap-1.5">
                       <Clock3 size={15} strokeWidth={1.9} />
-                      <p className="text-[11px] uppercase tracking-[0.1em] font-medium">
+                      <p className="text-[11px] uppercase tracking-widest font-medium">
                         {isExpiringSoon ? "Expires soon" : "Time remaining"}
                       </p>
                     </div>

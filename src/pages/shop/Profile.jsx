@@ -106,7 +106,7 @@ function GhostButton({ children, ...props }) {
   return (
     <button
       {...props}
-      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-sm border transition-all duration-200 hover:bg-[var(--color-paper)] active:scale-[0.98] disabled:opacity-50"
+      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-sm border transition-all duration-200 hover:bg-paper active:scale-[0.98] disabled:opacity-50"
       style={{
         borderColor: "var(--color-hairline)",
         color: "var(--color-ink)",
@@ -486,7 +486,7 @@ export default function Profile() {
                   <button
                     type="button"
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-2 px-3.5 py-2.5 text-sm text-left rounded-sm transition-colors hover:bg-[var(--color-surface)]"
+                    className="w-full flex items-center gap-2 px-3.5 py-2.5 text-sm text-left rounded-sm transition-colors hover:bg-surface"
                     style={{ color: "var(--color-clay)" }}
                   >
                     <LogOut size={15} strokeWidth={1.7} />
@@ -558,7 +558,7 @@ export default function Profile() {
                           <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="px-4 py-2 text-sm rounded-sm border transition-colors hover:bg-[var(--color-paper)]"
+                            className="px-4 py-2 text-sm rounded-sm border transition-colors hover:bg-paper"
                             style={{
                               borderColor: "var(--color-hairline)",
                               color: "var(--color-ink)",
@@ -571,7 +571,7 @@ export default function Profile() {
                             <button
                               type="button"
                               onClick={handleRemoveImage}
-                              className="w-9 h-9 flex items-center justify-center rounded-sm border transition-colors hover:bg-[var(--color-paper)]"
+                              className="w-9 h-9 flex items-center justify-center rounded-sm border transition-colors hover:bg-paper"
                               style={{
                                 borderColor: "var(--color-hairline)",
                                 color: "var(--color-clay)",

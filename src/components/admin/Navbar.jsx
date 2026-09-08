@@ -13,7 +13,7 @@ import api from "../../api/axios";
 import { useTheme } from "../../hooks/useTheme";
 
 const LOW_STOCK_THRESHOLD = 5;
-const POLL_INTERVAL_MS = 60000; // refresh every 60s
+const POLL_INTERVAL_MS = 60000;
 
 export default function Navbar({ onMenuClick }) {
   const navigate = useNavigate();
@@ -62,7 +62,7 @@ export default function Navbar({ onMenuClick }) {
       setPendingOrders(orders);
       setLowStockProducts(lowStock);
     } catch {
-      // Fail silently — notifications aren't critical path, avoid noisy toasts
+      
     } finally {
       setLoading(false);
     }
@@ -76,7 +76,7 @@ export default function Navbar({ onMenuClick }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Close dropdown on outside click
+  
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -137,7 +137,7 @@ export default function Navbar({ onMenuClick }) {
       </div>
 
       <div className="flex items-center gap-2">
-        {/* Notifications */}
+   
         <div className="relative" ref={dropdownRef}>
           <button
             type="button"
@@ -156,7 +156,7 @@ export default function Navbar({ onMenuClick }) {
 
           {open && (
             <div className="absolute right-0 top-11 z-50 w-80 rounded-xl border border-hairline bg-surface shadow-[0_12px_32px_rgba(33,31,27,0.12)]">
-              {/* Header */}
+             
               <div className="flex items-center justify-between border-b border-hairline px-4 py-3">
                 <p className="text-[13px] font-medium text-ink">
                   Notifications
@@ -169,7 +169,7 @@ export default function Navbar({ onMenuClick }) {
                 )}
               </div>
 
-              {/* Body */}
+              
               <div className="max-h-96 overflow-y-auto">
                 {loading ? (
                   <div className="px-4 py-6 text-center text-[12.5px] text-stone">
@@ -188,7 +188,7 @@ export default function Navbar({ onMenuClick }) {
                   </div>
                 ) : (
                   <div className="divide-y divide-hairline">
-                    {/* Pending Orders */}
+                
                     {pendingOrders.slice(0, 5).map((order) => (
                       <button
                         key={`order-${order.id}`}
@@ -217,7 +217,7 @@ export default function Navbar({ onMenuClick }) {
                       </button>
                     ))}
 
-                    {/* Low Stock Products */}
+             
                     {lowStockProducts.slice(0, 5).map((product) => (
                       <button
                         key={`stock-${product.id}`}
@@ -248,7 +248,6 @@ export default function Navbar({ onMenuClick }) {
                 )}
               </div>
 
-              {/* Footer */}
               {totalAlerts > 0 && (
                 <div className="flex items-center gap-2 border-t border-hairline px-4 py-2.5">
                   <button
@@ -282,7 +281,7 @@ export default function Navbar({ onMenuClick }) {
           )}
         </div>
 
-        {/* Dark Mode */}
+ 
         <button
           type="button"
           onClick={toggleTheme}

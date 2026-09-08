@@ -15,7 +15,7 @@ export function StoreSettingsProvider({ children }) {
         if (active) setStore(res.data?.data || res.data || {});
       })
       .catch(() => {
-        // Store details are optional; keep the storefront defaults available.
+       
       });
 
     return () => {

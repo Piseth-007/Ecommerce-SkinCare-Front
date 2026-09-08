@@ -10,8 +10,8 @@ export default function ProductCard({ product, isDeleting, onEdit, onDelete }) {
         isDeleting ? "pointer-events-none opacity-50" : ""
       }`}
     >
-      {/* Image / Status */}
-      <div className="relative flex aspect-[4/3] items-center justify-center bg-paper">
+     
+      <div className="relative flex aspect-4/3 items-center justify-center bg-paper">
         {product.images?.[0]?.url ? (
           <img
             src={product.images[0].url}
@@ -31,7 +31,7 @@ export default function ProductCard({ product, isDeleting, onEdit, onDelete }) {
         </span>
       </div>
 
-      {/* Details */}
+
       <div className="p-4">
         <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-clay">
           {product.category?.name || "Uncategorized"}

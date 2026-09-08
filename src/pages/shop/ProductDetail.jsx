@@ -470,7 +470,7 @@ export default function ProductDetail() {
             </>
           )}
 
-          <span className="max-w-[180px] truncate text-ink">
+          <span className="max-w-45 truncate text-ink">
             {product.name}
           </span>
         </div>
@@ -480,7 +480,7 @@ export default function ProductDetail() {
         <div className="grid items-start gap-10 p-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
           <div className="product-detail-fade">
             <div className="group relative aspect-square overflow-hidden rounded-2xl border border-hairline bg-surface">
-              <div className="product-detail-pulse pointer-events-none absolute -right-16 -top-16 z-0 h-40 w-40 rounded-full bg-moss/[0.06] blur-2xl" />
+              <div className="product-detail-pulse pointer-events-none absolute -right-16 -top-16 z-0 h-40 w-40 rounded-full bg-moss/6 blur-2xl" />
 
               {getImageUrl(images[activeImage]) ? (
                 <img
@@ -561,7 +561,7 @@ export default function ProductDetail() {
                       key={image.public_id || image.id || imageUrl || index}
                       type="button"
                       onClick={() => setActiveImage(index)}
-                      className={`relative h-[74px] w-[74px] shrink-0 overflow-hidden rounded-xl border transition-all duration-300 ${
+                      className={`relative h-18.5 w-18.5 shrink-0 overflow-hidden rounded-xl border transition-all duration-300 ${
                         index === activeImage
                           ? "border-moss shadow-[0_6px_20px_rgba(63,88,67,0.12)]"
                           : "border-hairline opacity-65 hover:border-moss/30 hover:opacity-100"
@@ -614,7 +614,7 @@ export default function ProductDetail() {
             </div>
 
             {product.category?.name && (
-              <p className="mt-2 text-[10px] uppercase tracking-[0.1em] text-stone">
+              <p className="mt-2 text-[10px] uppercase tracking-widest text-stone">
                 {product.category.name}
               </p>
             )}
@@ -683,7 +683,7 @@ export default function ProductDetail() {
 
             {skinTypes.length > 0 && (
               <div className="mt-6">
-                <p className="mb-2.5 text-[10px] font-medium uppercase tracking-[0.1em] text-stone">
+                <p className="mb-2.5 text-[10px] font-medium uppercase tracking-widest text-stone">
                   Suits these skin types
                 </p>
 
@@ -729,7 +729,7 @@ export default function ProductDetail() {
 
             <div className="mt-7 flex gap-3">
               <div
-                className={`flex h-[50px] items-center rounded-xl border ${
+                className={`flex h-12.5 items-center rounded-xl border ${
                   isOutOfStock
                     ? "border-hairline opacity-50"
                     : "border-hairline"
@@ -762,7 +762,7 @@ export default function ProductDetail() {
                 type="button"
                 onClick={handleAddToCart}
                 disabled={adding || isOutOfStock}
-                className={`group flex h-[50px] flex-1 items-center justify-center gap-2 rounded-xl px-5 text-[13px] font-medium text-white shadow-[0_10px_25px_rgba(63,88,67,0.14)] transition-all duration-300 ${
+                className={`group flex h-12.5 flex-1 items-center justify-center gap-2 rounded-xl px-5 text-[13px] font-medium text-white shadow-[0_10px_25px_rgba(63,88,67,0.14)] transition-all duration-300 ${
                   added
                     ? "bg-moss-deep"
                     : "bg-moss hover:-translate-y-0.5 hover:bg-moss-deep hover:shadow-[0_14px_30px_rgba(63,88,67,0.22)]"
@@ -1206,7 +1206,7 @@ function ProductDetailSkeleton() {
             {Array.from({ length: 4 }).map((_, index) => (
               <div
                 key={index}
-                className="h-[74px] w-[74px] rounded-xl bg-hairline/30"
+                className="h-18.5 w-18.5 rounded-xl bg-hairline/30"
               />
             ))}
           </div>
@@ -1232,8 +1232,8 @@ function ProductDetailSkeleton() {
           <div className="mt-7 h-3 w-24 rounded bg-hairline/40" />
 
           <div className="mt-7 flex gap-3">
-            <div className="h-[50px] w-28 rounded-xl bg-hairline/40" />
-            <div className="h-[50px] flex-1 rounded-xl bg-hairline/50" />
+            <div className="h-12.5 w-28 rounded-xl bg-hairline/40" />
+            <div className="h-12.5 flex-1 rounded-xl bg-hairline/50" />
           </div>
 
           <div className="mt-8 space-y-3">

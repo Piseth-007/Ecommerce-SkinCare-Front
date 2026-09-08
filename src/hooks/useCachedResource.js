@@ -30,7 +30,7 @@ function writeCache(key, data) {
       })
     );
   } catch {
-    // Storage can fail in private browsing or when quota is exceeded.
+   
   }
 }
 

@@ -46,7 +46,7 @@ function NotifyBadge({ count, isActive }) {
   if (!count) return null;
   return (
     <span
-      className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10.5px] font-semibold ${
+      className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10.5px] font-semibold ${
         isActive ? "bg-white/90 text-moss" : "bg-clay text-white"
       }`}
     >

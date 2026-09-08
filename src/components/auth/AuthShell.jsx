@@ -55,7 +55,7 @@ export default function AuthShell({
           className="auth-form-panel"
           style={{ order: reverse ? 2 : 1 }}
         >
-          {/* Top navigation header: Brand + Back to shop */}
+         
           <div className="auth-nav-header">
             <Link to="/" className="auth-brand-link" aria-label={`${storeName} Home`}>
               <div className="auth-brand-mark">

@@ -58,7 +58,7 @@ export default function Category() {
           {Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
-              className="aspect-[4/3] rounded-2xl bg-hairline/30 animate-pulse"
+              className="aspect-4/3 rounded-2xl bg-hairline/30 animate-pulse"
             />
           ))}
         </div>
@@ -94,12 +94,12 @@ function CategoryCard({ category, index }) {
   return (
     <Link
       to={`/products?category_id=${category.id}`}
-      className="cat-fade-up group relative aspect-[4/3] overflow-hidden rounded-2xl shadow-[0_1px_3px_rgba(33,31,27,0.06)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(33,31,27,0.14)]"
+      className="cat-fade-up group relative aspect-4/3 overflow-hidden rounded-2xl shadow-[0_1px_3px_rgba(33,31,27,0.06)] transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_20px_40px_rgba(33,31,27,0.14)]"
       style={{ animationDelay: `${delay}ms` }}
     >
       {/* Gradient background */}
       <div
-        className={`absolute inset-0 bg-gradient-to-br ${gradient} transition-transform duration-700 group-hover:scale-110`}
+        className={`absolute inset-0 bg-linear-to-br ${gradient} transition-transform duration-700 group-hover:scale-110`}
       />
 
       {/* Decorative glow */}

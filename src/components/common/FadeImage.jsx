@@ -22,7 +22,7 @@ export default function FadeImage({
     >
       {!loaded && !failed && (
         <div className="absolute inset-0 overflow-hidden bg-hairline/20">
-          <div className="absolute inset-y-0 left-0 w-1/2 -translate-x-full animate-[botaniq-shimmer_1.8s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+          <div className="absolute inset-y-0 left-0 w-1/2 -translate-x-full animate-[botaniq-shimmer_1.8s_ease-in-out_infinite] bg-linear-to-r from-transparent via-white/50 to-transparent" />
         </div>
       )}
 

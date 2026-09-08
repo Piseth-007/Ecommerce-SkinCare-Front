@@ -1,16 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
-/**
- * AddressFormModal — add/edit a shipping address.
- * Field names match AddressController::addressRules() exactly:
- *   full_name, telephone, city_province, district, commune, street, label, is_default
- *
- * Props:
- *   open        - boolean
- *   onClose     - () => void
- *   onSave      - (formData) => Promise<void>   // parent does the api.post/put + refetch
- *   initialData - existing address when editing, null when creating
- */
 
 const EMPTY = {
   label: "",
@@ -78,7 +67,7 @@ export default function AddressFormModal({
       await onSave(form);
       onClose();
     } catch (err) {
-      // Laravel validation errors: { errors: { field: [msg] } }
+      
       const laravelErrors = err?.response?.data?.errors;
       if (laravelErrors) {
         setErrors(
@@ -197,7 +186,7 @@ export default function AddressFormModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-sm rounded-sm border transition-colors hover:bg-[var(--color-paper)]"
+              className="px-5 py-2.5 text-sm rounded-sm border transition-colors hover:bg-paper"
               style={{
                 borderColor: "var(--color-hairline)",
                 color: "var(--color-ink)",

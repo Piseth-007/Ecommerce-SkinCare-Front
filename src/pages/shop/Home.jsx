@@ -744,7 +744,7 @@ export default function Home() {
           fixed
           right-5
           top-20
-          z-[90]
+          z-90
           flex
           items-center
           gap-2
@@ -781,7 +781,7 @@ export default function Home() {
       <section
         className="
           relative
-          min-h-[680px]
+          min-h-170
           overflow-hidden
           border-b
           border-hairline
@@ -794,8 +794,8 @@ export default function Home() {
             absolute
             -left-32
             top-20
-            h-[420px]
-            w-[420px]
+            h-105
+            w-105
             rounded-full
             bg-moss/[0.07]
             blur-3xl
@@ -815,8 +815,8 @@ export default function Home() {
             absolute
             -right-40
             top-0
-            h-[520px]
-            w-[520px]
+            h-130
+            w-130
             rounded-full
             bg-sage/[0.10]
             blur-3xl
@@ -861,7 +861,7 @@ export default function Home() {
             h-12
             w-12
             rounded-full
-            bg-moss/[0.06]
+            bg-moss/6
           "
           style={{
             transform: reducedMotion
@@ -877,9 +877,9 @@ export default function Home() {
             absolute
             -right-20
             -top-20
-            h-[500px]
-            w-[500px]
-            text-moss/[0.055]
+            h-125
+            w-125
+            text-moss/5.5
             transition-transform
             duration-1000
           "
@@ -899,7 +899,7 @@ export default function Home() {
             relative
             mx-auto
             flex
-            min-h-[680px]
+            min-h-170
             max-w-6xl
             items-center
             px-6
@@ -953,7 +953,7 @@ export default function Home() {
                   text-[42px]
                   font-medium
                   leading-[1.05]
-                  tracking-[-0.025em]
+                  tracking-tight
                   text-ink
                   sm:text-[58px]
                   lg:text-[68px]
@@ -1048,7 +1048,7 @@ export default function Home() {
                       left-0
                       h-4
                       w-[200%]
-                      text-white/[0.10]
+                      text-white/10
                     "
                     viewBox="0 0 400 30"
                     preserveAspectRatio="none"
@@ -1170,7 +1170,7 @@ export default function Home() {
 
             {/* HERO VISUAL — framer-motion fade/slide in */}
             <motion.div
-              className="relative flex min-h-[460px] sm:min-h-[500px] w-full max-w-sm sm:max-w-md mx-auto items-center justify-center lg:max-w-none lg:h-[500px]"
+              className="relative flex min-h-115 sm:min-h-125 w-full max-w-sm sm:max-w-md mx-auto items-center justify-center lg:max-w-none lg:h-125"
               initial={{ opacity: 0, y: 32 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.9, ease: easeSmooth, delay: 0.25 }}
@@ -1182,10 +1182,10 @@ export default function Home() {
                   absolute
                   left-[15%]
                   top-[10%]
-                  h-[300px]
-                  w-[300px]
+                  h-75
+                  w-75
                   rounded-full
-                  bg-moss/[0.08]
+                  bg-moss/8
                   blur-3xl
                   transition-transform
                   duration-1000
@@ -1204,8 +1204,8 @@ export default function Home() {
                   absolute
                   right-[10%]
                   bottom-[10%]
-                  h-[280px]
-                  w-[280px]
+                  h-70
+                  w-70
                   rounded-full
                   bg-sage/[0.12]
                   blur-3xl
@@ -1226,14 +1226,14 @@ export default function Home() {
                   absolute
                   left-1/2
                   top-1/2
-                  h-[340px]
-                  w-[340px]
-                  sm:h-[390px]
-                  sm:w-[390px]
+                  h-85
+                  w-85
+                  sm:h-97.5
+                  sm:w-97.5
                   rounded-[45%_55%_52%_48%]
                   border
                   border-white/75
-                  bg-gradient-to-br
+                  bg-linear-to-br
                   from-white/80
                   to-moss-tint/60
                   shadow-[0_30px_80px_rgba(63,88,67,0.12)]
@@ -1248,7 +1248,7 @@ export default function Home() {
 
               {/* Centerpiece: Latest Updated Product Card or Skeleton or Fallback */}
               {showProductSkeleton ? (
-                <div className="relative z-10 w-[290px] sm:w-[330px] rounded-3xl border border-white/80 bg-white/85 p-4 sm:p-5 shadow-[0_25px_50px_rgba(40,55,43,0.12)] backdrop-blur-xl">
+                <div className="relative z-10 w-72.5 sm:w-82.5 rounded-3xl border border-white/80 bg-white/85 p-4 sm:p-5 shadow-[0_25px_50px_rgba(40,55,43,0.12)] backdrop-blur-xl">
                   <div className="mb-3 flex items-center justify-between">
                     <div className="h-5 w-24 rounded-full botaniq-skeleton" />
                     <div className="h-5 w-12 rounded-full botaniq-skeleton" />
@@ -1265,7 +1265,7 @@ export default function Home() {
                 </div>
               ) : latestProduct ? (
                 <div
-                  className="botaniq-float relative z-10 w-[290px] sm:w-[330px]"
+                  className="botaniq-float relative z-10 w-72.5 sm:w-82.5"
                   style={{
                     animationDelay: "-2s",
                     transform: reducedMotion
@@ -1361,13 +1361,13 @@ export default function Home() {
                   </Link>
                 </div>
               ) : (
-                /* Fallback bottle if database is completely empty */
+
                 <div
                   className="botaniq-float relative z-10"
                   style={{ animationDelay: "-2s" }}
                 >
                   <div className="mx-auto h-16 w-24 rounded-t-2xl border border-ink/10 bg-white shadow-xl" />
-                  <div className="relative h-64 w-36 rounded-[20px_20px_30px_30px] border border-ink/10 bg-gradient-to-br from-white via-paper to-moss-tint shadow-[0_25px_45px_rgba(40,55,43,0.18)]">
+                  <div className="relative h-64 w-36 rounded-[20px_20px_30px_30px] border border-ink/10 bg-linear-to-br from-white via-paper to-moss-tint shadow-[0_25px_45px_rgba(40,55,43,0.18)]">
                     <div className="absolute bottom-5 left-4 right-4 top-14 flex flex-col items-center justify-center rounded-xl border border-moss/10 bg-white/70 text-center">
                       <Leaf size={25} strokeWidth={1.2} className="mb-3 text-moss" />
                       <span className="font-display text-[15px] italic text-moss-deep">
@@ -1381,7 +1381,6 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Floating card 1: Top-Right */}
               <div
                 className="
                   botaniq-float
@@ -1530,7 +1529,7 @@ export default function Home() {
           "
           aria-hidden="true"
         >
-          {/* Back layer — widest, slowest, faintest */}
+
           <svg
             className="
               botaniq-wave-scroll-slow
@@ -1539,7 +1538,7 @@ export default function Home() {
               left-0
               h-full
               w-[200%]
-              text-moss/[0.05]
+              text-moss/5
             "
             viewBox="0 0 2400 220"
             preserveAspectRatio="none"
@@ -1561,7 +1560,7 @@ export default function Home() {
               left-0
               h-full
               w-[200%]
-              text-moss/[0.08]
+              text-moss/8
             "
             viewBox="0 0 2400 220"
             preserveAspectRatio="none"
@@ -1583,7 +1582,7 @@ export default function Home() {
               left-0
               h-full
               w-[200%]
-              text-moss/[0.12]
+              text-moss/12
             "
             viewBox="0 0 2400 220"
             preserveAspectRatio="none"
@@ -1604,7 +1603,7 @@ export default function Home() {
               inset-y-0
               left-0
               w-1/3
-              bg-gradient-to-r
+              bg-linear-to-r
               from-transparent
               via-white/40
               to-transparent
@@ -1636,7 +1635,7 @@ export default function Home() {
                   text-[11px]
                   font-medium
                   uppercase
-                  tracking-[0.1em]
+                  tracking-widest
                   text-stone
                 "
               >
@@ -1890,7 +1889,7 @@ export default function Home() {
             w-40
             -translate-y-1/2
             rounded-full
-            bg-moss/[0.05]
+            bg-moss/5
             blur-3xl
           "
         />
@@ -2345,8 +2344,8 @@ function CategorySkeleton() {
           key={index}
           className="
             botaniq-skeleton
-            h-[116px]
-            min-w-[190px]
+            h-29
+            min-w-47.5
             rounded-xl
             md:min-w-0
           "
@@ -2356,9 +2355,6 @@ function CategorySkeleton() {
   );
 }
 
-/* =========================================================
-   COMPACT CATEGORY CARD
-========================================================= */
 
 function CompactCategoryCard({ category, index }) {
   return (
@@ -2367,7 +2363,7 @@ function CompactCategoryCard({ category, index }) {
       className="
         group
         relative
-        min-w-[190px]
+        min-w-47.5
         snap-start
         overflow-hidden
         rounded-xl
@@ -2393,11 +2389,11 @@ function CompactCategoryCard({ category, index }) {
           h-24
           w-24
           rounded-full
-          bg-moss/[0.055]
+          bg-moss/5.5
           transition-all
           duration-700
           group-hover:scale-[1.6]
-          group-hover:bg-moss/[0.09]
+          group-hover:bg-moss/9
         "
       />
 

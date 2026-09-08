@@ -16,7 +16,7 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Already logged in as admin? Skip the form entirely.
+  
   if (!authLoading && user?.role === "admin") {
     const redirectTo = location.state?.from || "/admin/dashboard";
     return <Navigate to={redirectTo} replace />;

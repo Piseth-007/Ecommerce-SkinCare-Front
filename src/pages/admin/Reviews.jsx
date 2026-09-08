@@ -603,7 +603,7 @@ function Stars({ rating }) {
         );
 
         return (
-          <span key={number} className="relative inline-flex h-[14px] w-[14px]">
+          <span key={number} className="relative inline-flex h-3.5 w-3.5">
             <Star
               size={14}
               strokeWidth={1.75}

@@ -19,7 +19,7 @@ export default function CategoriesPanel() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [editing, setEditing] = useState(null); // null | "new" | category object
+  const [editing, setEditing] = useState(null); 
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 

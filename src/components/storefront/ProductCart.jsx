@@ -99,7 +99,7 @@ export default function ProductCard({ product }) {
                 ease-out
                 ${
                   isOutOfStock
-                    ? "grayscale-[30%] opacity-70"
+                    ? "grayscale-30 opacity-70"
                     : "group-hover:scale-[1.055]"
                 }
               `}
@@ -295,8 +295,8 @@ export default function ProductCard({ product }) {
               pointer-events-none
               absolute
               inset-0
-              z-[1]
-              bg-gradient-to-t
+              z-1
+              bg-linear-to-t
               from-moss/[0.07]
               via-transparent
               to-transparent
@@ -317,8 +317,8 @@ export default function ProductCard({ product }) {
                 right-0
                 h-20
                 translate-y-5
-                bg-gradient-to-t
-                from-moss/[0.08]
+                bg-linear-to-t
+                from-moss/8
                 to-transparent
                 opacity-0
                 transition-all
@@ -454,7 +454,7 @@ export default function ProductCard({ product }) {
                   text-[9px]
                   font-medium
                   uppercase
-                  tracking-[0.05em]
+                  tracking-wider
                   text-clay
                 "
               >

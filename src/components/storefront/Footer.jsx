@@ -54,7 +54,7 @@ export default function Footer() {
 
     if (!email.trim()) return;
 
-    // TODO: wire to a real newsletter endpoint once one exists on the backend
+   
     setSubscribed(true);
     setEmail("");
   };
@@ -204,7 +204,7 @@ export default function Footer() {
 function FooterColumn({ title, links }) {
   return (
     <div>
-      <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-stone mb-4">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-stone mb-4">
         {title}
       </p>
       <ul className="space-y-2.5">

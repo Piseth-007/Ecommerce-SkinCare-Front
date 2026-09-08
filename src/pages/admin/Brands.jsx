@@ -20,7 +20,7 @@ export default function Brands() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [editing, setEditing] = useState(null); // null | "new" | brand object
+  const [editing, setEditing] = useState(null); 
   const [saving, setSaving] = useState(false);
 
   const [search, setSearch] = useState("");

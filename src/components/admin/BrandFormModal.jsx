@@ -6,7 +6,7 @@ export default function BrandFormModal({ brand, onClose, onSave, saving }) {
 
   const [name, setName] = useState(brand?.name || "");
 
-  // Lock background scroll while modal is open
+
   useEffect(() => {
     const original = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -15,7 +15,7 @@ export default function BrandFormModal({ brand, onClose, onSave, saving }) {
     };
   }, []);
 
-  // Close on Escape (unless mid-save)
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && !saving) onClose();
@@ -37,10 +37,10 @@ export default function BrandFormModal({ brand, onClose, onSave, saving }) {
   return (
     <div
       onMouseDown={handleOverlayClick}
-      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-ink/40 backdrop-blur-[2px] px-4 py-6 sm:items-center"
+      className="fixed inset-0 z-100 flex items-start justify-center overflow-y-auto bg-ink/40 backdrop-blur-[2px] px-4 py-6 sm:items-center"
     >
       <div className="w-full max-w-2xl rounded-xl bg-surface border border-hairline shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
-        {/* Header */}
+
         <div className="flex items-start justify-between gap-4 border-b border-hairline px-6 py-5">
           <div>
             <p className="text-[10.5px] font-medium uppercase tracking-widest text-stone mb-1">
@@ -63,7 +63,7 @@ export default function BrandFormModal({ brand, onClose, onSave, saving }) {
           </button>
         </div>
 
-        {/* Body */}
+        
         <form id="brand-form" onSubmit={handleSubmit} className="px-6 py-5">
           <label className="block text-[11px] font-medium uppercase tracking-[0.08em] text-stone mb-2">
             Brand Name
@@ -96,7 +96,7 @@ export default function BrandFormModal({ brand, onClose, onSave, saving }) {
           )}
         </form>
 
-        {/* Footer */}
+
         <div className="flex items-center justify-end gap-3 border-t border-hairline px-6 py-4">
           <button
             type="button"

@@ -350,7 +350,7 @@ export default function ProductList() {
         )}
 
         {fetching && products.length > 0 && (
-          <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.1em] text-stone/60">
+          <span className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-stone/60">
             <RefreshCw size={11} className="animate-spin" />
             Updating
           </span>

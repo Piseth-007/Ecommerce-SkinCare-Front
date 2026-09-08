@@ -385,7 +385,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
         <div className="space-y-6 xl:col-span-8">
-          <div className="rounded-xl border border-hairline bg-surface p-5 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
+          <div className="rounded-xl border border-hairline bg-surface p-5 dark:border-white/10 dark:bg-white/3 sm:p-6">
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="mb-1 text-[10.5px] font-medium uppercase tracking-widest text-stone dark:text-stone-400">
@@ -428,7 +428,7 @@ export default function Dashboard() {
             {trendLoading ? (
               <ChartSkeleton />
             ) : trend.length === 0 ? (
-              <div className="flex h-[300px] items-center justify-center">
+              <div className="flex h-75 items-center justify-center">
                 <p className="text-[13px] text-stone dark:text-stone-400">
                   No sales data available
                 </p>
@@ -507,7 +507,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-hairline bg-surface dark:border-white/10 dark:bg-white/[0.03]">
+          <div className="overflow-hidden rounded-xl border border-hairline bg-surface dark:border-white/10 dark:bg-white/3">
             <div className="flex items-center justify-between border-b border-hairline px-5 py-5 dark:border-white/10 sm:px-6">
               <div>
                 <h2 className="font-display text-[18px] font-medium text-ink dark:text-white">
@@ -532,7 +532,7 @@ export default function Dashboard() {
             {ordersLoading ? (
               <OrdersSkeleton />
             ) : recentOrders.length === 0 ? (
-              <div className="flex min-h-[180px] items-center justify-center px-6">
+              <div className="flex min-h-45 items-center justify-center px-6">
                 <div className="text-center">
                   <ShoppingBag
                     size={24}
@@ -546,9 +546,9 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[720px]">
+                <table className="w-full min-w-180">
                   <thead>
-                    <tr className="border-b border-hairline bg-paper/40 dark:border-white/10 dark:bg-white/[0.02]">
+                    <tr className="border-b border-hairline bg-paper/40 dark:border-white/10 dark:bg-white/2">
                       <TableHeader>Order ID</TableHeader>
                       <TableHeader>Customer</TableHeader>
                       <TableHeader>Date</TableHeader>
@@ -604,7 +604,7 @@ export default function Dashboard() {
 
                           <TableCell>
                             <div className="min-w-0">
-                              <p className="max-w-[150px] truncate text-[12.5px] font-medium text-ink dark:text-white">
+                              <p className="max-w-37.5 truncate text-[12.5px] font-medium text-ink dark:text-white">
                                 {customer}
                               </p>
 
@@ -649,7 +649,7 @@ export default function Dashboard() {
         </div>
 
         <div className="space-y-6 xl:col-span-4">
-          <div className="rounded-xl border border-hairline bg-surface p-5 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
+          <div className="rounded-xl border border-hairline bg-surface p-5 dark:border-white/10 dark:bg-white/3 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="font-display text-[18px] font-medium text-ink dark:text-white">
@@ -663,8 +663,8 @@ export default function Dashboard() {
             </div>
 
             {summaryLoading ? (
-              <div className="h-[320px] animate-pulse">
-                <div className="mx-auto mt-8 h-44 w-44 rounded-full border-[26px] border-hairline/40 dark:border-white/10" />
+              <div className="h-80 animate-pulse">
+                <div className="mx-auto mt-8 h-44 w-44 rounded-full border-26 border-hairline/40 dark:border-white/10" />
 
                 <div className="mt-6 space-y-3">
                   <div className="h-3 rounded bg-hairline/40 dark:bg-white/10" />
@@ -674,7 +674,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <>
-                <div className="relative h-[245px]">
+                <div className="relative h-61.25">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -741,7 +741,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div className="rounded-xl border border-hairline bg-surface p-5 dark:border-white/10 dark:bg-white/[0.03] sm:p-6">
+          <div className="rounded-xl border border-hairline bg-surface p-5 dark:border-white/10 dark:bg-white/3 sm:p-6">
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <h2 className="font-display text-[18px] font-medium text-ink dark:text-white">
@@ -757,7 +757,7 @@ export default function Dashboard() {
             {ordersLoading ? (
               <TopProductsSkeleton />
             ) : topProducts.length === 0 ? (
-              <div className="flex min-h-[180px] items-center justify-center">
+              <div className="flex min-h-45 items-center justify-center">
                 <div className="text-center">
                   <Package
                     size={24}
@@ -858,7 +858,7 @@ function DashboardStatCard({
   const isPositive = Number(change || 0) >= 0;
 
   return (
-    <div className="rounded-xl border border-hairline bg-surface p-5 transition-shadow hover:shadow-[0_8px_24px_rgba(33,31,27,0.04)] dark:border-white/10 dark:bg-white/[0.03]">
+    <div className="rounded-xl border border-hairline bg-surface p-5 transition-shadow hover:shadow-[0_8px_24px_rgba(33,31,27,0.04)] dark:border-white/10 dark:bg-white/3">
       <div className="mb-5 flex items-start justify-between">
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconClass}`}
@@ -1019,7 +1019,7 @@ function TopProductsSkeleton() {
 
 function ChartSkeleton() {
   return (
-    <div className="relative h-[300px] animate-pulse">
+    <div className="relative h-75 animate-pulse">
       <div className="absolute inset-x-0 top-5 h-px bg-hairline/50 dark:bg-white/10" />
       <div className="absolute inset-x-0 top-[35%] h-px bg-hairline/40 dark:bg-white/10" />
       <div className="absolute inset-x-0 top-[65%] h-px bg-hairline/40 dark:bg-white/10" />

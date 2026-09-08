@@ -88,7 +88,7 @@ export default function Contact() {
     setError("");
     setValidationErrors({});
 
-    // Frontend validation
+ 
     const errors = {};
 
     if (!form.name.trim()) {
@@ -211,9 +211,7 @@ export default function Contact() {
         }
       `}</style>
 
-      {/* =====================================================
-          HERO
-      ===================================================== */}
+
 
       <section className="relative overflow-hidden px-6 pt-16 pb-10 text-center">
         <div className="contact-pulse pointer-events-none absolute left-1/2 top-4 h-64 w-64 -translate-x-1/2 rounded-full bg-moss/[0.07] blur-3xl" />
@@ -234,15 +232,10 @@ export default function Contact() {
         </div>
       </section>
 
-      {/* =====================================================
-          MAIN GRID
-      ===================================================== */}
 
       <section className="px-6 pb-20">
         <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[1fr_1.3fr]">
-          {/* =================================================
-              CONTACT INFO
-          ================================================= */}
+
 
           <div
             className="contact-fade-up space-y-4"
@@ -280,9 +273,7 @@ export default function Contact() {
               );
             })}
 
-            {/* =================================================
-                HOURS
-            ================================================= */}
+
 
             <div className="rounded-2xl border border-hairline bg-surface p-5">
               <div className="mb-3 flex items-center gap-2.5">
@@ -309,9 +300,7 @@ export default function Contact() {
             </div>
           </div>
 
-          {/* =================================================
-              CONTACT FORM
-          ================================================= */}
+
 
           <div
             className="contact-fade-up rounded-2xl border border-hairline bg-surface p-6 sm:p-8"

@@ -308,10 +308,6 @@ export default function Navbar() {
           <Link to="/products" className="nav-link hover:text-ink">
             Shop all
           </Link>
-
-          {/* Note: no "relative" wrapper here — the mega menu positions
-              itself against the <header>, which is already a positioned
-              element (sticky), so it can span the full viewport width. */}
           <div
             onMouseEnter={() => openDropdown("categories")}
             onMouseLeave={scheduleClose}
@@ -737,9 +733,7 @@ export default function Navbar() {
   );
 }
 
-/* =========================================================
-   MEGA MENU — full viewport width, multi-column
-========================================================= */
+
 
 function MegaMenu({
   title,

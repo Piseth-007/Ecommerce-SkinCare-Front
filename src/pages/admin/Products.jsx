@@ -470,7 +470,7 @@ export default function Products() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="min-w-[180px] rounded-lg border border-hairline bg-surface px-3 py-2.5 text-[13px] text-ink focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/20"
+              className="min-w-45 rounded-lg border border-hairline bg-surface px-3 py-2.5 text-[13px] text-ink focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/20"
             >
               <option value="all">All Categories</option>
 
@@ -484,7 +484,7 @@ export default function Products() {
             <select
               value={stockFilter}
               onChange={(e) => setStockFilter(e.target.value)}
-              className="min-w-[160px] rounded-lg border border-hairline bg-surface px-3 py-2.5 text-[13px] text-ink focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/20"
+              className="min-w-40 rounded-lg border border-hairline bg-surface px-3 py-2.5 text-[13px] text-ink focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/20"
             >
               {STOCK_FILTERS.map((filter) => (
                 <option key={filter.key} value={filter.key}>
@@ -496,7 +496,7 @@ export default function Products() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="min-w-[175px] rounded-lg border border-hairline bg-surface px-3 py-2.5 text-[13px] text-ink focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/20"
+              className="min-w-43.75 rounded-lg border border-hairline bg-surface px-3 py-2.5 text-[13px] text-ink focus:border-moss focus:outline-none focus:ring-2 focus:ring-moss/20"
             >
               <option value="newest">Newest First</option>
               <option value="name-asc">Name: A–Z</option>
@@ -658,7 +658,7 @@ function TableView({ products, deletingId, onEdit, onDelete }) {
   return (
     <div className="overflow-hidden rounded-xl border border-hairline bg-surface">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[850px] text-left">
+        <table className="w-full min-w-212.5 text-left">
           <thead>
             <tr className="border-b border-hairline bg-paper/30">
               <TableHead>Product</TableHead>
@@ -722,7 +722,7 @@ function ProductTableRow({ product, deleting, onEdit, onDelete }) {
           </div>
 
           <div className="min-w-0">
-            <p className="max-w-[220px] truncate text-[13.5px] font-medium text-ink">
+            <p className="max-w-55 truncate text-[13.5px] font-medium text-ink">
               {product.name || "Unnamed Product"}
             </p>
 
