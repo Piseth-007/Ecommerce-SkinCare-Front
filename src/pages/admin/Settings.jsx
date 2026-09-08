@@ -8,6 +8,7 @@ import {
   X,
   Loader2,
   Save,
+  Send,
 } from "lucide-react";
 import api from "../../api/axios";
 import { useAuth } from "../../context/useAuth";
@@ -479,6 +480,7 @@ function NotificationsTab({ initial, onSaved }) {
     telegram_chat_id: initial.telegram_chat_id || "",
   });
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -495,6 +497,28 @@ function NotificationsTab({ initial, onSaved }) {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTestTelegram = async () => {
+    if (!form.telegram_bot_token || !form.telegram_chat_id) {
+      showToast("Please enter both Bot Token and Chat ID before testing", "error");
+      return;
+    }
+    setTesting(true);
+    try {
+      const res = await api.post("/admin/settings/notifications/test-telegram", {
+        telegram_bot_token: form.telegram_bot_token,
+        telegram_chat_id: form.telegram_chat_id,
+      });
+      showToast(res.data?.message || "Test message sent to Telegram!", "success");
+    } catch (err) {
+      showToast(
+        err.response?.data?.message || "Failed to send test message",
+        "error",
+      );
+    } finally {
+      setTesting(false);
     }
   };
 
@@ -519,6 +543,7 @@ function NotificationsTab({ initial, onSaved }) {
             <FieldLabel>Telegram bot token</FieldLabel>
             <TextInput
               type="password"
+              placeholder="e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ"
               value={form.telegram_bot_token}
               onChange={(e) =>
                 setForm({ ...form, telegram_bot_token: e.target.value })
@@ -528,6 +553,7 @@ function NotificationsTab({ initial, onSaved }) {
           <div>
             <FieldLabel>Telegram chat ID</FieldLabel>
             <TextInput
+              placeholder="e.g. -1001234567890 or 123456789"
               value={form.telegram_chat_id}
               onChange={(e) =>
                 setForm({ ...form, telegram_chat_id: e.target.value })
@@ -537,7 +563,24 @@ function NotificationsTab({ initial, onSaved }) {
         </div>
       )}
 
-      <SaveButton saving={saving} />
+      <div className="flex flex-wrap items-center gap-3">
+        <SaveButton saving={saving} />
+        {form.telegram_enabled && (
+          <button
+            type="button"
+            onClick={handleTestTelegram}
+            disabled={testing || saving}
+            className="inline-flex items-center gap-2 rounded-lg border border-hairline bg-surface px-4 py-2 text-sm font-medium text-ink transition hover:bg-hairline/50 disabled:opacity-60"
+          >
+            {testing ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <Send size={16} />
+            )}
+            Send test notification
+          </button>
+        )}
+      </div>
     </form>
   );
 }

@@ -19,7 +19,7 @@ export default function SkinTypesPanel() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const [editing, setEditing] = useState(null); // null | "new" | skinType object
+  const [editing, setEditing] = useState(null); 
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 

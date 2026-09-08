@@ -209,7 +209,7 @@ export default function About() {
 
             <Link
               to="/products"
-              className="relative mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-[13.5px] font-medium text-moss-deep transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(0,0,0,0.2)]"
+              className="relative mt-7 inline-flex items-center gap-2 rounded-xl bg-surface border border-hairline/20 px-6 py-3 text-[13.5px] font-medium text-ink transition-all duration-300 hover:-translate-y-0.5 hover:bg-paper hover:text-ink hover:shadow-[0_14px_30px_rgba(0,0,0,0.2)]"
             >
               Shop now
               <ArrowRight

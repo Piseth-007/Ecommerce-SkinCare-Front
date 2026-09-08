@@ -6,7 +6,6 @@ import {
   MapPin,
   Pencil,
   Trash2,
-  QrCode,
   X,
   Download,
   Copy,
@@ -17,6 +16,9 @@ import {
 import api from "../../api/axios";
 import { useCart } from "../../context/useCard";
 import { useToast } from "../../context/useToast";
+import khqrLogoRed from "../../assets/KHQR Logo red.svg";
+import khqrLogoWhite from "../../assets/KHQR Logo.svg";
+import khqrBadgeBg from "../../assets/KHQR available here - logo with bg.svg";
 
 export default function Checkout() {
   const { cart, subtotal, refreshCart } = useCart();
@@ -455,6 +457,7 @@ export default function Checkout() {
     }, 5000);
 
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showQrModal, paymentData?.payment_id, paymentStatus]);
 
   useEffect(() => {
@@ -772,6 +775,67 @@ export default function Checkout() {
             )}
           </div>
 
+          {/* PAYMENT METHOD */}
+          <div>
+            <p className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone mb-3">
+              Payment Method
+            </p>
+
+            <div className="bg-surface border-2 border-moss/40 rounded-xl p-4.5 relative overflow-hidden transition-all shadow-xs">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-moss">
+                    <div className="h-2 w-2 rounded-full bg-moss" />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-[14px] text-ink">
+                        Bakong KHQR
+                      </span>
+                      <span className="rounded-full bg-moss-tint px-2 py-0.5 text-[11px] font-medium text-moss">
+                        Instant
+                      </span>
+                    </div>
+
+                    <p className="text-[12.5px] text-stone mt-1 leading-relaxed">
+                      Scan and pay with any Cambodian mobile banking app supporting Bakong KHQR.
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-1.5 mt-3 pt-2.5 border-t border-hairline/60">
+                      <span className="text-[11px] text-stone font-medium mr-1">
+                        Works with:
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-paper text-[11px] font-medium text-stone">
+                        Bakong
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-paper text-[11px] font-medium text-stone">
+                        ABA Mobile
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-paper text-[11px] font-medium text-stone">
+                        ACLEDA
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-paper text-[11px] font-medium text-stone">
+                        Wing Bank
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-paper text-[11px] font-medium text-stone">
+                        +30 Banks
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="shrink-0">
+                  <img
+                    src={khqrBadgeBg}
+                    alt="KHQR Available Here"
+                    className="h-9 w-auto object-contain rounded-md shadow-2xs"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* ORDER ITEMS */}
           <div>
             <p className="text-[12px] font-medium uppercase tracking-[0.08em] text-stone mb-3">
@@ -833,187 +897,245 @@ export default function Checkout() {
             disabled={
               placing || items.length === 0 || !selectedId || showQrModal
             }
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-lg bg-moss text-white text-[13.5px] font-medium hover:bg-moss-deep transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl bg-[#E1232E] hover:bg-[#C81A24] text-white text-[14px] font-medium transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {placing ? (
-              <Loader2 size={17} className="animate-spin" />
+              <Loader2 size={18} className="animate-spin" />
             ) : (
-              <QrCode size={17} />
+              <img
+                src={khqrLogoWhite}
+                alt="KHQR"
+                className="h-5 w-auto object-contain"
+              />
             )}
 
-            {placing ? "Generating QR..." : "Pay with KHQR"}
+            <span>{placing ? "Generating QR..." : "Pay with KHQR"}</span>
           </button>
 
-          <p className="text-[11.5px] text-stone text-center mt-3 leading-relaxed">
-            Scan with any banking app that supports Bakong KHQR
-          </p>
+          <div className="flex items-center justify-center gap-1.5 mt-3 text-center">
+            <span className="text-[11px] text-stone">Powered by</span>
+            <img
+              src={khqrLogoRed}
+              alt="KHQR"
+              className="h-3 w-auto object-contain opacity-85"
+            />
+            <span className="text-[11px] text-stone">· Official Bakong Network</span>
+          </div>
         </div>
       </div>
 
       {/* KHQR MODAL */}
       {showQrModal && paymentData && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
-            {/* HEADER */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-[20px] font-medium text-ink">
-                  Scan to Pay
-                </h2>
-
-                <p className="text-[12px] text-stone mt-1">
-                  Complete payment with any Bakong app
-                </p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="bg-surface rounded-3xl max-w-[380px] w-full shadow-2xl overflow-hidden border border-hairline my-auto animate-in fade-in zoom-in-95 duration-200">
+            {/* OFFICIAL KHQR STAND CARD */}
+            <div className="relative bg-surface">
+              {/* TOP KHQR RED BANNER */}
+              <div className="relative bg-[#E1232E] px-6 pt-5 pb-4 text-white overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <img
+                    src={khqrLogoWhite}
+                    alt="Bakong KHQR"
+                    className="h-7 w-auto object-contain drop-shadow-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleClosePayment}
+                    disabled={checkingPayment || cancellingPayment}
+                    className="p-1.5 rounded-full bg-white/15 hover:bg-white/25 transition-colors disabled:opacity-50 text-white"
+                    title="Close"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
               </div>
 
+              {/* MERCHANT & ORDER AMOUNT */}
+              <div className="px-6 pt-4 pb-1 text-center">
+                <p className="text-[13px] font-semibold text-ink uppercase tracking-wider">
+                  Botaniq Store
+                </p>
+                <div className="mt-1 flex items-baseline justify-center gap-1">
+                  <span className="text-[19px] font-semibold text-ink">$</span>
+                  <span className="font-mono text-[32px] font-bold tracking-tight text-ink leading-none">
+                    {Number(subtotal || 0).toFixed(2)}
+                  </span>
+                  <span className="text-[12px] font-medium text-stone uppercase ml-0.5">
+                    USD
+                  </span>
+                </div>
+              </div>
+
+              {/* TICKET-STYLE DASHED DIVIDER */}
+              <div className="relative flex items-center justify-between my-2 px-3">
+                <div className="w-3 h-5 bg-black/15 dark:bg-black/40 rounded-r-full -ml-3" />
+                <div className="flex-1 border-t-2 border-dashed border-hairline mx-2" />
+                <div className="w-3 h-5 bg-black/15 dark:bg-black/40 rounded-l-full -mr-3" />
+              </div>
+
+              {/* QR BODY: ACTIVE QR OR SUCCESS */}
+              <div className="px-6 pb-4">
+                {paymentStatus === "paid" ? (
+                  <div className="rounded-2xl border border-moss/20 bg-moss-tint px-6 py-10 text-center">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-moss text-white shadow-sm">
+                      <CheckCircle2 size={36} strokeWidth={2} />
+                    </div>
+                    <h3 className="mt-4 text-[17px] font-semibold text-ink">
+                      Payment Successful!
+                    </h3>
+                    <p className="mt-1 text-[12px] text-stone">
+                      Thank you for your order.
+                    </p>
+                    <div className="mt-4 flex items-center justify-center gap-2 text-[12px] text-moss font-medium">
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Preparing your receipt...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center">
+                    {/* DYNAMIC QR CANVAS */}
+                    <div
+                      ref={qrCanvasRef}
+                      className="p-3 bg-white rounded-2xl shadow-xs border border-hairline/80 flex items-center justify-center"
+                    >
+                      {paymentData.qr_string ? (
+                        <QRCodeCanvas
+                          value={paymentData.qr_string}
+                          size={220}
+                          level="M"
+                          marginSize={1}
+                        />
+                      ) : (
+                        <div className="w-[220px] h-[220px] flex items-center justify-center text-stone text-xs">
+                          QR code not available
+                        </div>
+                      )}
+                    </div>
+
+                    {/* OFFICIAL FOOTER BRANDING */}
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      <img
+                        src={khqrLogoRed}
+                        alt="KHQR"
+                        className="h-4 w-auto object-contain"
+                      />
+                      <span className="text-[11.5px] text-stone font-medium">
+                        Scan with any KHQR banking app
+                      </span>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-center gap-1 mt-1.5 text-[10px] text-stone/80">
+                      <span>Bakong</span>
+                      <span>·</span>
+                      <span>ABA</span>
+                      <span>·</span>
+                      <span>ACLEDA</span>
+                      <span>·</span>
+                      <span>Wing</span>
+                      <span>·</span>
+                      <span>Canadia</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* STATUS, COUNTDOWN & ACTIONS */}
+            <div className="bg-paper px-6 py-4 border-t border-hairline space-y-3">
+              {paymentStatus !== "paid" && (
+                <>
+                  {/* COUNTDOWN */}
+                  {paymentStatus === "expired" ? (
+                    <div className="rounded-xl border border-clay/30 bg-clay-tint px-3 py-2 text-center text-[12px] font-medium text-clay">
+                      This QR code has expired. Please close and try again.
+                    </div>
+                  ) : (
+                    <div
+                      className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border ${
+                        isExpiringSoon
+                          ? "border-clay/30 bg-clay-tint text-clay"
+                          : "border-moss/20 bg-moss-tint text-moss-deep"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Clock3 size={15} strokeWidth={2} />
+                        <span className="text-[11px] font-medium uppercase tracking-wider">
+                          {isExpiringSoon ? "Expires soon" : "Time remaining"}
+                        </span>
+                      </div>
+                      <span className="font-mono text-[16px] font-semibold tracking-wider">
+                        {secondsLeft !== null ? formatTime(secondsLeft) : "--:--"}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* AUTO-CHECK INDICATOR */}
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] text-stone">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-moss opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-moss"></span>
+                    </span>
+                    <span>Checking payment automatically every 5s</span>
+                  </div>
+
+                  {/* REFERENCE MD5 */}
+                  <p
+                    className="text-[11px] text-stone text-center truncate px-2"
+                    title={paymentData.md5}
+                  >
+                    Ref: <span className="font-mono text-ink/70">{paymentData.md5}</span>
+                  </p>
+
+                  {/* MANUAL VERIFY BUTTON */}
+                  <button
+                    type="button"
+                    onClick={() => checkPaymentStatus(true)}
+                    disabled={checkingPayment || paymentStatus === "expired"}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-moss text-white text-[13px] font-medium hover:bg-moss-deep transition-colors shadow-xs disabled:opacity-50"
+                  >
+                    {checkingPayment && (
+                      <Loader2 size={16} className="animate-spin" />
+                    )}
+                    <span>
+                      {checkingPayment
+                        ? "Verifying Payment..."
+                        : "I Have Completed Payment"}
+                    </span>
+                  </button>
+
+                  {/* COPY & DOWNLOAD BUTTONS */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyQr}
+                      className="flex items-center justify-center gap-1.5 flex-1 py-2.5 px-3 border border-hairline bg-surface rounded-xl hover:bg-paper text-ink text-[12px] font-medium transition-colors"
+                    >
+                      <Copy size={13} />
+                      <span>Copy KHQR</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleDownloadQr}
+                      className="flex items-center justify-center gap-1.5 flex-1 py-2.5 px-3 border border-hairline bg-surface rounded-xl hover:bg-paper text-ink text-[12px] font-medium transition-colors"
+                    >
+                      <Download size={13} />
+                      <span>Download QR</span>
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* CANCEL / CLOSE */}
               <button
                 type="button"
                 onClick={handleClosePayment}
                 disabled={checkingPayment || cancellingPayment}
-                className="p-2 hover:bg-paper rounded-lg transition-colors disabled:opacity-50"
+                className="w-full py-2 text-stone hover:text-ink text-[12.5px] font-medium transition-colors disabled:opacity-50"
               >
-                <X size={20} className="text-stone" />
+                {cancellingPayment ? "Cancelling payment..." : "Cancel & Return to Cart"}
               </button>
             </div>
-            {paymentStatus === "paid" ? (
-              <div className="rounded-xl border border-moss/20 bg-moss-tint px-6 py-12 text-center">
-                <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-moss text-white shadow-sm">
-                  <CheckCircle2 size={42} strokeWidth={1.8} />
-                </div>
-                <h3 className="mt-5 text-[18px] font-medium text-ink">
-                  Payment successful
-                </h3>
-                <div className="mt-3 flex items-center justify-center gap-2 text-[12px] text-moss">
-                  <Loader2 size={15} className="animate-spin" />
-                  <span>Preparing your order ticket...</span>
-                </div>
-              </div>
-            ) : (
-              <div
-                ref={qrCanvasRef}
-                className="bg-paper p-5 rounded-xl flex justify-center"
-              >
-                {paymentData.qr_string ? (
-                  <QRCodeCanvas
-                    value={paymentData.qr_string}
-                    size={256}
-                    level="M"
-                    includeMargin
-                  />
-                ) : (
-                  <div className="w-64 h-64 flex items-center justify-center text-stone text-sm">
-                    QR code not available
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* PAYMENT STATUS */}
-            <div className="text-center">
-              {paymentStatus === "paid" ? (
-                <div className="flex items-center justify-center gap-2 text-moss">
-                  <CheckCircle2 size={18} />
-                  <span className="text-[13px] font-medium">
-                    Payment Successful
-                  </span>
-                </div>
-              ) : paymentStatus === "expired" ? (
-                <p className="text-[12px] uppercase tracking-[0.08em] font-medium text-clay">
-                  QR Code Expired
-                </p>
-              ) : (
-                <>
-                  <div
-                    className={`rounded-xl border px-4 py-3 ${
-                      isExpiringSoon
-                        ? "border-clay/30 bg-clay-tint text-clay"
-                        : "border-moss/20 bg-moss-tint text-moss"
-                    }`}
-                  >
-                    <div className="flex items-center justify-center gap-1.5">
-                      <Clock3 size={15} strokeWidth={1.9} />
-                      <p className="text-[11px] uppercase tracking-widest font-medium">
-                        {isExpiringSoon ? "Expires soon" : "Time remaining"}
-                      </p>
-                    </div>
-                    <p
-                      aria-live="polite"
-                      className="mt-1 font-mono text-[30px] font-semibold tracking-[0.12em] leading-none"
-                    >
-                      {secondsLeft !== null ? formatTime(secondsLeft) : "--:--"}
-                    </p>
-                  </div>
-                  <div className="hidden">
-                    <Clock3 size={13} strokeWidth={1.75} />
-                    <p className="text-[12px] uppercase tracking-[0.08em] font-medium">
-                      Waiting for Payment
-                      {secondsLeft !== null && ` · ${formatTime(secondsLeft)}`}
-                    </p>
-                  </div>
-
-                  <p className="hidden text-[11.5px] text-stone mt-2">
-                    Checking automatically every 5 seconds
-                  </p>
-                </>
-              )}
-
-              <p className="text-[12px] text-stone mt-3 break-all">
-                Reference: {paymentData.md5}
-              </p>
-            </div>
-
-            {/* CHECK PAYMENT */}
-            <button
-              type="button"
-              onClick={() => checkPaymentStatus(true)}
-              disabled={
-                checkingPayment ||
-                paymentStatus === "paid" ||
-                paymentStatus === "expired"
-              }
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-moss text-moss text-[13px] font-medium rounded-lg hover:bg-moss-tint transition-colors disabled:opacity-50"
-            >
-              {checkingPayment && (
-                <Loader2 size={16} className="animate-spin" />
-              )}
-
-              {checkingPayment
-                ? "Checking Payment..."
-                : "I Have Completed Payment"}
-            </button>
-
-            {/* COPY / DOWNLOAD */}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleCopyQr}
-                className="flex items-center justify-center gap-2 flex-1 py-2.5 px-3 border border-hairline rounded-lg hover:bg-paper transition-colors"
-              >
-                <Copy size={14} />
-                <span className="text-[12px] font-medium text-ink">Copy</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleDownloadQr}
-                className="flex items-center justify-center gap-2 flex-1 py-2.5 px-3 border border-hairline rounded-lg hover:bg-paper transition-colors"
-              >
-                <Download size={14} />
-                <span className="text-[12px] font-medium text-ink">
-                  Download
-                </span>
-              </button>
-            </div>
-
-            {/* CLOSE */}
-            <button
-              type="button"
-              onClick={handleClosePayment}
-              disabled={checkingPayment || cancellingPayment}
-              className="w-full py-2.5 px-4 text-ink text-[13px] font-medium rounded-lg border border-hairline hover:bg-paper transition-colors disabled:opacity-50"
-            >
-              {cancellingPayment ? "Cancelling payment..." : "Close"}
-            </button>
           </div>
         </div>
       )}

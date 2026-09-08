@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   ArrowRight,
   Truck,
@@ -9,9 +8,10 @@ import {
   Sparkles,
   ArrowUp,
   RefreshCw,
-  Heart,
   Star,
   MousePointer2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import api from "../../api/axios";
@@ -28,40 +28,6 @@ const PRODUCT_CACHE_KEY = `${CACHE_VERSION}:products`;
 const CATEGORY_CACHE_KEY = `${CACHE_VERSION}:categories`;
 
 const CACHE_TTL = 1000 * 60 * 10; // 10 minutes
-
-const INGREDIENTS = [
-  "Niacinamide",
-  "Centella Asiatica",
-  "Squalane",
-  "Green Tea",
-  "Hyaluronic Acid",
-  "Ceramides",
-  "Vitamin C",
-  "Panthenol",
-];
-
-/* =========================================================
-   HERO MOTION CONFIG (only the hero uses framer-motion)
-========================================================= */
-
-const easeSmooth = [0.22, 1, 0.36, 1];
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0 },
-};
-
-const fadeUpSmall = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0 },
-};
-
-const staggerContainer = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.12 },
-  },
-};
 
 /* =========================================================
    CACHE HELPERS
@@ -186,12 +152,10 @@ function useCachedResource({ cacheKey, fetcher, initialData = [] }) {
 
         setError(true);
       } finally {
-        if (!mountedRef.current) {
-          return;
+        if (mountedRef.current) {
+          setLoading(false);
+          setRefreshing(false);
         }
-
-        setLoading(false);
-        setRefreshing(false);
       }
     },
     [cacheKey, fetcher],
@@ -374,26 +338,110 @@ export default function Home() {
 
   const refreshing = refreshingProducts || refreshingCategories;
 
-  const latestProduct = useMemo(() => {
-    if (!products || products.length === 0) return null;
-    return [...products].sort((a, b) => {
-      const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
-      const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
-      return dateB - dateA;
-    })[0];
+  const heroSlides = useMemo(() => {
+    if (!products || products.length === 0) {
+      return [
+        {
+          id: 1,
+          name: "Hydrating Botanical Essence",
+          brand: "Botaniq Ritual",
+          price: 38.0,
+          discount: 0,
+          image:
+            "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&auto=format&fit=crop&q=80",
+          tag: "Latest Arrival",
+        },
+        {
+          id: 2,
+          name: "Restorative Facial Treatment",
+          brand: "Botaniq Ritual",
+          price: 52.0,
+          discount: 10,
+          image:
+            "https://images.unsplash.com/photo-1608248597359-00f7238290f6?w=800&auto=format&fit=crop&q=80",
+          tag: "Customer Loved",
+        },
+        {
+          id: 3,
+          name: "Purifying Gentle Cleanse",
+          brand: "Botaniq Ritual",
+          price: 32.0,
+          discount: 0,
+          image:
+            "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop&q=80",
+          tag: "Pure Botanical",
+        },
+      ];
+    }
+
+    const count = Math.min(products.length, 3);
+    return products.slice(0, count).map((item, idx) => {
+      const images = Array.isArray(item.images) ? item.images : [];
+      const primary = images.find((img) => img?.is_primary);
+      const imageUrl =
+        primary?.url ||
+        images[0]?.url ||
+        (typeof images[0] === "string" ? images[0] : "") ||
+        "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&auto=format&fit=crop&q=80";
+
+      return {
+        id: item.id,
+        name: item.name,
+        brand: item.brand?.name || item.category?.name || "Skincare Ritual",
+        price: Number(item.price) || 0,
+        discount: Number(item.discount) || 0,
+        free_delivery: Boolean(item.free_delivery),
+        image: imageUrl,
+        tag: idx === 0 ? "Latest Arrival" : idx === 1 ? "Popular" : "Featured",
+      };
+    });
   }, [products]);
 
-  const latestProductImage = useMemo(() => {
-    if (!latestProduct) return "";
-    const images = Array.isArray(latestProduct.images)
-      ? latestProduct.images
-      : [];
-    const primary = images.find((img) => img?.is_primary);
-    if (primary?.url) return primary.url;
-    if (images[0]?.url) return images[0].url;
-    if (typeof images[0] === "string") return images[0];
-    return "";
-  }, [latestProduct]);
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [isSliderHovered, setIsSliderHovered] = useState(false);
+  const touchStartXRef = useRef(null);
+
+  const totalSlides = heroSlides.length || 1;
+
+  const nextSlide = useCallback(() => {
+    setActiveSlide((prev) => (prev + 1) % totalSlides);
+  }, [totalSlides]);
+
+  const prevSlide = useCallback(() => {
+    setActiveSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
+  }, [totalSlides]);
+
+  // Gentle auto-advance (every 5s, paused when hovering)
+  useEffect(() => {
+    if (isSliderHovered || totalSlides <= 1) return;
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % totalSlides);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [isSliderHovered, totalSlides]);
+
+  useEffect(() => {
+    if (activeSlide >= heroSlides.length && heroSlides.length > 0) {
+      setActiveSlide(0);
+    }
+  }, [activeSlide, heroSlides.length]);
+
+  const handleTouchStart = (e) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartXRef.current === null) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
+    if (Math.abs(deltaX) > 40) {
+      if (deltaX < 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+    }
+    touchStartXRef.current = null;
+  };
 
   const formatPrice = useCallback((value) => {
     return new Intl.NumberFormat("en-US", {
@@ -422,50 +470,6 @@ export default function Home() {
   const showBackToTop = useBackToTop();
 
   const reducedMotion = usePrefersReducedMotion();
-
-  /* =======================================================
-     MOUSE PARALLAX
-  ======================================================= */
-
-  const [mouse, setMouse] = useState({
-    x: 0,
-    y: 0,
-  });
-
-  useEffect(() => {
-    if (reducedMotion) return;
-
-    let frame = null;
-
-    const handleMouseMove = (event) => {
-      if (frame) return;
-
-      frame = requestAnimationFrame(() => {
-        const x = event.clientX / window.innerWidth - 0.5;
-
-        const y = event.clientY / window.innerHeight - 0.5;
-
-        setMouse({
-          x,
-          y,
-        });
-
-        frame = null;
-      });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove, {
-      passive: true,
-    });
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-
-      if (frame) {
-        cancelAnimationFrame(frame);
-      }
-    };
-  }, [reducedMotion]);
 
   /* =======================================================
      INITIAL DATA LOAD
@@ -566,31 +570,6 @@ export default function Home() {
       =================================================== */}
 
       <style>{`
-  @keyframes botaniq-marquee {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-  }
-
-  @keyframes botaniq-float {
-    0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-    50% { transform: translate3d(0, -14px, 0) rotate(3deg); }
-  }
-
-  @keyframes botaniq-float-reverse {
-    0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-    50% { transform: translate3d(0, 12px, 0) rotate(-4deg); }
-  }
-
-  @keyframes botaniq-pulse {
-    0%, 100% { opacity: .30; transform: scale(1); }
-    50% { opacity: .60; transform: scale(1.08); }
-  }
-
-  @keyframes botaniq-bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(7px); }
-  }
-
   @keyframes botaniq-shimmer {
     0% { transform: translateX(-120%); }
     100% { transform: translateX(120%); }
@@ -605,91 +584,6 @@ export default function Home() {
     from { opacity: 0; }
     to { opacity: 1; }
   }
-
-  /* ---------- HERO BACKGROUND WAVES (LEFT -> RIGHT) ---------- */
-
-  @keyframes botaniq-wave-scroll-ltr {
-    from { transform: translateX(-50%); }
-    to { transform: translateX(0); }
-  }
-
-  @keyframes botaniq-wave-drift {
-    0%, 100% { transform: translate3d(0, 0, 0) scaleY(1); }
-    50% { transform: translate3d(0, -6px, 0) scaleY(1.04); }
-  }
-
-  @keyframes botaniq-wave-drift-reverse {
-    0%, 100% { transform: translate3d(0, 0, 0) scaleY(1); }
-    50% { transform: translate3d(0, 5px, 0) scaleY(0.97); }
-  }
-
-  @keyframes botaniq-wave-shimmer-sweep {
-    0% { transform: translateX(-30%); opacity: 0; }
-    50% { opacity: .5; }
-    100% { transform: translateX(130%); opacity: 0; }
-  }
-
-  .botaniq-wave-scroll-slow {
-    animation: botaniq-wave-scroll-ltr 26s linear infinite,
-               botaniq-wave-drift 8s ease-in-out infinite;
-    transform-origin: bottom;
-  }
-
-  .botaniq-wave-scroll-mid {
-    animation: botaniq-wave-scroll-ltr 18s linear infinite,
-               botaniq-wave-drift-reverse 7s ease-in-out infinite;
-    transform-origin: bottom;
-  }
-
-  .botaniq-wave-scroll-fast {
-    animation: botaniq-wave-scroll-ltr 12s linear infinite,
-               botaniq-wave-drift 5.5s ease-in-out infinite;
-    transform-origin: bottom;
-  }
-
-  .botaniq-wave-shimmer {
-    animation: botaniq-wave-shimmer-sweep 6s ease-in-out infinite;
-  }
-
-  /* ---------- CTA BUTTON WAVES (LEFT -> RIGHT) ---------- */
-
-  @keyframes botaniq-btn-wave-scroll-ltr {
-    from { transform: translateX(-50%); }
-    to { transform: translateX(0); }
-  }
-
-  @keyframes botaniq-btn-ripple {
-    0% { transform: scale(0); opacity: 0.5; }
-    100% { transform: scale(2.2); opacity: 0; }
-  }
-
-  .botaniq-btn-wave {
-    animation: botaniq-btn-wave-scroll-ltr 3.5s linear infinite;
-  }
-
-  .group:hover .botaniq-btn-wave {
-    animation-duration: 1.6s;
-  }
-
-  .botaniq-btn-ripple {
-    animation: botaniq-btn-ripple 1.8s ease-out infinite;
-  }
-
-  /* ---------- SHARED ---------- */
-
-  .botaniq-marquee-track {
-    animation: botaniq-marquee 28s linear infinite;
-  }
-
-  .botaniq-marquee-wrap:hover .botaniq-marquee-track {
-    animation-play-state: paused;
-  }
-
-  .botaniq-float { animation: botaniq-float 7s ease-in-out infinite; }
-  .botaniq-float-reverse { animation: botaniq-float-reverse 8s ease-in-out infinite; }
-  .botaniq-pulse { animation: botaniq-pulse 5s ease-in-out infinite; }
-  .botaniq-bounce { animation: botaniq-bounce 1.8s ease-in-out infinite; }
-  .botaniq-shimmer { animation: botaniq-shimmer 2.4s ease-in-out infinite; }
 
   .botaniq-skeleton {
     position: relative;
@@ -714,21 +608,9 @@ export default function Home() {
   .scrollbar-hide::-webkit-scrollbar { display: none; }
 
   @media (prefers-reduced-motion: reduce) {
-    .botaniq-marquee-track,
-    .botaniq-float,
-    .botaniq-float-reverse,
-    .botaniq-pulse,
-    .botaniq-bounce,
-    .botaniq-shimmer,
     .botaniq-skeleton::after,
     .botaniq-fade-up,
-    .botaniq-fade,
-    .botaniq-wave-scroll-slow,
-    .botaniq-wave-scroll-mid,
-    .botaniq-wave-scroll-fast,
-    .botaniq-wave-shimmer,
-    .botaniq-btn-wave,
-    .botaniq-btn-ripple {
+    .botaniq-fade {
       animation: none !important;
     }
   }
@@ -775,234 +657,56 @@ export default function Home() {
       </div>
 
       {/* ===================================================
-          HERO — framer-motion, everything else unchanged
+          HERO — Clean, simple layout with product image slider
       =================================================== */}
 
-      <section
-        className="
-          relative
-          min-h-170
-          overflow-hidden
-          border-b
-          border-hairline
-        "
-      >
-        {/* Background glow */}
+      <section className="relative overflow-hidden border-b border-hairline bg-paper">
+        {/* Subtle ambient backdrop, no animations */}
         <div
-          className="
-            pointer-events-none
-            absolute
-            -left-32
-            top-20
-            h-105
-            w-105
-            rounded-full
-            bg-moss/[0.07]
-            blur-3xl
-            transition-transform
-            duration-1000
-          "
-          style={{
-            transform: reducedMotion
-              ? undefined
-              : `translate3d(${mouse.x * -25}px, ${mouse.y * -25}px, 0)`,
-          }}
+          className="pointer-events-none absolute -left-20 top-10 h-96 w-96 rounded-full bg-moss/5 blur-3xl"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute -right-20 top-20 h-96 w-96 rounded-full bg-sage/8 blur-3xl"
+          aria-hidden="true"
         />
 
-        <div
-          className="
-            pointer-events-none
-            absolute
-            -right-40
-            top-0
-            h-130
-            w-130
-            rounded-full
-            bg-sage/[0.10]
-            blur-3xl
-            transition-transform
-            duration-1000
-          "
-          style={{
-            transform: reducedMotion
-              ? undefined
-              : `translate3d(${mouse.x * 35}px, ${mouse.y * 35}px, 0)`,
-          }}
-        />
-
-        {/* Floating circle */}
-        <div
-          className="
-            botaniq-float
-            pointer-events-none
-            absolute
-            right-[12%]
-            top-24
-            h-20
-            w-20
-            rounded-full
-            border
-            border-moss/10
-          "
-          style={{
-            transform: reducedMotion
-              ? undefined
-              : `translate3d(${mouse.x * 12}px, ${mouse.y * 12}px, 0)`,
-          }}
-        />
-
-        <div
-          className="
-            botaniq-float-reverse
-            pointer-events-none
-            absolute
-            bottom-32
-            left-[9%]
-            h-12
-            w-12
-            rounded-full
-            bg-moss/6
-          "
-          style={{
-            transform: reducedMotion
-              ? undefined
-              : `translate3d(${mouse.x * -18}px, ${mouse.y * -18}px, 0)`,
-          }}
-        />
-
-        {/* Organic background shape */}
-        <svg
-          className="
-            pointer-events-none
-            absolute
-            -right-20
-            -top-20
-            h-125
-            w-125
-            text-moss/5.5
-            transition-transform
-            duration-1000
-          "
-          viewBox="0 0 200 200"
-          fill="currentColor"
-          style={{
-            transform: reducedMotion
-              ? undefined
-              : `translate3d(${mouse.x * 18}px, ${mouse.y * 18}px, 0) rotate(${mouse.x * 4}deg)`,
-          }}
-        >
-          <path d="M100 10c40 0 80 35 80 90s-40 90-80 90-80-35-80-90S60 10 100 10Z" />
-        </svg>
-
-        <div
-          className="
-            relative
-            mx-auto
-            flex
-            min-h-170
-            max-w-6xl
-            items-center
-            px-6
-            py-24
-          "
-        >
-          <div
-            className="
-              grid
-              w-full
-              items-center
-              gap-14
-              lg:grid-cols-[1.05fr_.95fr]
-            "
-          >
-            {/* HERO CONTENT — framer-motion stagger */}
-            <motion.div
-              className="max-w-xl"
-              variants={staggerContainer}
-              initial="hidden"
-              animate="visible"
-            >
+        <div className="relative mx-auto max-w-6xl px-6 py-16 sm:py-20 lg:py-24">
+          <div className="grid w-full items-center gap-12 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
+            {/* HERO CONTENT — Clean editorial left column */}
+            <div className="max-w-xl">
               {/* Eyebrow */}
-              <motion.div
-                variants={fadeUpSmall}
-                transition={{ duration: 0.7, ease: easeSmooth }}
-                className="
-                  mb-6
-                  flex
-                  items-center
-                  gap-2
-                  text-[11px]
-                  font-medium
-                  uppercase
-                  tracking-[0.16em]
-                  text-moss
-                "
-              >
+              <div className="mb-5 flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-moss">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss-tint">
                   <Leaf size={13} strokeWidth={1.8} />
                 </span>
                 Clean, effective skincare
-              </motion.div>
+              </div>
 
               {/* Heading */}
-              <motion.h1
-                variants={fadeUp}
-                transition={{ duration: 0.85, ease: easeSmooth }}
-                className="
-                  font-display
-                  text-[42px]
-                  font-medium
-                  leading-[1.05]
-                  tracking-tight
-                  text-ink
-                  sm:text-[58px]
-                  lg:text-[68px]
-                "
-              >
+              <h1 className="font-display text-[40px] sm:text-[54px] lg:text-[64px] font-medium leading-[1.06] tracking-tight text-ink">
                 Skincare that respects{" "}
                 <span className="relative italic text-moss-deep">
                   your skin's story.
-                  <span className="absolute -bottom-1 left-0 h-px w-full origin-left bg-moss/30" />
+                  <span className="absolute -bottom-1 left-0 h-px w-full bg-moss/30" />
                 </span>
-              </motion.h1>
+              </h1>
 
               {/* Description */}
-              <motion.p
-                variants={fadeUp}
-                transition={{ duration: 0.85, ease: easeSmooth }}
-                className="
-                  mt-7
-                  max-w-md
-                  text-[15.5px]
-                  leading-relaxed
-                  text-stone
-                "
-              >
+              <p className="mt-6 max-w-md text-[15.5px] leading-relaxed text-stone">
                 Thoughtfully formulated products for every skin type,
                 thoughtfully selected for your everyday ritual.
-              </motion.p>
+              </p>
 
-              {/* CTA */}
-              <motion.div
-                variants={fadeUp}
-                transition={{ duration: 0.85, ease: easeSmooth }}
-                className="
-                  mt-9
-                  flex
-                  flex-wrap
-                  items-center
-                  gap-3
-                "
-              >
+              {/* CTA Buttons */}
+              <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link
                   to="/products"
                   className="
                     group
-                    relative
-                    flex
+                    inline-flex
                     items-center
                     gap-2
-                    overflow-hidden
                     rounded-lg
                     bg-moss
                     px-6
@@ -1010,91 +714,18 @@ export default function Home() {
                     text-[14px]
                     font-medium
                     text-white
-                    shadow-[0_10px_30px_rgba(63,88,67,0.18)]
+                    shadow-[0_10px_25px_rgba(63,88,67,0.18)]
                     transition-all
-                    duration-300
-                    hover:-translate-y-1
+                    duration-200
                     hover:bg-moss-deep
-                    hover:shadow-[0_15px_35px_rgba(63,88,67,0.25)]
-                    active:translate-y-0
+                    hover:shadow-[0_14px_30px_rgba(63,88,67,0.24)]
+                    active:translate-y-0.5
                   "
                 >
-                  {/* Water wave layer 1 */}
-                  <svg
-                    className="
-                      botaniq-btn-wave
-                      pointer-events-none
-                      absolute
-                      -bottom-1
-                      left-0
-                      h-5
-                      w-[200%]
-                      text-white/[0.14]
-                    "
-                    viewBox="0 0 400 30"
-                    preserveAspectRatio="none"
-                    fill="currentColor"
-                  >
-                    <path d="M0,15 C40,25 60,5 100,15 C140,25 160,5 200,15 C240,25 260,5 300,15 C340,25 360,5 400,15 L400,30 L0,30 Z" />
-                  </svg>
-
-                  {/* Water wave layer 2 — same direction, slightly faster for depth */}
-                  <svg
-                    className="
-                      botaniq-btn-wave
-                      pointer-events-none
-                      absolute
-                      -bottom-0.5
-                      left-0
-                      h-4
-                      w-[200%]
-                      text-white/10
-                    "
-                    viewBox="0 0 400 30"
-                    preserveAspectRatio="none"
-                    fill="currentColor"
-                    style={{ animationDuration: "2.6s" }}
-                  >
-                    <path d="M0,18 C50,8 70,28 120,18 C170,8 190,28 240,18 C290,8 310,28 360,18 C380,13 390,23 400,18 L400,30 L0,30 Z" />
-                  </svg>
-
-                  {/* Ripple pulse */}
-                  <span
-                    className="
-                      botaniq-btn-ripple
-                      pointer-events-none
-                      absolute
-                      left-[18%]
-                      top-1/2
-                      h-2
-                      w-2
-                      -translate-y-1/2
-                      rounded-full
-                      bg-white/40
-                    "
-                  />
-
-                  {/* Shimmer sweep */}
-                  <span
-                    className="
-                      botaniq-shimmer
-                      absolute
-                      inset-0
-                      -translate-x-full
-                      bg-white/10
-                    "
-                  />
-
-                  <span className="relative">Shop the collection</span>
-
+                  <span>Shop the collection</span>
                   <ArrowRight
                     size={15}
-                    className="
-                      relative
-                      transition-transform
-                      duration-300
-                      group-hover:translate-x-1
-                    "
+                    className="transition-transform duration-200 group-hover:translate-x-1"
                   />
                 </Link>
 
@@ -1103,13 +734,13 @@ export default function Home() {
                   onClick={scrollToProducts}
                   className="
                     group
-                    flex
+                    inline-flex
                     items-center
                     gap-2
                     rounded-lg
                     border
                     border-hairline
-                    bg-surface/70
+                    bg-surface/80
                     px-5
                     py-3.5
                     text-[14px]
@@ -1117,43 +748,23 @@ export default function Home() {
                     text-ink
                     backdrop-blur-sm
                     transition-all
-                    duration-300
-                    hover:-translate-y-1
+                    duration-200
                     hover:border-moss/30
                     hover:bg-moss-tint
+                    hover:text-moss-deep
+                    active:translate-y-0.5
                   "
                 >
                   Explore products
                   <MousePointer2
                     size={14}
-                    className="
-                      text-stone
-                      transition-all
-                      duration-300
-                      group-hover:rotate-12
-                      group-hover:text-moss
-                    "
+                    className="text-stone transition-transform duration-200 group-hover:rotate-12 group-hover:text-moss"
                   />
                 </button>
-              </motion.div>
+              </div>
 
-              {/* Trust */}
-              <motion.div
-                variants={fadeUpSmall}
-                transition={{ duration: 0.7, ease: easeSmooth }}
-                className="
-                  mt-9
-                  flex
-                  flex-wrap
-                  items-center
-                  gap-x-6
-                  gap-y-3
-                  text-[11px]
-                  uppercase
-                  tracking-[0.08em]
-                  text-stone
-                "
-              >
+              {/* Trust badges */}
+              <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3 text-[11px] uppercase tracking-[0.08em] text-stone">
                 <span className="flex items-center gap-1.5">
                   <Sparkles size={12} className="text-moss" />
                   Carefully selected
@@ -1165,490 +776,169 @@ export default function Home() {
                   <Star size={12} className="text-moss" />
                   Customer loved
                 </span>
-              </motion.div>
-            </motion.div>
 
-            {/* HERO VISUAL — framer-motion fade/slide in */}
-            <motion.div
-              className="relative flex min-h-115 sm:min-h-125 w-full max-w-sm sm:max-w-md mx-auto items-center justify-center lg:max-w-none lg:h-125"
-              initial={{ opacity: 0, y: 32 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.9, ease: easeSmooth, delay: 0.25 }}
-            >
-              {/* Background ambient glow 1 */}
-              <div
-                className="
-                  pointer-events-none
-                  absolute
-                  left-[15%]
-                  top-[10%]
-                  h-75
-                  w-75
-                  rounded-full
-                  bg-moss/8
-                  blur-3xl
-                  transition-transform
-                  duration-1000
-                "
-                style={{
-                  transform: reducedMotion
-                    ? undefined
-                    : `translate3d(${mouse.x * 20}px, ${mouse.y * 20}px, 0)`,
-                }}
-              />
+                <span className="h-1 w-1 rounded-full bg-hairline" />
 
-              {/* Background ambient glow 2 */}
-              <div
-                className="
-                  pointer-events-none
-                  absolute
-                  right-[10%]
-                  bottom-[10%]
-                  h-70
-                  w-70
-                  rounded-full
-                  bg-sage/[0.12]
-                  blur-3xl
-                  transition-transform
-                  duration-1000
-                "
-                style={{
-                  transform: reducedMotion
-                    ? undefined
-                    : `translate3d(${mouse.x * -18}px, ${mouse.y * -18}px, 0)`,
-                }}
-              />
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck size={12} className="text-moss" />
+                  Pure botanical
+                </span>
+              </div>
+            </div>
 
-              {/* Organic backdrop shape */}
-              <div
-                className="
-                  pointer-events-none
-                  absolute
-                  left-1/2
-                  top-1/2
-                  h-85
-                  w-85
-                  sm:h-97.5
-                  sm:w-97.5
-                  rounded-[45%_55%_52%_48%]
-                  border
-                  border-white/75
-                  bg-linear-to-br
-                  from-white/80
-                  to-moss-tint/60
-                  shadow-[0_30px_80px_rgba(63,88,67,0.12)]
-                  backdrop-blur-md
-                "
-                style={{
-                  transform: reducedMotion
-                    ? "translate(-50%, -50%)"
-                    : `translate(calc(-50% + ${mouse.x * -12}px), calc(-50% + ${mouse.y * -12}px)) rotate(${mouse.x * 3}deg)`,
-                }}
-              />
-
-              {/* Centerpiece: Latest Updated Product Card or Skeleton or Fallback */}
+            {/* HERO VISUAL — Clean Product Image Slider */}
+            <div className="relative flex w-full items-center justify-center">
               {showProductSkeleton ? (
-                <div className="relative z-10 w-72.5 sm:w-82.5 rounded-3xl border border-white/80 bg-white/85 p-4 sm:p-5 shadow-[0_25px_50px_rgba(40,55,43,0.12)] backdrop-blur-xl">
-                  <div className="mb-3 flex items-center justify-between">
+                /* Skeleton loader while products load */
+                <div className="w-full max-w-md rounded-3xl border border-hairline/80 bg-surface/90 p-5 sm:p-6 shadow-[0_20px_50px_rgba(40,55,43,0.06)] backdrop-blur-md">
+                  <div className="flex items-center justify-between">
                     <div className="h-5 w-24 rounded-full botaniq-skeleton" />
-                    <div className="h-5 w-12 rounded-full botaniq-skeleton" />
+                    <div className="h-6 w-16 rounded-full botaniq-skeleton" />
                   </div>
-                  <div className="aspect-square w-full rounded-2xl botaniq-skeleton" />
-                  <div className="mt-3.5 space-y-2">
-                    <div className="h-3 w-1/3 rounded botaniq-skeleton" />
+                  <div className="mt-4 aspect-square w-full rounded-2xl botaniq-skeleton" />
+                  <div className="mt-4 space-y-2">
+                    <div className="h-3 w-1/4 rounded botaniq-skeleton" />
                     <div className="h-5 w-3/4 rounded botaniq-skeleton" />
-                    <div className="flex items-center justify-between border-t border-hairline/60 pt-3">
-                      <div className="h-5 w-16 rounded botaniq-skeleton" />
-                      <div className="h-4 w-20 rounded botaniq-skeleton" />
+                    <div className="flex items-center justify-between pt-2">
+                      <div className="h-5 w-20 rounded botaniq-skeleton" />
+                      <div className="h-2 w-12 rounded botaniq-skeleton" />
                     </div>
                   </div>
                 </div>
-              ) : latestProduct ? (
+              ) : (
+                /* Product Image Slider */
                 <div
-                  className="botaniq-float relative z-10 w-72.5 sm:w-82.5"
-                  style={{
-                    animationDelay: "-2s",
-                    transform: reducedMotion
-                      ? undefined
-                      : `translate3d(${mouse.x * 8}px, ${mouse.y * 8}px, 0)`,
-                  }}
+                  className="w-full max-w-md sm:max-w-lg lg:max-w-md xl:max-w-lg rounded-3xl border border-hairline/80 bg-surface/90 p-5 sm:p-6 shadow-[0_20px_50px_rgba(40,55,43,0.07)] backdrop-blur-md"
+                  onMouseEnter={() => setIsSliderHovered(true)}
+                  onMouseLeave={() => setIsSliderHovered(false)}
                 >
-                  <Link
-                    to={`/products/${latestProduct.id}`}
-                    className="group/card block rounded-3xl border border-white/85 bg-white/90 p-4 sm:p-5 shadow-[0_25px_50px_rgba(40,55,43,0.14)] backdrop-blur-xl transition-all duration-500 hover:-translate-y-1.5 hover:border-moss/30 hover:shadow-[0_32px_65px_rgba(40,55,43,0.22)]"
-                    aria-label={`View latest product: ${latestProduct.name}`}
-                  >
-                    {/* Top Header: Badge & Discount */}
-                    <div className="mb-3 flex items-center justify-between gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-moss-tint px-2.5 py-1 text-[10.5px] font-medium uppercase tracking-[0.12em] text-moss">
-                        <span className="relative flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-moss opacity-75" />
-                          <span className="relative inline-flex h-2 w-2 rounded-full bg-moss" />
-                        </span>
-                        Latest Update
+                  {/* Slider Top Bar: Tag, Counter & Arrows */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-moss-tint px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-moss">
+                        <span className="h-1.5 w-1.5 rounded-full bg-moss" />
+                        {heroSlides[activeSlide]?.tag || "Featured Product"}
                       </span>
-
-                      {Number(latestProduct.discount) > 0 ? (
+                      {Number(heroSlides[activeSlide]?.discount) > 0 && (
                         <span className="rounded-full bg-terracotta/10 px-2 py-0.5 text-[10.5px] font-semibold text-terracotta">
-                          -{Math.round(Number(latestProduct.discount))}% OFF
+                          -{Math.round(Number(heroSlides[activeSlide]?.discount))}% OFF
                         </span>
-                      ) : latestProduct.free_delivery ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-moss">
-                          <Truck size={12} strokeWidth={1.8} />
-                          Free Delivery
-                        </span>
-                      ) : null}
-                    </div>
-
-                    {/* Product Image Showcase */}
-                    <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-hairline/70 bg-paper/60 transition-colors duration-500 group-hover/card:border-moss/20">
-                      {latestProductImage ? (
-                        <FadeImage
-                          src={latestProductImage}
-                          alt={latestProduct.name}
-                          loading="eager"
-                          wrapperClassName="h-full w-full"
-                          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover/card:scale-105"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full flex-col items-center justify-center text-moss/40">
-                          <Leaf size={32} strokeWidth={1.2} />
-                          <span className="mt-2 text-[11px] font-medium uppercase tracking-wider text-stone">
-                            BOTANIQ
-                          </span>
-                        </div>
                       )}
                     </div>
 
-                    {/* Product Info */}
-                    <div className="mt-3.5">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone truncate">
-                        {latestProduct.brand?.name ||
-                          latestProduct.category?.name ||
-                          "Skincare Ritual"}
-                      </p>
-
-                      <h3 className="mt-1 font-display text-[16px] sm:text-[17px] font-medium leading-snug text-ink line-clamp-1 transition-colors duration-300 group-hover/card:text-moss-deep">
-                        {latestProduct.name}
-                      </h3>
-
-                      {/* Pricing & Link */}
-                      <div className="mt-3 flex items-center justify-between border-t border-hairline/60 pt-3">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-[15.5px] font-semibold text-ink">
-                            ${formatPrice(
-                              Number(latestProduct.discount) > 0
-                                ? Number(latestProduct.price) -
-                                    (Number(latestProduct.price) *
-                                      Number(latestProduct.discount)) /
-                                      100
-                                : Number(latestProduct.price)
-                            )}
-                          </span>
-                          {Number(latestProduct.discount) > 0 && (
-                            <span className="text-[12px] text-stone line-through">
-                              ${formatPrice(Number(latestProduct.price))}
-                            </span>
-                          )}
-                        </div>
-
-                        <span className="inline-flex items-center gap-1 text-[11.5px] font-medium text-moss transition-transform duration-300 group-hover/card:translate-x-1">
-                          View Ritual
-                          <ArrowRight size={13} />
-                        </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-medium tracking-widest text-stone">
+                        0{activeSlide + 1} / 0{heroSlides.length}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={prevSlide}
+                          aria-label="Previous product"
+                          className="flex h-7 w-7 items-center justify-center rounded-full border border-hairline bg-surface text-stone transition-colors hover:border-moss/30 hover:bg-moss-tint hover:text-moss active:scale-95"
+                        >
+                          <ChevronLeft size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={nextSlide}
+                          aria-label="Next product"
+                          className="flex h-7 w-7 items-center justify-center rounded-full border border-hairline bg-surface text-stone transition-colors hover:border-moss/30 hover:bg-moss-tint hover:text-moss active:scale-95"
+                        >
+                          <ChevronRight size={14} />
+                        </button>
                       </div>
                     </div>
-                  </Link>
-                </div>
-              ) : (
+                  </div>
 
-                <div
-                  className="botaniq-float relative z-10"
-                  style={{ animationDelay: "-2s" }}
-                >
-                  <div className="mx-auto h-16 w-24 rounded-t-2xl border border-ink/10 bg-white shadow-xl" />
-                  <div className="relative h-64 w-36 rounded-[20px_20px_30px_30px] border border-ink/10 bg-linear-to-br from-white via-paper to-moss-tint shadow-[0_25px_45px_rgba(40,55,43,0.18)]">
-                    <div className="absolute bottom-5 left-4 right-4 top-14 flex flex-col items-center justify-center rounded-xl border border-moss/10 bg-white/70 text-center">
-                      <Leaf size={25} strokeWidth={1.2} className="mb-3 text-moss" />
-                      <span className="font-display text-[15px] italic text-moss-deep">
-                        BOTANIQ
-                      </span>
-                      <span className="mt-1 text-[7px] uppercase tracking-[0.18em] text-stone">
-                        Skin ritual
-                      </span>
+                  {/* Product Image Carousel Track */}
+                  <div
+                    className="relative mt-4 aspect-square w-full overflow-hidden rounded-2xl border border-hairline/70 bg-paper/60"
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                  >
+                    <div
+                      className="flex h-full w-full transition-transform duration-500 ease-out"
+                      style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+                    >
+                      {heroSlides.map((slide, idx) => (
+                        <div
+                          key={slide.id || idx}
+                          className="relative h-full w-full shrink-0"
+                        >
+                          <Link
+                            to={`/products/${slide.id}`}
+                            className="group/slide block h-full w-full"
+                            aria-label={`View product: ${slide.name}`}
+                          >
+                            <FadeImage
+                              src={slide.image}
+                              alt={slide.name}
+                              loading={idx === 0 ? "eager" : "lazy"}
+                              wrapperClassName="h-full w-full"
+                              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover/slide:scale-105"
+                            />
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Product Info & Indicators */}
+                  <div className="mt-4 flex items-end justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-stone truncate">
+                        {heroSlides[activeSlide]?.brand}
+                      </p>
+                      <Link
+                        to={`/products/${heroSlides[activeSlide]?.id}`}
+                        className="mt-1 block font-display text-[16px] sm:text-[18px] font-medium leading-snug text-ink truncate hover:text-moss transition-colors"
+                      >
+                        {heroSlides[activeSlide]?.name}
+                      </Link>
+                      <div className="mt-2 flex items-baseline gap-2">
+                        <span className="text-[15.5px] font-semibold text-ink">
+                          ${formatPrice(
+                            Number(heroSlides[activeSlide]?.discount) > 0
+                              ? Number(heroSlides[activeSlide]?.price) -
+                                  (Number(heroSlides[activeSlide]?.price) *
+                                    Number(heroSlides[activeSlide]?.discount)) /
+                                    100
+                              : Number(heroSlides[activeSlide]?.price)
+                          )}
+                        </span>
+                        {Number(heroSlides[activeSlide]?.discount) > 0 && (
+                          <span className="text-[12px] text-stone line-through">
+                            ${formatPrice(Number(heroSlides[activeSlide]?.price))}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Pagination Dots */}
+                    <div className="flex items-center gap-1.5 pb-1">
+                      {heroSlides.map((_, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setActiveSlide(idx)}
+                          aria-label={`Go to product slide ${idx + 1}`}
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            activeSlide === idx
+                              ? "w-6 bg-moss"
+                              : "w-2 bg-hairline hover:bg-stone/50"
+                          }`}
+                        />
+                      ))}
                     </div>
                   </div>
                 </div>
               )}
-
-              <div
-                className="
-                  botaniq-float
-                  absolute
-                  -right-1
-                  sm:right-2
-                  top-4
-                  sm:top-8
-                  z-20
-                  rounded-2xl
-                  border
-                  border-white/80
-                  bg-white/90
-                  px-3.5
-                  py-2.5
-                  shadow-[0_15px_35px_rgba(40,55,43,0.10)]
-                  backdrop-blur-md
-                "
-                style={{ animationDelay: "-2s" }}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss-tint text-moss">
-                    {latestProduct?.reviews_avg_rating ? (
-                      <Star size={13} className="fill-moss" />
-                    ) : (
-                      <Leaf size={13} />
-                    )}
-                  </span>
-
-                  <div>
-                    <p className="text-[10.5px] font-medium text-ink leading-tight">
-                      {latestProduct?.reviews_avg_rating
-                        ? `${Number(latestProduct.reviews_avg_rating).toFixed(1)} ★ Rating`
-                        : "Gentle formulas"}
-                    </p>
-                    <p className="text-[9px] text-stone">
-                      {latestProduct?.reviews_count
-                        ? `${latestProduct.reviews_count} verified reviews`
-                        : "Everyday friendly"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating card 2: Bottom-Left */}
-              <div
-                className="
-                  botaniq-float-reverse
-                  absolute
-                  -left-1
-                  sm:left-2
-                  bottom-6
-                  sm:bottom-10
-                  z-20
-                  rounded-2xl
-                  border
-                  border-white/80
-                  bg-white/90
-                  px-3.5
-                  py-2.5
-                  shadow-[0_15px_35px_rgba(40,55,43,0.10)]
-                  backdrop-blur-md
-                "
-                style={{ animationDelay: "-3s" }}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-moss-tint text-moss">
-                    {latestProduct?.free_delivery ? (
-                      <Truck size={13} />
-                    ) : (
-                      <Heart size={13} />
-                    )}
-                  </span>
-
-                  <div>
-                    <p className="text-[10.5px] font-medium text-ink leading-tight">
-                      {latestProduct?.free_delivery
-                        ? "Free Delivery"
-                        : "Made for rituals"}
-                    </p>
-                    <p className="text-[9px] text-stone">
-                      {latestProduct?.free_delivery
-                        ? "On latest arrivals"
-                        : "Simple. Calm. Effective."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Subtle accent circle */}
-              <div
-                className="
-                  pointer-events-none
-                  absolute
-                  bottom-[4%]
-                  right-[10%]
-                  h-20
-                  w-20
-                  rounded-full
-                  border
-                  border-moss/10
-                "
-              />
-            </motion.div>
+            </div>
           </div>
 
-          {/* Discover */}
-          <button
-            type="button"
-            onClick={scrollToProducts}
-            className="
-              botaniq-bounce
-              absolute
-              bottom-7
-              left-1/2
-              flex
-              -translate-x-1/2
-              flex-col
-              items-center
-              gap-2
-              text-stone/50
-              transition-colors
-              hover:text-moss
-              z-10
-            "
-            aria-label="Scroll to products"
-          >
-            <span className="text-[9px] uppercase tracking-[0.18em]">
-              Discover
-            </span>
-            <ArrowDown />
-          </button>
         </div>
 
-        {/* ===============================================
-            HERO BACKGROUND WAVES
-        =============================================== */}
-        <div
-          className="
-            pointer-events-none
-            absolute
-            inset-x-0
-            bottom-0
-            h-44
-            overflow-hidden
-          "
-          aria-hidden="true"
-        >
-
-          <svg
-            className="
-              botaniq-wave-scroll-slow
-              absolute
-              -bottom-4
-              left-0
-              h-full
-              w-[200%]
-              text-moss/5
-            "
-            viewBox="0 0 2400 220"
-            preserveAspectRatio="none"
-            fill="currentColor"
-          >
-            <path
-              d="M0,120 C200,180 400,60 600,120 C800,180 1000,60 1200,120
-                 C1400,180 1600,60 1800,120 C2000,180 2200,60 2400,120
-                 L2400,220 L0,220 Z"
-            />
-          </svg>
-
-          {/* Mid layer */}
-          <svg
-            className="
-              botaniq-wave-scroll-mid
-              absolute
-              -bottom-2
-              left-0
-              h-full
-              w-[200%]
-              text-moss/8
-            "
-            viewBox="0 0 2400 220"
-            preserveAspectRatio="none"
-            fill="currentColor"
-          >
-            <path
-              d="M0,140 C180,80 420,190 600,140 C780,90 1020,190 1200,140
-                 C1380,90 1620,190 1800,140 C1980,90 2220,190 2400,140
-                 L2400,220 L0,220 Z"
-            />
-          </svg>
-
-          {/* Front layer */}
-          <svg
-            className="
-              botaniq-wave-scroll-fast
-              absolute
-              bottom-0
-              left-0
-              h-full
-              w-[200%]
-              text-moss/12
-            "
-            viewBox="0 0 2400 220"
-            preserveAspectRatio="none"
-            fill="currentColor"
-          >
-            <path
-              d="M0,160 C220,110 380,200 600,160 C820,110 980,200 1200,160
-                 C1420,110 1580,200 1800,160 C2020,110 2180,200 2400,160
-                 L2400,220 L0,220 Z"
-            />
-          </svg>
-
-          {/* Soft light sweep */}
-          <div
-            className="
-              botaniq-wave-shimmer
-              absolute
-              inset-y-0
-              left-0
-              w-1/3
-              bg-linear-to-r
-              from-transparent
-              via-white/40
-              to-transparent
-              mix-blend-overlay
-            "
-          />
-        </div>
-
-        {/* Ingredient ticker */}
-        <div
-          className="
-            botaniq-marquee-wrap
-            relative
-            border-t
-            border-hairline
-            bg-paper/60
-            backdrop-blur-sm
-          "
-        >
-          <div className="botaniq-marquee-track flex w-max py-4">
-            {[...INGREDIENTS, ...INGREDIENTS].map((ingredient, index) => (
-              <span
-                key={`${ingredient}-${index}`}
-                className="
-                  flex
-                  items-center
-                  gap-2
-                  px-7
-                  text-[11px]
-                  font-medium
-                  uppercase
-                  tracking-widest
-                  text-stone
-                "
-              >
-                <Sparkles
-                  size={11}
-                  className="text-moss/60"
-                  strokeWidth={1.75}
-                />
-                {ingredient}
-              </span>
-            ))}
-          </div>
-        </div>
       </section>
 
       {/* ===================================================
@@ -2171,16 +1461,18 @@ export default function Home() {
               items-center
               gap-2
               rounded-lg
-              bg-white
+              bg-surface
+              border border-hairline/20
               px-6
               py-3.5
               text-[14px]
               font-medium
-              text-moss
+              text-ink
               transition-all
               duration-300
               hover:-translate-y-1
               hover:bg-paper
+              hover:text-ink
               hover:shadow-xl
             "
           >
@@ -2634,24 +1926,5 @@ function ErrorState({ message, onRetry }) {
         {retrying ? "Retrying" : "Retry"}
       </button>
     </div>
-  );
-}
-
-function ArrowDown() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-    >
-      <path
-        d="M12 5v14M6 13l6 6 6-6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

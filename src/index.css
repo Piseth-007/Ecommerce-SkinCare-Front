@@ -11,16 +11,16 @@
 
   /* Text */
   --color-ink: #211f1b;
-  --color-stone: #8a8579;
+  --color-stone: #736e63;
 
   /* Brand — moss (primary) */
-  --color-moss: #3f5843;
-  --color-moss-deep: #2c4030;
+  --color-moss: #38543c;
+  --color-moss-deep: #253d29;
   --color-moss-tint: #eef2ed;
 
   /* Accent — clay (warnings / destructive / highlights) */
-  --color-clay: #a3492a;
-  --color-clay-deep: #7a3520;
+  --color-clay: #a34426;
+  --color-clay-deep: #7a311a;
   --color-clay-tint: #fbeee9;
 
   --font-display: "Fraunces", serif;
@@ -601,22 +601,70 @@ body {
 }
 
 .dark {
-  /* Surfaces — slightly lifted layers instead of pure black, keeps depth */
-  --color-paper: #0c0c0e;
-  --color-surface: #17171a;
-  --color-hairline: #2a2a2e;
+  /* Surfaces — subtle elevation hierarchy with rich depth */
+  --color-paper: #0e0e11;
+  --color-surface: #18191e;
+  --color-hairline: #2b2d35;
 
-  /* Text */
-  --color-ink: #f2f1ee;
-  --color-stone: #94908a;
+  /* Text — WCAG AAA contrast */
+  --color-ink: #f5f4f0;
+  --color-stone: #a6a29a;
 
-  /* Brand — moss lightened for contrast, deep variant darkened further */
-  --color-moss: #6b9271;
-  --color-moss-deep: #4b6b53;
-  --color-moss-tint: #1a251c;
+  /* Brand — moss buttons & solid backgrounds */
+  --color-moss: #3e6344;
+  --color-moss-deep: #4c7853;
+  --color-moss-tint: #17281a;
 
-  /* Accent — clay lightened for contrast, deep variant kept rich */
-  --color-clay: #e2896a;
-  --color-clay-deep: #b8583a;
-  --color-clay-tint: #2e1c16;
+  /* Accent — clay buttons & solid backgrounds */
+  --color-clay: #993f23;
+  --color-clay-deep: #b85030;
+  --color-clay-tint: #2c1813;
+}
+
+/* Luminous accessible typography tokens in dark mode */
+.dark .text-moss {
+  color: #8ee29b !important;
+}
+
+.dark .text-moss-deep {
+  color: #a9eab4 !important;
+}
+
+.dark a.hover\:text-moss-deep:hover,
+.dark button.hover\:text-moss-deep:hover,
+.dark .group:hover .group-hover\:text-moss-deep {
+  color: #c3f5cc !important;
+}
+
+.dark .text-clay {
+  color: #ff9d82 !important;
+}
+
+.dark .text-clay-deep {
+  color: #ffb8a3 !important;
+}
+
+/* Alerts and native inputs in dark mode */
+.dark .auth-alert {
+  color: #ffb8a3;
+  background-color: #2c1813;
+  border-color: rgba(255, 157, 130, 0.25);
+}
+
+.dark select option {
+  background-color: #18191e;
+  color: #f5f4f0;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: var(--color-paper);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-hairline);
+  border-radius: 999px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-stone);
 }

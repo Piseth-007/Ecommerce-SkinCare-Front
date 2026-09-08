@@ -508,7 +508,7 @@ export default function ProductDetail() {
               )}
 
               {product.free_delivery && !isOutOfStock && (
-                <span className="absolute right-4 top-4 z-20 flex items-center gap-1.5 rounded-full border border-white/70 bg-white/85 px-3 py-1.5 text-[9px] font-medium uppercase tracking-[0.06em] text-moss backdrop-blur-md">
+                <span className="absolute right-4 top-4 z-20 flex items-center gap-1.5 rounded-full border border-hairline/70 bg-surface/90 px-3 py-1.5 text-[9px] font-medium uppercase tracking-[0.06em] text-moss backdrop-blur-md">
                   <Truck size={11} strokeWidth={1.7} />
                   Free delivery
                 </span>
@@ -516,7 +516,7 @@ export default function ProductDetail() {
 
               {isOutOfStock && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-paper/30 backdrop-blur-[2px]">
-                  <span className="rounded-full border border-hairline bg-white/90 px-5 py-2.5 text-[10px] font-medium uppercase tracking-[0.12em] text-stone shadow-sm">
+                  <span className="rounded-full border border-hairline bg-surface/90 px-5 py-2.5 text-[10px] font-medium uppercase tracking-[0.12em] text-stone shadow-sm">
                     Out of stock
                   </span>
                 </div>
@@ -528,7 +528,7 @@ export default function ProductDetail() {
                     type="button"
                     onClick={previousImage}
                     aria-label="Previous image"
-                    className="absolute left-4 top-1/2 z-30 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/85 text-ink opacity-0 shadow-sm backdrop-blur-md transition-all duration-300 hover:bg-white group-hover:opacity-100"
+                    className="absolute left-4 top-1/2 z-30 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-hairline/70 bg-surface/90 text-ink opacity-0 shadow-sm backdrop-blur-md transition-all duration-300 hover:bg-surface group-hover:opacity-100"
                   >
                     <ChevronLeft size={17} />
                   </button>
@@ -537,7 +537,7 @@ export default function ProductDetail() {
                     type="button"
                     onClick={nextImage}
                     aria-label="Next image"
-                    className="absolute right-4 top-1/2 z-30 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/85 text-ink opacity-0 shadow-sm backdrop-blur-md transition-all duration-300 hover:bg-white group-hover:opacity-100"
+                    className="absolute right-4 top-1/2 z-30 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-hairline/70 bg-surface/90 text-ink opacity-0 shadow-sm backdrop-blur-md transition-all duration-300 hover:bg-surface group-hover:opacity-100"
                   >
                     <ChevronRight size={17} />
                   </button>
@@ -545,7 +545,7 @@ export default function ProductDetail() {
               )}
 
               {images.length > 1 && (
-                <div className="absolute bottom-4 right-4 z-20 rounded-full border border-white/70 bg-white/80 px-3 py-1 text-[9px] font-mono text-stone backdrop-blur-md">
+                <div className="absolute bottom-4 right-4 z-20 rounded-full border border-hairline/70 bg-surface/85 px-3 py-1 text-[9px] font-mono text-stone backdrop-blur-md">
                   {activeImage + 1} / {images.length}
                 </div>
               )}

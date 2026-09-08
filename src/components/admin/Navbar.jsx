@@ -62,7 +62,7 @@ export default function Navbar({ onMenuClick }) {
       setPendingOrders(orders);
       setLowStockProducts(lowStock);
     } catch {
-      
+      // Ignore background notification fetch errors
     } finally {
       setLoading(false);
     }

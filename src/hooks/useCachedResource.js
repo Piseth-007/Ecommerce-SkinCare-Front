@@ -30,7 +30,7 @@ function writeCache(key, data) {
       })
     );
   } catch {
-   
+    // Ignore storage write failures
   }
 }
 
@@ -39,14 +39,12 @@ export function useCachedResource({
   fetcher,
   initialData = [],
 }) {
-  const cached = useRef(readCache(cacheKey));
-
   const [data, setData] = useState(
-    cached.current ?? initialData
+    () => readCache(cacheKey) ?? initialData
   );
 
   const [loading, setLoading] = useState(
-    cached.current === null
+    () => readCache(cacheKey) === null
   );
 
   const [refreshing, setRefreshing] = useState(false);

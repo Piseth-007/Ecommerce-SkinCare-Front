@@ -179,8 +179,8 @@ export default function ProductCard({ product }) {
                     gap-1
                     rounded-full
                     border
-                    border-white/70
-                    bg-white/85
+                    border-hairline/60
+                    bg-surface/90
                     px-2.5
                     py-1
                     text-[9px]
@@ -235,7 +235,7 @@ export default function ProductCard({ product }) {
                   rounded-full
                   border
                   border-hairline
-                  bg-white/90
+                  bg-surface/90
                   px-4
                   py-2
                   text-[10px]
@@ -266,7 +266,9 @@ export default function ProductCard({ product }) {
                 items-center
                 justify-center
                 rounded-full
-                bg-white/90
+                border
+                border-hairline/60
+                bg-surface/90
                 text-ink
                 opacity-0
                 shadow-[0_8px_20px_rgba(0,0,0,0.08)]

@@ -13,7 +13,6 @@ const statusStyles = {
 };
 
 const ORDERS_CACHE_KEY = "botaniq-orderhistory-v1";
-const ORDERS_CACHE_TTL = 1000 * 60 * 5; 
 
 // ─────────────────────────────────────────────
 // Cache helpers
@@ -43,7 +42,7 @@ function writeOrdersCache(orders, reviewableItems) {
       JSON.stringify({ orders, reviewableItems, cachedAt: Date.now() }),
     );
   } catch {
- 
+    // Ignore storage write error
   }
 }
 
@@ -224,10 +223,10 @@ export default function OrderHistory() {
           );
         }
       } finally {
-        if (!mountedRef.current) return;
-
-        setLoading(false);
-        setRefreshing(false);
+        if (mountedRef.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [showToast],

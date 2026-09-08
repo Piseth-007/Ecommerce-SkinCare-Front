@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import api from "../../api/axios";
+import khqrLogoRed from "../../assets/KHQR Logo red.svg";
 
 const STEPS = [
   { key: "pending", label: "Placed" },
@@ -232,7 +233,16 @@ export default function OrderDetail() {
           <div className="p-5 rounded-xl sticky top-6 bg-surface border border-hairline">
             <div className="mb-5 pb-5 border-b border-hairline">
               <p className="text-sm mb-1 text-stone">Payment</p>
-              <p className="font-display text-base text-ink">{paymentMethod}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-display text-base text-ink">{paymentMethod}</p>
+                {payment?.method === "khqr" && (
+                  <img
+                    src={khqrLogoRed}
+                    alt="KHQR"
+                    className="h-3.5 w-auto object-contain"
+                  />
+                )}
+              </div>
               <p
                 className={`text-xs mt-1 ${paymentStatus === "paid" ? "text-moss" : "text-clay"}`}
               >

@@ -198,10 +198,10 @@ export default function ProductList() {
 
       setError(true);
     } finally {
-      if (!mountedRef.current) return;
-
-      setLoading(false);
-      setFetching(false);
+      if (mountedRef.current) {
+        setLoading(false);
+        setFetching(false);
+      }
     }
   }, [
     page,

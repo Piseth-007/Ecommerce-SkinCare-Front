@@ -117,7 +117,7 @@ function CategoryCard({ category, index }) {
             {category.name}
           </h3>
 
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-all duration-300 group-hover:bg-white group-hover:text-ink">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-all duration-300 group-hover:bg-surface group-hover:text-ink">
             <ArrowUpRight
               size={14}
               strokeWidth={2}

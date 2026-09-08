@@ -551,27 +551,47 @@ function OrderRow({
                   </span>
                 </div>
                 {items.length > 0 ? (
-                  <div className="space-y-1">
+                  <div className="divide-y divide-hairline">
                     {items.map((item) => {
                       const price = Number(item.price || 0);
                       const quantity = Number(item.quantity || 0);
+                      const image = getProductImage(item);
+                      const productName =
+                        item.product_name ||
+                        item.product?.name ||
+                        "Unknown product";
+
                       return (
                         <div
                           key={item.id}
-                          className="flex items-center justify-between gap-4 border-b border-hairline py-2 last:border-0"
+                          className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
                         >
-                          <div className="min-w-0">
-                            <p className="truncate text-[13px] font-medium text-ink">
-                              {item.product_name ||
-                                item.product?.name ||
-                                "Unknown product"}
-                            </p>
-                            <p className="mt-0.5 text-[11.5px] text-stone">
-                              ${price.toFixed(2)} × {quantity}
-                            </p>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <ProductItemThumbnail
+                              src={image}
+                              alt={productName}
+                            />
+                            <div className="min-w-0">
+                              <p className="truncate text-[13px] font-medium text-ink">
+                                {productName}
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-0.5 text-[11.5px] text-stone">
+                                <span>
+                                  ${price.toFixed(2)} × {quantity}
+                                </span>
+                                {item.product?.id && (
+                                  <>
+                                    <span>·</span>
+                                    <span className="font-mono text-[10.5px] text-stone/70">
+                                      ID: #{item.product.id}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <span className="whitespace-nowrap font-mono text-[13px] text-ink">
-                            $ {(price * quantity).toFixed(2)}
+                          <span className="whitespace-nowrap font-mono text-[13px] font-medium text-ink">
+                            ${(price * quantity).toFixed(2)}
                           </span>
                         </div>
                       );
@@ -698,3 +718,52 @@ function SearchEmptyState({ search, onClear }) {
     </div>
   );
 }
+
+function ProductItemThumbnail({ src, alt }) {
+  const [error, setError] = useState(false);
+
+  return (
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-hairline/80 bg-paper">
+      {src && !error ? (
+        <img
+          src={src}
+          alt={alt || "Product"}
+          className="h-full w-full object-cover transition-transform hover:scale-105"
+          loading="lazy"
+          onError={() => setError(true)}
+        />
+      ) : (
+        <Package size={17} className="text-stone/50" strokeWidth={1.5} />
+      )}
+    </div>
+  );
+}
+
+function getProductImage(item) {
+  const product = item?.product;
+  if (!product) {
+    return item?.image_url || item?.image || null;
+  }
+
+  const images = Array.isArray(product.images) ? product.images : [];
+  if (images.length > 0) {
+    const primary = images.find(
+      (img) => img && (img.is_primary || img.isPrimary),
+    );
+    const target = primary || images[0];
+
+    if (typeof target === "string") return target;
+    if (target?.url) return target.url;
+    if (target?.image_url) return target.image_url;
+    if (target?.path) return target.path;
+  }
+
+  return (
+    (typeof product.image === "string" ? product.image : null) ||
+    (typeof product.image_url === "string" ? product.image_url : null) ||
+    (typeof item?.image_url === "string" ? item.image_url : null) ||
+    (typeof item?.image === "string" ? item.image : null) ||
+    null
+  );
+}
+

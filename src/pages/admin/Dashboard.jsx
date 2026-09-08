@@ -313,29 +313,29 @@ export default function Dashboard() {
 
   const chartColors = isDark
     ? {
-        grid: "rgba(255,255,255,0.1)",
-        axisText: "#8f8b85",
-        barFill: "#6b9271",
-        cursorFill: "#6b9271",
-        tooltipBg: "#17171a",
-        tooltipBorder: "rgba(255,255,255,0.1)",
-        tooltipText: "#f2f1ee",
+        grid: "#2b2d35",
+        axisText: "#a6a29a",
+        barFill: "#3e6344",
+        cursorFill: "#3e6344",
+        tooltipBg: "#18191e",
+        tooltipBorder: "#2b2d35",
+        tooltipText: "#f5f4f0",
       }
     : {
-        grid: "#E4E0D8",
-        axisText: "#8A8579",
-        barFill: "#3F5843",
-        cursorFill: "#3F5843",
-        tooltipBg: "#FFFFFF",
-        tooltipBorder: "#E4E0D8",
-        tooltipText: "#211F1B",
+        grid: "#e4e0d8",
+        axisText: "#736e63",
+        barFill: "#38543c",
+        cursorFill: "#38543c",
+        tooltipBg: "#ffffff",
+        tooltipBorder: "#e4e0d8",
+        tooltipText: "#211f1b",
       };
 
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="font-display text-[28px] font-medium text-ink dark:text-white">
+          <h1 className="font-display text-[28px] font-medium text-ink">
             Dashboard
           </h1>
         </div>
@@ -370,7 +370,7 @@ export default function Dashboard() {
             label="Total Shoppers"
             value={Number(summary.total_customers || 0).toLocaleString()}
             change={summary.customers_growth}
-            iconClass="bg-stone-500/10 text-stone-500 dark:bg-white/10 dark:text-stone-300"
+            iconClass="bg-stone-500/10 text-stone-500 dark:bg-stone-500/15 dark:text-stone-300"
           />
 
           <DashboardStatCard
@@ -385,15 +385,15 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
         <div className="space-y-6 xl:col-span-8">
-          <div className="rounded-xl border border-hairline bg-surface p-5 dark:border-white/10 dark:bg-white/3 sm:p-6">
+          <div className="rounded-xl border border-hairline bg-surface p-5 sm:p-6">
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="mb-1 text-[10.5px] font-medium uppercase tracking-widest text-stone dark:text-stone-400">
+                <p className="mb-1 text-[10.5px] font-medium uppercase tracking-widest text-stone">
                   Sales Overview
                 </p>
 
                 <div className="flex items-center gap-3">
-                  <h2 className="font-mono text-[28px] leading-none text-ink dark:text-white">
+                  <h2 className="font-mono text-[28px] leading-none text-ink">
                     ${Number(summary?.total_sales || 0).toLocaleString()}
                   </h2>
 
@@ -406,7 +406,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="flex items-center rounded-lg border border-hairline bg-paper p-1 dark:border-white/10 dark:bg-white/5">
+              <div className="flex items-center rounded-lg border border-hairline bg-paper p-1">
                 {RANGES.map((item) => (
                   <button
                     key={item.key}
@@ -415,8 +415,8 @@ export default function Dashboard() {
                     onClick={() => setRange(item.key)}
                     className={`rounded-md px-3 py-1.5 text-[12px] font-medium transition-all disabled:opacity-60 ${
                       range === item.key
-                        ? "bg-surface text-ink shadow-[0_1px_3px_rgba(33,31,27,0.08)] dark:bg-white/10 dark:text-white"
-                        : "text-stone hover:text-ink dark:text-stone-400 dark:hover:text-white"
+                        ? "bg-surface text-ink shadow-[0_1px_3px_rgba(33,31,27,0.08)]"
+                        : "text-stone hover:text-ink"
                     }`}
                   >
                     {item.label}
@@ -429,7 +429,7 @@ export default function Dashboard() {
               <ChartSkeleton />
             ) : trend.length === 0 ? (
               <div className="flex h-75 items-center justify-center">
-                <p className="text-[13px] text-stone dark:text-stone-400">
+                <p className="text-[13px] text-stone">
                   No sales data available
                 </p>
               </div>
@@ -507,14 +507,14 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-hairline bg-surface dark:border-white/10 dark:bg-white/3">
-            <div className="flex items-center justify-between border-b border-hairline px-5 py-5 dark:border-white/10 sm:px-6">
+          <div className="overflow-hidden rounded-xl border border-hairline bg-surface">
+            <div className="flex items-center justify-between border-b border-hairline px-5 py-5 sm:px-6">
               <div>
-                <h2 className="font-display text-[18px] font-medium text-ink dark:text-white">
+                <h2 className="font-display text-[18px] font-medium text-ink">
                   Recent Orders
                 </h2>
 
-                <p className="mt-1 text-[12px] text-stone dark:text-stone-400">
+                <p className="mt-1 text-[12px] text-stone">
                   Latest 5 orders from your customers
                 </p>
               </div>
@@ -522,7 +522,7 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => navigate("/admin/orders")}
-                className="flex items-center gap-1.5 text-[12.5px] font-medium text-moss transition-colors hover:text-ink dark:text-emerald-400 dark:hover:text-white"
+                className="flex items-center gap-1.5 text-[12.5px] font-medium text-moss transition-colors hover:text-ink"
               >
                 View All
                 <ArrowRight size={15} />
@@ -536,10 +536,10 @@ export default function Dashboard() {
                 <div className="text-center">
                   <ShoppingBag
                     size={24}
-                    className="mx-auto mb-3 text-stone/50 dark:text-stone-500/50"
+                    className="mx-auto mb-3 text-stone/50"
                   />
 
-                  <p className="text-[13px] text-stone dark:text-stone-400">
+                  <p className="text-[13px] text-stone">
                     No recent orders available
                   </p>
                 </div>
@@ -548,7 +548,7 @@ export default function Dashboard() {
               <div className="overflow-x-auto">
                 <table className="w-full min-w-180">
                   <thead>
-                    <tr className="border-b border-hairline bg-paper/40 dark:border-white/10 dark:bg-white/2">
+                    <tr className="border-b border-hairline bg-paper/40">
                       <TableHeader>Order ID</TableHeader>
                       <TableHeader>Customer</TableHeader>
                       <TableHeader>Date</TableHeader>
@@ -594,22 +594,22 @@ export default function Dashboard() {
                       return (
                         <tr
                           key={order.id}
-                          className="border-b border-hairline/70 last:border-0 dark:border-white/10"
+                          className="border-b border-hairline/70 last:border-0"
                         >
                           <TableCell>
-                            <span className="font-mono text-[12px] text-ink dark:text-white">
+                            <span className="font-mono text-[12px] text-ink">
                               #{order.id}
                             </span>
                           </TableCell>
 
                           <TableCell>
                             <div className="min-w-0">
-                              <p className="max-w-37.5 truncate text-[12.5px] font-medium text-ink dark:text-white">
+                              <p className="max-w-37.5 truncate text-[12.5px] font-medium text-ink">
                                 {customer}
                               </p>
 
                               {Array.isArray(items) && items.length > 0 && (
-                                <p className="mt-0.5 text-[11px] text-stone dark:text-stone-400">
+                                <p className="mt-0.5 text-[11px] text-stone">
                                   {items.length}{" "}
                                   {items.length === 1 ? "item" : "items"}
                                 </p>
@@ -618,19 +618,19 @@ export default function Dashboard() {
                           </TableCell>
 
                           <TableCell>
-                            <span className="text-[12px] text-stone dark:text-stone-400">
+                            <span className="text-[12px] text-stone">
                               {formatDate(date)}
                             </span>
                           </TableCell>
 
                           <TableCell>
-                            <span className="text-[12px] capitalize text-stone dark:text-stone-400">
+                            <span className="text-[12px] capitalize text-stone">
                               {payment}
                             </span>
                           </TableCell>
 
                           <TableCell>
-                            <span className="font-mono text-[12px] text-ink dark:text-white">
+                            <span className="font-mono text-[12px] text-ink">
                               ${Number(amount).toFixed(2)}
                             </span>
                           </TableCell>
@@ -649,14 +649,14 @@ export default function Dashboard() {
         </div>
 
         <div className="space-y-6 xl:col-span-4">
-          <div className="rounded-xl border border-hairline bg-surface p-5 dark:border-white/10 dark:bg-white/3 sm:p-6">
+          <div className="rounded-xl border border-hairline bg-surface p-5 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="font-display text-[18px] font-medium text-ink dark:text-white">
+                <h2 className="font-display text-[18px] font-medium text-ink">
                   Order Breakdown
                 </h2>
 
-                <p className="text-[12px] text-stone dark:text-stone-400">
+                <p className="text-[12px] text-stone">
                   Current order status
                 </p>
               </div>
@@ -664,12 +664,12 @@ export default function Dashboard() {
 
             {summaryLoading ? (
               <div className="h-80 animate-pulse">
-                <div className="mx-auto mt-8 h-44 w-44 rounded-full border-26 border-hairline/40 dark:border-white/10" />
+                <div className="mx-auto mt-8 h-44 w-44 rounded-full border-26 border-hairline/40" />
 
                 <div className="mt-6 space-y-3">
-                  <div className="h-3 rounded bg-hairline/40 dark:bg-white/10" />
-                  <div className="h-3 rounded bg-hairline/30 dark:bg-white/10" />
-                  <div className="h-3 rounded bg-hairline/30 dark:bg-white/10" />
+                  <div className="h-3 rounded bg-hairline/40" />
+                  <div className="h-3 rounded bg-hairline/30" />
+                  <div className="h-3 rounded bg-hairline/30" />
                 </div>
               </div>
             ) : (
@@ -702,17 +702,17 @@ export default function Dashboard() {
                   </ResponsiveContainer>
 
                   <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-[11px] text-stone dark:text-stone-400">
+                    <span className="text-[11px] text-stone">
                       Total Orders
                     </span>
 
-                    <span className="mt-1 font-mono text-[26px] font-medium text-ink dark:text-white">
+                    <span className="mt-1 font-mono text-[26px] font-medium text-ink">
                       {totalBreakdownOrders.toLocaleString()}
                     </span>
                   </div>
                 </div>
 
-                <div className="space-y-3 border-t border-hairline pt-4 dark:border-white/10">
+                <div className="space-y-3 border-t border-hairline pt-4">
                   {orderBreakdown.map((item) => (
                     <div
                       key={item.name}
@@ -726,12 +726,12 @@ export default function Dashboard() {
                           }}
                         />
 
-                        <span className="text-[12px] text-stone dark:text-stone-400">
+                        <span className="text-[12px] text-stone">
                           {item.name}
                         </span>
                       </div>
 
-                      <span className="font-mono text-[12px] text-ink dark:text-white">
+                      <span className="font-mono text-[12px] text-ink">
                         {item.value.toLocaleString()}
                       </span>
                     </div>
@@ -741,14 +741,14 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div className="rounded-xl border border-hairline bg-surface p-5 dark:border-white/10 dark:bg-white/3 sm:p-6">
+          <div className="rounded-xl border border-hairline bg-surface p-5 sm:p-6">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <h2 className="font-display text-[18px] font-medium text-ink dark:text-white">
+                <h2 className="font-display text-[18px] font-medium text-ink">
                   Top Selling Products
                 </h2>
 
-                <p className="mt-1 text-[12px] text-stone dark:text-stone-400">
+                <p className="mt-1 text-[12px] text-stone">
                   Products with the most orders
                 </p>
               </div>
@@ -761,10 +761,10 @@ export default function Dashboard() {
                 <div className="text-center">
                   <Package
                     size={24}
-                    className="mx-auto mb-3 text-stone/50 dark:text-stone-500/50"
+                    className="mx-auto mb-3 text-stone/50"
                   />
 
-                  <p className="text-[13px] text-stone dark:text-stone-400">
+                  <p className="text-[13px] text-stone">
                     No product data available
                   </p>
                 </div>
@@ -776,7 +776,7 @@ export default function Dashboard() {
                     key={product.id || index}
                     className="flex items-center gap-3"
                   >
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-hairline bg-paper dark:border-white/10 dark:bg-white/5">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-hairline bg-paper">
                       {product.image ? (
                         <img
                           src={product.image}
@@ -786,23 +786,23 @@ export default function Dashboard() {
                       ) : (
                         <Package
                           size={18}
-                          className="text-stone/60 dark:text-stone-400/60"
+                          className="text-stone/60"
                         />
                       )}
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[12.5px] font-medium text-ink dark:text-white">
+                      <p className="truncate text-[12.5px] font-medium text-ink">
                         {product.name}
                       </p>
 
-                      <p className="mt-0.5 text-[11px] text-stone dark:text-stone-400">
+                      <p className="mt-0.5 text-[11px] text-stone">
                         {Number(product.sold).toLocaleString()} sold
                       </p>
                     </div>
 
                     <div className="text-right">
-                      <p className="font-mono text-[12px] text-ink dark:text-white">
+                      <p className="font-mono text-[12px] text-ink">
                         ${Number(product.revenue).toFixed(2)}
                       </p>
                     </div>
@@ -814,7 +814,7 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => navigate("/admin/products")}
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg border border-hairline py-2.5 text-[12.5px] font-medium text-ink transition-colors hover:bg-paper dark:border-white/10 dark:text-white dark:hover:bg-white/5"
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg border border-hairline py-2.5 text-[12.5px] font-medium text-ink transition-colors hover:bg-paper"
             >
               View Products
               <ArrowUpRight size={15} />
@@ -858,7 +858,7 @@ function DashboardStatCard({
   const isPositive = Number(change || 0) >= 0;
 
   return (
-    <div className="rounded-xl border border-hairline bg-surface p-5 transition-shadow hover:shadow-[0_8px_24px_rgba(33,31,27,0.04)] dark:border-white/10 dark:bg-white/3">
+    <div className="rounded-xl border border-hairline bg-surface p-5 transition-shadow hover:shadow-[0_8px_24px_rgba(33,31,27,0.04)]">
       <div className="mb-5 flex items-start justify-between">
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconClass}`}
@@ -869,11 +869,11 @@ function DashboardStatCard({
         {hasChange && <GrowthBadge value={change} positive={isPositive} />}
       </div>
 
-      <p className="font-mono text-[25px] leading-none text-ink dark:text-white">
+      <p className="font-mono text-[25px] leading-none text-ink">
         {value}
       </p>
 
-      <p className="text-[12.5px] text-stone dark:text-stone-400">{label}</p>
+      <p className="text-[12.5px] text-stone">{label}</p>
     </div>
   );
 }
@@ -897,7 +897,7 @@ function GrowthBadge({ value, positive }) {
 
 function TableHeader({ children }) {
   return (
-    <th className="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-stone dark:text-stone-400 sm:px-6">
+    <th className="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-wider text-stone sm:px-6">
       {children}
     </th>
   );
@@ -962,7 +962,7 @@ function OrderStatus({ status }) {
 
   const current = config[normalizedStatus] || {
     icon: Clock3,
-    className: "bg-paper text-stone dark:bg-white/10 dark:text-stone-400",
+    className: "bg-paper text-stone",
     label: status || "Unknown",
   };
 
@@ -984,14 +984,14 @@ function OrdersSkeleton() {
       {Array.from({ length: 5 }).map((_, index) => (
         <div
           key={index}
-          className="grid grid-cols-6 gap-6 border-b border-hairline px-5 py-4 last:border-0 dark:border-white/10 sm:px-6"
+          className="grid grid-cols-6 gap-6 border-b border-hairline px-5 py-4 last:border-0 sm:px-6"
         >
-          <div className="h-3 rounded bg-hairline/40 dark:bg-white/10" />
-          <div className="h-3 rounded bg-hairline/40 dark:bg-white/10" />
-          <div className="h-3 rounded bg-hairline/40 dark:bg-white/10" />
-          <div className="h-3 rounded bg-hairline/40 dark:bg-white/10" />
-          <div className="h-3 rounded bg-hairline/40 dark:bg-white/10" />
-          <div className="h-5 w-16 rounded-full bg-hairline/40 dark:bg-white/10" />
+          <div className="h-3 rounded bg-hairline/40" />
+          <div className="h-3 rounded bg-hairline/40" />
+          <div className="h-3 rounded bg-hairline/40" />
+          <div className="h-3 rounded bg-hairline/40" />
+          <div className="h-3 rounded bg-hairline/40" />
+          <div className="h-5 w-16 rounded-full bg-hairline/40" />
         </div>
       ))}
     </div>
@@ -1003,14 +1003,14 @@ function TopProductsSkeleton() {
     <div className="animate-pulse space-y-4">
       {Array.from({ length: 4 }).map((_, index) => (
         <div key={index} className="flex items-center gap-3">
-          <div className="h-12 w-12 shrink-0 rounded-lg bg-hairline/40 dark:bg-white/10" />
+          <div className="h-12 w-12 shrink-0 rounded-lg bg-hairline/40" />
 
           <div className="min-w-0 flex-1 space-y-2">
-            <div className="h-3 w-3/4 rounded bg-hairline/40 dark:bg-white/10" />
-            <div className="h-2.5 w-1/3 rounded bg-hairline/30 dark:bg-white/10" />
+            <div className="h-3 w-3/4 rounded bg-hairline/40" />
+            <div className="h-2.5 w-1/3 rounded bg-hairline/30" />
           </div>
 
-          <div className="h-3 w-14 rounded bg-hairline/40 dark:bg-white/10" />
+          <div className="h-3 w-14 rounded bg-hairline/40" />
         </div>
       ))}
     </div>
@@ -1020,27 +1020,27 @@ function TopProductsSkeleton() {
 function ChartSkeleton() {
   return (
     <div className="relative h-75 animate-pulse">
-      <div className="absolute inset-x-0 top-5 h-px bg-hairline/50 dark:bg-white/10" />
-      <div className="absolute inset-x-0 top-[35%] h-px bg-hairline/40 dark:bg-white/10" />
-      <div className="absolute inset-x-0 top-[65%] h-px bg-hairline/40 dark:bg-white/10" />
-      <div className="absolute inset-x-0 bottom-8 h-px bg-hairline/50 dark:bg-white/10" />
+      <div className="absolute inset-x-0 top-5 h-px bg-hairline/50" />
+      <div className="absolute inset-x-0 top-[35%] h-px bg-hairline/40" />
+      <div className="absolute inset-x-0 top-[65%] h-px bg-hairline/40" />
+      <div className="absolute inset-x-0 bottom-8 h-px bg-hairline/50" />
 
       <div className="absolute bottom-8 left-8 right-2 top-5 flex items-end gap-2">
-        <div className="h-[35%] flex-1 rounded-t-md bg-hairline/30 dark:bg-white/10" />
-        <div className="h-[55%] flex-1 rounded-t-md bg-hairline/40 dark:bg-white/10" />
-        <div className="h-[45%] flex-1 rounded-t-md bg-hairline/30 dark:bg-white/10" />
-        <div className="h-[70%] flex-1 rounded-t-md bg-hairline/50 dark:bg-white/10" />
-        <div className="h-[60%] flex-1 rounded-t-md bg-hairline/40 dark:bg-white/10" />
-        <div className="h-[85%] flex-1 rounded-t-md bg-hairline/50 dark:bg-white/10" />
-        <div className="h-[75%] flex-1 rounded-t-md bg-hairline/40 dark:bg-white/10" />
+        <div className="h-[35%] flex-1 rounded-t-md bg-hairline/30" />
+        <div className="h-[55%] flex-1 rounded-t-md bg-hairline/40" />
+        <div className="h-[45%] flex-1 rounded-t-md bg-hairline/30" />
+        <div className="h-[70%] flex-1 rounded-t-md bg-hairline/50" />
+        <div className="h-[60%] flex-1 rounded-t-md bg-hairline/40" />
+        <div className="h-[85%] flex-1 rounded-t-md bg-hairline/50" />
+        <div className="h-[75%] flex-1 rounded-t-md bg-hairline/40" />
       </div>
 
       <div className="absolute bottom-0 left-8 right-2 flex justify-between">
-        <div className="h-2 w-8 rounded bg-hairline/40 dark:bg-white/10" />
-        <div className="h-2 w-8 rounded bg-hairline/40 dark:bg-white/10" />
-        <div className="h-2 w-8 rounded bg-hairline/40 dark:bg-white/10" />
-        <div className="h-2 w-8 rounded bg-hairline/40 dark:bg-white/10" />
-        <div className="h-2 w-8 rounded bg-hairline/40 dark:bg-white/10" />
+        <div className="h-2 w-8 rounded bg-hairline/40" />
+        <div className="h-2 w-8 rounded bg-hairline/40" />
+        <div className="h-2 w-8 rounded bg-hairline/40" />
+        <div className="h-2 w-8 rounded bg-hairline/40" />
+        <div className="h-2 w-8 rounded bg-hairline/40" />
       </div>
     </div>
   );

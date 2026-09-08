@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Camera, X, UserRound, Plus, LogOut } from "lucide-react";
+import { Camera, X, Plus, LogOut } from "lucide-react";
 import api from "../../api/axios";
 import { AuthContext } from "../../context/AuthContext";
 import { ToastContext } from "../../context/ToastContext";
